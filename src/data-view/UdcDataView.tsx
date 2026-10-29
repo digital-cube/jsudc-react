@@ -5,7 +5,7 @@ import { ChartWindowControl } from "../chart/ChartWindowControl";
 import { useChartWindow } from "../chart/useChartWindow";
 import { andWindow } from "../chart/window";
 import { schemaLabelTerms, tableSection, useI18n } from "../i18n/i18n";
-import { humanize } from "../lib/utils";
+import { cn, humanize } from "../lib/utils";
 import { rendererEntry, rendererTabs } from "../renderers/registry";
 import type { FolderNav, RendererCount } from "../renderers/types";
 import { useSchemaEditor } from "../schema-editor/useSchemaEditor";
@@ -185,7 +185,7 @@ export function UdcDataView({ collection }: { collection: string }) {
 
   return (
     <div
-      className="udc:flex udc:min-h-0 udc:flex-1 udc:flex-col"
+      className="udc-data-view udc:flex udc:min-h-0 udc:flex-1 udc:flex-col"
       data-testid="data-view"
       data-collection={collection}
     >
@@ -272,11 +272,12 @@ export function UdcDataView({ collection }: { collection: string }) {
       <div className="udc:mx-6 udc:mb-6 udc:flex udc:min-h-0 udc:flex-1 udc:flex-col udc:overflow-hidden udc:rounded-xl udc:border udc:border-border udc:bg-surface udc:shadow-sm udc:shadow-black/[0.03]">
         <div
           data-testid="toolbar"
-          className={
+          className={cn(
+            "udc-toolbar",
             onPage
               ? "udc:hidden"
-              : "udc:flex udc:flex-wrap udc:items-center udc:gap-2 udc:border-b udc:border-border udc:px-3 udc:py-2.5"
-          }
+              : "udc:flex udc:flex-wrap udc:items-center udc:gap-2 udc:border-b udc:border-border udc:px-3 udc:py-2.5",
+          )}
         >
           {view ? (
             <>

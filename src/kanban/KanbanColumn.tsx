@@ -137,6 +137,7 @@ export function KanbanColumn(props: KanbanColumnProps) {
         minWidth: opts.buckets.min_width_px,
       }}
       className={cn(
+        "udc-kanban-column",
         "udc:flex udc:max-h-full udc:shrink-0 udc:flex-col udc:rounded-xl udc:border udc:border-border/80 udc:bg-muted/45 udc:dark:bg-muted/30",
         isDragging && "udc:opacity-50",
       )}

@@ -44,6 +44,7 @@ export function EventBlock({
       onPointerDown={(e) => onPointerDown(e, "move")}
       onClick={(e) => onOpen(e.currentTarget)}
       className={cn(
+        "udc-calendar-event",
         "udc:group/ev udc:absolute udc:z-10 udc:block udc:overflow-hidden udc:rounded-md udc:border-l-[3px] udc:px-1.5 udc:py-0.5 udc:text-left udc:text-foreground udc:select-none",
         "udc:shadow-[0_0_0_1px_var(--surface)] udc:focus-visible:ring-2 udc:focus-visible:ring-ring udc:focus-visible:outline-none",
         readOnly ? "udc:cursor-pointer" : "udc:cursor-grab",

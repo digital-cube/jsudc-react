@@ -46,7 +46,7 @@ export function SearchBox({
   };
 
   return (
-    <div className="udc:relative udc:w-72 udc:shrink-0">
+    <div className="udc-search udc:relative udc:w-72 udc:shrink-0">
       <Search className="udc:pointer-events-none udc:absolute udc:top-1/2 udc:left-2.5 udc:size-4 udc:-translate-y-1/2 udc:text-muted-foreground" />
       <Input
         ref={inputRef}

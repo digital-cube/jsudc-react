@@ -83,6 +83,7 @@ function ChipTrigger({
   return (
     <div
       className={cn(
+        "udc-filter-chip",
         "udc:inline-flex udc:h-7 udc:items-center udc:rounded-full udc:border udc:text-xs udc:font-medium udc:transition-colors",
         active
           ? "udc:border-primary/40 udc:bg-primary/8 udc:text-foreground"

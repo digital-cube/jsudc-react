@@ -437,7 +437,7 @@ function Tree({
   return (
     <Ctx.Provider value={ctx}>
       <div
-        className="udc:flex udc:min-h-0 udc:flex-1 udc:flex-col"
+        className="udc-tree udc:flex udc:min-h-0 udc:flex-1 udc:flex-col"
         data-testid="tree"
         data-lazy={lazy || undefined}
         data-searching={expansion ? true : undefined}

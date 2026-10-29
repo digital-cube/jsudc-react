@@ -233,6 +233,7 @@ export function KanbanCard({
       tabIndex={0}
       onClick={() => onOpen(row)}
       className={cn(
+        "udc-kanban-card",
         cardShellClass(tone, opts),
         "udc:outline-none udc:transition-[box-shadow,border-color] udc:hover:border-border-strong udc:hover:shadow-sm udc:focus-visible:ring-2 udc:focus-visible:ring-ring",
         readOnly
@@ -252,7 +253,7 @@ export function PendingCard({ title }: { title: string }) {
   return (
     <div
       data-testid="kanban-pending-card"
-      className="udc:flex udc:items-center udc:gap-2 udc:rounded-lg udc:border udc:border-dashed udc:border-border-strong udc:bg-surface/60 udc:px-3 udc:py-2.5 udc:text-[13px] udc:text-muted-foreground"
+      className="udc-kanban-card udc:flex udc:items-center udc:gap-2 udc:rounded-lg udc:border udc:border-dashed udc:border-border-strong udc:bg-surface/60 udc:px-3 udc:py-2.5 udc:text-[13px] udc:text-muted-foreground"
     >
       <Spinner className="udc:size-3" />
       <span className="udc:truncate">{title}</span>

@@ -125,7 +125,7 @@ export function TreeNode({ row, depth }: { row: Row; depth: number }) {
   ];
 
   return (
-    <div data-testid="tree-node" data-id={id} data-depth={depth}>
+    <div className="udc-tree-node" data-testid="tree-node" data-id={id} data-depth={depth}>
       <div className="udc:relative">
         {drag && !dragging ? (
           <div

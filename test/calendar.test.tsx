@@ -430,6 +430,7 @@ describe("CalendarRenderer", () => {
   it("asks for the work week of ?date= in the zone and draws the event there", async () => {
     const { mock, props } = renderCalendar(true, TOKYO);
     const event = await screen.findByTestId("cal-event");
+    expect(event).toHaveClass("udc-calendar-event");
     expect(event).toHaveAttribute("data-start", "2026-10-27T16:00:00+09:00");
     const list = mock.calls.find((c) => c.action === "list");
     expect(list?.body.filter).toEqual({

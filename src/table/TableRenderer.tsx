@@ -408,7 +408,7 @@ export function TableRenderer(props: TableRendererProps) {
           data-testid="udc-table"
           aria-busy={data.isFetching}
           aria-rowcount={total}
-          className="udc:border-separate udc:border-spacing-0 udc:text-[13px]"
+          className="udc-table udc:border-separate udc:border-spacing-0 udc:text-[13px]"
           style={{ width: totalWidth, minWidth: "100%", tableLayout: "fixed" }}
         >
           <colgroup>
@@ -499,6 +499,7 @@ export function TableRenderer(props: TableRendererProps) {
                     }
                     style={pinStyle(c)}
                     className={cn(
+                      "udc-cell",
                       "udc:relative udc:border-b udc:border-border udc:px-3 udc:align-middle udc:outline-none",
                       bg && bg !== "default"
                         ? BG_COLOR[bg]
@@ -557,7 +558,7 @@ export function TableRenderer(props: TableRendererProps) {
                   key={r.id}
                   data-testid="row"
                   data-row-id={row.__meta.id}
-                  className="udc:group/row"
+                  className="udc-row udc:group/row"
                   style={{ height: rowHeight }}
                 >
                   {[...left, ...center].map(cell)}

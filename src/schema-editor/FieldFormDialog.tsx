@@ -115,6 +115,7 @@ export function FieldFormDialog({
 
   return (
     <DialogContent
+      className="udc-schema-editor"
       data-testid="field-form"
       data-mode={mode}
       title={

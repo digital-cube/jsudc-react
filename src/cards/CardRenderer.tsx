@@ -202,6 +202,7 @@ function Card({
       data-row-id={row.__meta.id}
       data-accent={tone ?? undefined}
       className={cn(
+        "udc-card",
         "udc:group/card udc:relative udc:flex udc:min-w-0 udc:flex-col udc:overflow-hidden udc:rounded-xl udc:border udc:border-border udc:bg-surface udc:shadow-xs udc:shadow-black/[0.03]",
         "udc:transition-[transform,box-shadow,border-color] udc:duration-150 udc:ease-out udc:hover:-translate-y-0.5 udc:hover:border-border-strong udc:hover:shadow-md udc:hover:shadow-black/[0.06] udc:dark:hover:shadow-black/40",
       )}

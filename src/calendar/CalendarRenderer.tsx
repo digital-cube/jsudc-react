@@ -292,7 +292,7 @@ function Calendar({
 
   return (
     <div
-      className="udc:flex udc:min-h-0 udc:flex-1 udc:flex-col"
+      className="udc-calendar udc:flex udc:min-h-0 udc:flex-1 udc:flex-col"
       data-testid="calendar"
       data-preset={preset}
       data-date={dayKey(anchor)}

@@ -130,7 +130,7 @@ function ChartTab({
   const empty = !firstLoad && !q.isFetching && q.rows.length === 0;
   return (
     <div
-      className="udc:flex udc:min-h-0 udc:flex-1 udc:flex-col udc:overflow-auto"
+      className="udc-chart udc:flex udc:min-h-0 udc:flex-1 udc:flex-col udc:overflow-auto"
       data-testid="chart-tab"
     >
       <AllRowsStatus result={q} />

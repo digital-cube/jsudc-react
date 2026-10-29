@@ -55,7 +55,7 @@ export function Pager({
     <nav
       aria-label={t("APP", "PAGING")}
       data-testid="pager"
-      className="udc:flex udc:h-11 udc:shrink-0 udc:items-center udc:justify-between udc:gap-4 udc:border-t udc:border-border udc:bg-surface udc:px-3 udc:text-xs udc:text-muted-foreground"
+      className="udc-pager udc:flex udc:h-11 udc:shrink-0 udc:items-center udc:justify-between udc:gap-4 udc:border-t udc:border-border udc:bg-surface udc:px-3 udc:text-xs udc:text-muted-foreground"
     >
       <div className="udc:tabular-nums">
         {t("APP", "SHOWING_RANGE", { from: fmt(from), to: fmt(to), total: fmt(total) })}

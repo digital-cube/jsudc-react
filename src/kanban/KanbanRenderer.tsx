@@ -481,7 +481,7 @@ function Board({
 
   return (
     <div
-      className="udc:flex udc:min-h-0 udc:flex-1 udc:flex-col"
+      className="udc-kanban udc:flex udc:min-h-0 udc:flex-1 udc:flex-col"
       data-testid="kanban"
       data-board-id={boardId ?? undefined}
     >

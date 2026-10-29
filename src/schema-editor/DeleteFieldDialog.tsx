@@ -37,6 +37,7 @@ export function DeleteFieldDialog({
 
   return (
     <DialogContent
+      className="udc-schema-editor"
       role="alertdialog"
       data-testid="delete-field"
       title={t("APP", "DELETE_TITLE", { label })}

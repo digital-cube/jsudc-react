@@ -14,7 +14,9 @@ const allowed = /^\.(udc\\:|udc-|dark$|tone-|is-|leaflet-)/;
 const bad = [...new Set(selectors.filter((s) => !/^\.\d/.test(s) && !allowed.test(s)))];
 const prefixed = selectors.filter((s) => s.startsWith(".udc\\:")).length;
 if (bad.length || prefixed === 0) {
-  console.error(`dist/styles.css: ${prefixed} udc: utilities; unexpected selectors: ${bad.join(" ")}`);
+  console.error(
+    `dist/styles.css: ${prefixed} udc: utilities; unexpected selectors: ${bad.join(" ")}`,
+  );
   process.exit(1);
 }
 console.log(`dist/styles.css: ${prefixed} udc: utility selectors, no unprefixed class`);
