@@ -83,16 +83,16 @@ collections, so each one starts from a fresh view.
 
 ### The providers a host wraps
 
-| Provider                                              | Needed | Why                                                                                                                                                  |
-| ----------------------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Provider                                              | Needed | Why                                                                                                                                                   |
+| ----------------------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `UdcProvider client={new UdcClient(...)}`             | yes    | every hook reads the client from it; `renderers={…}` is what the data view draws its tabs with (none given: every tab says no renderer is registered) |
-| `QueryClientProvider client={createUdcQueryClient()}` | yes    | the hooks are TanStack Query; `createUdcQueryClient` retries transport failures only, never a protocol error                                         |
-| `UdcI18nProvider`                                     | yes    | every string goes through `useI18n()`                                                                                                                |
-| `TooltipProvider`                                     | yes    | Radix tooltips on headers, chips and buttons; with your own kit, `kit.TooltipProvider` (see [Bring your own primitives](#bring-your-own-primitives)) |
-| `Toaster`                                             | yes    | save, conflict and schema-edit toasts (`useToast`); with your own kit, `kit.Toaster`                                                                 |
-| `UdcUrlStateProvider` / `UdcReactRouterUrlState`      | no     | where search, filters, sort, paging and the tab live; without it `window.location` (see [URL state](#url-state))                                     |
-| `TimezoneProvider`                                    | no     | without it instants are shown in the browser's zone; with it the user's pick, kept in `localStorage` (`udc-tz`)                                      |
-| `ThemeProvider`                                       | no     | `useTheme()` toggles the `dark` class on `<html>` and keeps the choice (`udc-theme`); any other way of setting that class works too                  |
+| `QueryClientProvider client={createUdcQueryClient()}` | yes    | the hooks are TanStack Query; `createUdcQueryClient` retries transport failures only, never a protocol error                                          |
+| `UdcI18nProvider`                                     | yes    | every string goes through `useI18n()`                                                                                                                 |
+| `TooltipProvider`                                     | yes    | Radix tooltips on headers, chips and buttons; with your own kit, `kit.TooltipProvider` (see [Bring your own primitives](#bring-your-own-primitives))  |
+| `Toaster`                                             | yes    | save, conflict and schema-edit toasts (`useToast`); with your own kit, `kit.Toaster`                                                                  |
+| `UdcUrlStateProvider` / `UdcReactRouterUrlState`      | no     | where search, filters, sort, paging and the tab live; without it `window.location` (see [URL state](#url-state))                                      |
+| `TimezoneProvider`                                    | no     | without it instants are shown in the browser's zone; with it the user's pick, kept in `localStorage` (`udc-tz`)                                       |
+| `ThemeProvider`                                       | no     | `useTheme()` toggles the `dark` class on `<html>` and keeps the choice (`udc-theme`); any other way of setting that class works too                   |
 
 ## Renderers
 
@@ -107,7 +107,9 @@ import { tableRenderer } from "@jsudc/react/table";
 // A module constant: the registry should not change between renders.
 const renderers = createRendererRegistry(tableRenderer, cardsRenderer);
 
-<UdcProvider client={client} renderers={renderers}>…</UdcProvider>;
+<UdcProvider client={client} renderers={renderers}>
+  …
+</UdcProvider>;
 ```
 
 `RENDERERS` from `@jsudc/react/all` is the registry of all seven. A view's tab
@@ -118,18 +120,18 @@ more definition: `{ name: "gantt", component, icon, labelKey, paging, editMode }
 an earlier one, so `createRendererRegistry(tableRenderer, myTable)` swaps the
 table.
 
-| Subpath                       | Exports                                                       | Peers it needs (optional peers of the package)                  |
-| ----------------------------- | ------------------------------------------------------------- | --------------------------------------------------------------- |
-| `@jsudc/react/table`          | `tableRenderer`, `TableRenderer`, `CellValue`, `Pager`        | `@tanstack/react-table`                                         |
-| `@jsudc/react/cards`          | `cardsRenderer`, `CardRenderer`                               | —                                                               |
-| `@jsudc/react/kanban`         | `kanbanRenderer`, `KanbanRenderer`, `KanbanBoardSwitcher`     | `@dnd-kit/core`, `@dnd-kit/sortable`, `@dnd-kit/utilities`      |
-| `@jsudc/react/calendar`       | `calendarRenderer`, `CalendarRenderer`                        | —                                                               |
-| `@jsudc/react/tree`           | `treeRenderer`, `TreeRenderer`                                | `@dnd-kit/core`                                                 |
-| `@jsudc/react/map`            | `mapRenderer`, `MapRenderer`                                  | `leaflet`                                                       |
-| `@jsudc/react/chart`          | `chartRenderer`, `ChartRenderer`                              | `recharts`                                                      |
-| `@jsudc/react/schema-editor`  | `useSchemaEditor`, the field dialogs, the `fieldForm` helpers | —                                                               |
-| `@jsudc/react/all`            | `RENDERERS` and every `…Renderer` definition                  | all of the above                                                |
-| `@jsudc/react/headless`       | hooks and models, no markup (below)                           | none: `react`, `@tanstack/react-query`, `@jsudc/core` only      |
+| Subpath                      | Exports                                                       | Peers it needs (optional peers of the package)             |
+| ---------------------------- | ------------------------------------------------------------- | ---------------------------------------------------------- |
+| `@jsudc/react/table`         | `tableRenderer`, `TableRenderer`, `CellValue`, `Pager`        | `@tanstack/react-table`                                    |
+| `@jsudc/react/cards`         | `cardsRenderer`, `CardRenderer`                               | —                                                          |
+| `@jsudc/react/kanban`        | `kanbanRenderer`, `KanbanRenderer`, `KanbanBoardSwitcher`     | `@dnd-kit/core`, `@dnd-kit/sortable`, `@dnd-kit/utilities` |
+| `@jsudc/react/calendar`      | `calendarRenderer`, `CalendarRenderer`                        | —                                                          |
+| `@jsudc/react/tree`          | `treeRenderer`, `TreeRenderer`                                | `@dnd-kit/core`                                            |
+| `@jsudc/react/map`           | `mapRenderer`, `MapRenderer`                                  | `leaflet`                                                  |
+| `@jsudc/react/chart`         | `chartRenderer`, `ChartRenderer`                              | `recharts`                                                 |
+| `@jsudc/react/schema-editor` | `useSchemaEditor`, the field dialogs, the `fieldForm` helpers | —                                                          |
+| `@jsudc/react/all`           | `RENDERERS` and every `…Renderer` definition                  | all of the above                                           |
+| `@jsudc/react/headless`      | hooks and models, no markup (below)                           | none: `react`, `@tanstack/react-query`, `@jsudc/core` only |
 
 A subpath whose peer is not installed fails at that import and nowhere else:
 Node stops with `ERR_MODULE_NOT_FOUND` for `leaflet`; Vite, which knows the
@@ -410,18 +412,18 @@ redefining them after the stylesheet, no code:
 
 The variables (`dist/tokens.css`, both themes):
 
-| Variable                                                                                                   | What it paints                                       |
-| ---------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| `--background`, `--foreground`                                                                             | the page behind the view, the text                   |
-| `--surface`, `--surface-raised`                                                                            | panels, cards, cells; popovers and dialogs           |
-| `--muted`, `--muted-foreground`                                                                            | quiet fills (skeletons, column backgrounds), secondary text |
-| `--border`, `--border-strong`, `--input`, `--ring`                                                         | hairlines, emphasised borders, inputs, focus rings   |
-| `--primary`, `--primary-foreground`                                                                        | the accent: primary buttons, active chips, links     |
-| `--hover`, `--selected`                                                                                    | row and item hover, selection                        |
-| `--shadow-pin`                                                                                             | the shadow beside a pinned table column              |
-| `--sem-accent`, `--sem-success`, `--sem-warning`, `--sem-danger`, `--sem-info`, `--sem-muted`              | the semantic tones (badges, row colours, kanban columns, map markers) |
-| `--sem-accent-bg`, `--sem-success-bg`, `--sem-warning-bg`, `--sem-danger-bg`, `--sem-info-bg`, `--sem-muted-bg` | their background pairs                          |
-| `--chart-1` … `--chart-8`                                                                                  | the chart's series                                   |
+| Variable                                                                                                        | What it paints                                                        |
+| --------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `--background`, `--foreground`                                                                                  | the page behind the view, the text                                    |
+| `--surface`, `--surface-raised`                                                                                 | panels, cards, cells; popovers and dialogs                            |
+| `--muted`, `--muted-foreground`                                                                                 | quiet fills (skeletons, column backgrounds), secondary text           |
+| `--border`, `--border-strong`, `--input`, `--ring`                                                              | hairlines, emphasised borders, inputs, focus rings                    |
+| `--primary`, `--primary-foreground`                                                                             | the accent: primary buttons, active chips, links                      |
+| `--hover`, `--selected`                                                                                         | row and item hover, selection                                         |
+| `--shadow-pin`                                                                                                  | the shadow beside a pinned table column                               |
+| `--sem-accent`, `--sem-success`, `--sem-warning`, `--sem-danger`, `--sem-info`, `--sem-muted`                   | the semantic tones (badges, row colours, kanban columns, map markers) |
+| `--sem-accent-bg`, `--sem-success-bg`, `--sem-warning-bg`, `--sem-danger-bg`, `--sem-info-bg`, `--sem-muted-bg` | their background pairs                                                |
+| `--chart-1` … `--chart-8`                                                                                       | the chart's series                                                    |
 
 Dark mode is the `dark` class on any ancestor, usually `<html>`. The font is
 `Inter Variable` when the host loads it (`@fontsource-variable/inter`), else
@@ -432,27 +434,27 @@ the system UI font.
 Next to its utilities every structural element carries a class that does not
 change with them, for plain-CSS overrides:
 
-| Class                 | Element                                            |
-| --------------------- | -------------------------------------------------- |
-| `udc-data-view`       | the whole view (header, toolbar, the renderer)     |
-| `udc-toolbar`         | the toolbar: search, chips, filter builder, count  |
-| `udc-search`          | the search box                                     |
-| `udc-filter-chip`     | one filter chip                                    |
-| `udc-table`           | the table's `<table>`                              |
-| `udc-row`             | a table row (`<tr>`)                               |
-| `udc-cell`            | a table cell (`<td>`)                              |
-| `udc-pager`           | the pager under the table or the cards             |
-| `udc-card`            | one card of the card grid                          |
-| `udc-kanban`          | the kanban board                                   |
-| `udc-kanban-column`   | a kanban column                                    |
-| `udc-kanban-card`     | a kanban card                                      |
-| `udc-calendar`        | the calendar                                       |
-| `udc-calendar-event`  | an event (time grid block, month chip)             |
-| `udc-tree`            | the tree                                           |
-| `udc-tree-node`       | one node of the tree (with its children)           |
-| `udc-map`             | the map's Leaflet container                        |
-| `udc-chart`           | the chart tab                                      |
-| `udc-schema-editor`   | the field form and the delete-field dialog         |
+| Class                | Element                                           |
+| -------------------- | ------------------------------------------------- |
+| `udc-data-view`      | the whole view (header, toolbar, the renderer)    |
+| `udc-toolbar`        | the toolbar: search, chips, filter builder, count |
+| `udc-search`         | the search box                                    |
+| `udc-filter-chip`    | one filter chip                                   |
+| `udc-table`          | the table's `<table>`                             |
+| `udc-row`            | a table row (`<tr>`)                              |
+| `udc-cell`           | a table cell (`<td>`)                             |
+| `udc-pager`          | the pager under the table or the cards            |
+| `udc-card`           | one card of the card grid                         |
+| `udc-kanban`         | the kanban board                                  |
+| `udc-kanban-column`  | a kanban column                                   |
+| `udc-kanban-card`    | a kanban card                                     |
+| `udc-calendar`       | the calendar                                      |
+| `udc-calendar-event` | an event (time grid block, month chip)            |
+| `udc-tree`           | the tree                                          |
+| `udc-tree-node`      | one node of the tree (with its children)          |
+| `udc-map`            | the map's Leaflet container                       |
+| `udc-chart`          | the chart tab                                     |
+| `udc-schema-editor`  | the field form and the delete-field dialog        |
 
 ```css
 /* Denser table rows, a bolder first column, square cards. */
