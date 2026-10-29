@@ -121,7 +121,10 @@ export function CalendarRenderer(props: RendererProps) {
   const { t } = useI18n();
   if (!opts) {
     return (
-      <div className="p-8 text-center text-sm text-muted-foreground" data-testid="calendar-missing">
+      <div
+        className="udc:p-8 udc:text-center udc:text-sm udc:text-muted-foreground"
+        data-testid="calendar-missing"
+      >
         {t("APP", "CAL_NO_OPTIONS")}
       </div>
     );
@@ -289,7 +292,7 @@ function Calendar({
 
   return (
     <div
-      className="flex min-h-0 flex-1 flex-col"
+      className="udc:flex udc:min-h-0 udc:flex-1 udc:flex-col"
       data-testid="calendar"
       data-preset={preset}
       data-date={dayKey(anchor)}
@@ -299,12 +302,12 @@ function Calendar({
     >
       <div
         data-testid="cal-toolbar"
-        className="flex flex-wrap items-center gap-2 border-b border-border px-3 py-2"
+        className="udc:flex udc:flex-wrap udc:items-center udc:gap-2 udc:border-b udc:border-border udc:px-3 udc:py-2"
       >
         <Button size="sm" data-testid="cal-today" onClick={() => url.setAnchor(today)}>
           {t("APP", "CAL_TODAY")}
         </Button>
-        <div className="flex items-center">
+        <div className="udc:flex udc:items-center">
           <Button
             size="icon-sm"
             variant="ghost"
@@ -324,7 +327,10 @@ function Calendar({
             <ChevronRight />
           </Button>
         </div>
-        <h2 className="text-sm font-semibold tracking-tight tabular-nums" data-testid="cal-label">
+        <h2
+          className="udc:text-sm udc:font-semibold udc:tracking-tight udc:tabular-nums"
+          data-testid="cal-label"
+        >
           {windowLabel(win, intlLocale)}
         </h2>
         <button
@@ -332,13 +338,13 @@ function Calendar({
           data-testid="cal-zone"
           title={t("APP", "CAL_ZONE_HINT", { zone: timeZone })}
           onClick={() => setPickerOpen(true)}
-          className="inline-flex h-6 items-center gap-1 rounded-full bg-muted px-2 text-[11px] font-medium text-muted-foreground hover:bg-selected hover:text-foreground"
+          className="udc:inline-flex udc:h-6 udc:items-center udc:gap-1 udc:rounded-full udc:bg-muted udc:px-2 udc:text-[11px] udc:font-medium udc:text-muted-foreground udc:hover:bg-selected udc:hover:text-foreground"
         >
-          <Globe className="size-3" />
+          <Globe className="udc:size-3" />
           {zoneCity(timeZone) === zoneOffset ? zoneOffset : `${zoneCity(timeZone)} · ${zoneOffset}`}
         </button>
         <Segmented<CalendarPreset>
-          className="ml-auto"
+          className="udc:ml-auto"
           aria-label={t("APP", "CAL_PRESETS")}
           data-testid="cal-presets"
           value={preset}
@@ -352,7 +358,7 @@ function Calendar({
       </div>
       <AllRowsStatus result={q} />
       {filtered && !q.isFetching && events.length === 0 ? (
-        <div className="border-b border-border">
+        <div className="udc:border-b udc:border-border">
           <EmptyState filtered onClear={onClearFilters} />
         </div>
       ) : null}

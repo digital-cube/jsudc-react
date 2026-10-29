@@ -44,24 +44,32 @@ export function EventBlock({
       onPointerDown={(e) => onPointerDown(e, "move")}
       onClick={(e) => onOpen(e.currentTarget)}
       className={cn(
-        "group/ev absolute z-10 block overflow-hidden rounded-md border-l-[3px] px-1.5 py-0.5 text-left text-foreground select-none",
-        "shadow-[0_0_0_1px_var(--surface)] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
-        readOnly ? "cursor-pointer" : "cursor-grab",
-        dragging && "z-30 cursor-grabbing opacity-90 shadow-lg ring-2 ring-primary/40",
+        "udc:group/ev udc:absolute udc:z-10 udc:block udc:overflow-hidden udc:rounded-md udc:border-l-[3px] udc:px-1.5 udc:py-0.5 udc:text-left udc:text-foreground udc:select-none",
+        "udc:shadow-[0_0_0_1px_var(--surface)] udc:focus-visible:ring-2 udc:focus-visible:ring-ring udc:focus-visible:outline-none",
+        readOnly ? "udc:cursor-pointer" : "udc:cursor-grab",
+        dragging &&
+          "udc:z-30 udc:cursor-grabbing udc:opacity-90 udc:shadow-lg udc:ring-2 udc:ring-primary/40",
       )}
       style={{ ...eventTint(ev.color), ...style }}
     >
       {!readOnly ? (
         <div
           data-testid="cal-resize-start"
-          className="absolute inset-x-0 top-0 h-1.5 cursor-ns-resize"
+          className="udc:absolute udc:inset-x-0 udc:top-0 udc:h-1.5 udc:cursor-ns-resize"
           onPointerDown={(e) => onPointerDown(e, "resize-start")}
         />
       ) : null}
-      <div className={cn("flex min-w-0 gap-1.5", short ? "items-baseline" : "flex-col gap-0")}>
-        <span className="truncate text-[11.5px] leading-tight font-semibold">{ev.title}</span>
+      <div
+        className={cn(
+          "udc:flex udc:min-w-0 udc:gap-1.5",
+          short ? "udc:items-baseline" : "udc:flex-col udc:gap-0",
+        )}
+      >
+        <span className="udc:truncate udc:text-[11.5px] udc:leading-tight udc:font-semibold">
+          {ev.title}
+        </span>
         <span
-          className="truncate text-[10.5px] leading-tight text-muted-foreground tabular-nums"
+          className="udc:truncate udc:text-[10.5px] udc:leading-tight udc:text-muted-foreground udc:tabular-nums"
           data-testid="cal-event-time"
         >
           {timeLabel}
@@ -70,7 +78,7 @@ export function EventBlock({
       {!readOnly ? (
         <div
           data-testid="cal-resize-end"
-          className="absolute inset-x-0 bottom-0 h-1.5 cursor-ns-resize after:absolute after:bottom-0.5 after:left-1/2 after:h-0.5 after:w-4 after:-translate-x-1/2 after:rounded-full after:bg-foreground/25 after:opacity-0 group-hover/ev:after:opacity-100"
+          className="udc:absolute udc:inset-x-0 udc:bottom-0 udc:h-1.5 udc:cursor-ns-resize udc:after:absolute udc:after:bottom-0.5 udc:after:left-1/2 udc:after:h-0.5 udc:after:w-4 udc:after:-translate-x-1/2 udc:after:rounded-full udc:after:bg-foreground/25 udc:after:opacity-0 udc:group-hover/ev:after:opacity-100"
           onPointerDown={(e) => onPointerDown(e, "resize-end")}
         />
       ) : null}

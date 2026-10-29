@@ -127,7 +127,7 @@ export function TreeRenderer(props: RendererProps) {
   const opts = props.describe.view.tree_options;
   if (!opts) {
     return (
-      <div className="p-6 text-sm text-muted-foreground" data-testid="tree-no-options">
+      <div className="udc:p-6 udc:text-sm udc:text-muted-foreground" data-testid="tree-no-options">
         {t("APP", "TREE_NO_OPTIONS")}
       </div>
     );
@@ -437,13 +437,13 @@ function Tree({
   return (
     <Ctx.Provider value={ctx}>
       <div
-        className="flex min-h-0 flex-1 flex-col"
+        className="udc:flex udc:min-h-0 udc:flex-1 udc:flex-col"
         data-testid="tree"
         data-lazy={lazy || undefined}
         data-searching={expansion ? true : undefined}
       >
         {lazy ? null : <AllRowsStatus result={all} />}
-        <div className="flex items-center gap-1 border-b border-border bg-muted/30 px-3 py-1.5">
+        <div className="udc:flex udc:items-center udc:gap-1 udc:border-b udc:border-border udc:bg-muted/30 udc:px-3 udc:py-1.5">
           {lazy ? null : (
             <Button
               size="sm"
@@ -468,16 +468,16 @@ function Tree({
             {t("APP", "TREE_COLLAPSE_ALL")}
           </Button>
         </div>
-        <div className="scroll-thin min-h-0 flex-1 overflow-auto py-1">
+        <div className="udc-scroll-thin udc:min-h-0 udc:flex-1 udc:overflow-auto udc:py-1">
           {error ? (
             <ErrorState
               error={error}
               onRetry={() => void (lazy ? roots.refetch() : all.refetch())}
             />
           ) : loading ? (
-            <div className="flex flex-col gap-2 p-4">
+            <div className="udc:flex udc:flex-col udc:gap-2 udc:p-4">
               {SKELETON.map((k, i) => (
-                <Skeleton key={k} className="h-6" style={{ marginLeft: (i % 3) * 20 }} />
+                <Skeleton key={k} className="udc:h-6" style={{ marginLeft: (i % 3) * 20 }} />
               ))}
             </div>
           ) : topRows.length === 0 ? (
@@ -495,8 +495,8 @@ function Tree({
               </div>
               <DragOverlay dropAnimation={null}>
                 {dragRow ? (
-                  <div className="flex max-w-md items-center gap-2 rounded-md border border-border bg-surface px-3 py-1.5 text-[13px] shadow-lg shadow-black/15">
-                    <ListTree className="size-3.5 text-muted-foreground" />
+                  <div className="udc:flex udc:max-w-md udc:items-center udc:gap-2 udc:rounded-md udc:border udc:border-border udc:bg-surface udc:px-3 udc:py-1.5 udc:text-[13px] udc:shadow-lg udc:shadow-black/15">
+                    <ListTree className="udc:size-3.5 udc:text-muted-foreground" />
                     <TreeNodeLabel row={dragRow} />
                   </div>
                 ) : null}
@@ -549,11 +549,11 @@ export function LazyChildren({ parent, depth }: { parent: string; depth: number 
   if (res.isLoading) {
     return (
       <div
-        className="flex items-center gap-2 py-1 text-xs text-muted-foreground"
+        className="udc:flex udc:items-center udc:gap-2 udc:py-1 udc:text-xs udc:text-muted-foreground"
         style={{ paddingLeft: 12 + (depth + 1) * 20 }}
         data-testid="tree-branch-loading"
       >
-        <Spinner className="size-3.5" />
+        <Spinner className="udc:size-3.5" />
         {t("APP", "TREE_LOADING")}
       </div>
     );

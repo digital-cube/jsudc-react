@@ -20,7 +20,7 @@ export function SourceTab({ collection }: { collection: string }) {
 
   if (source.error) {
     return (
-      <div className="flex flex-1 items-center justify-center p-6">
+      <div className="udc:flex udc:flex-1 udc:items-center udc:justify-center udc:p-6">
         <ErrorState error={source.error} onRetry={() => void source.refetch()} />
       </div>
     );
@@ -28,21 +28,21 @@ export function SourceTab({ collection }: { collection: string }) {
   const data = source.data;
   const lines = data ? data.text.replace(/\n$/, "").split("\n") : [];
   return (
-    <div className="flex min-h-0 flex-1 flex-col" data-testid="source-tab">
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-border px-4 py-2.5 text-xs">
-        <span className="flex items-center gap-1.5 font-medium text-foreground">
-          <FileCode2 className="size-3.5 text-muted-foreground" aria-hidden />
+    <div className="udc:flex udc:min-h-0 udc:flex-1 udc:flex-col" data-testid="source-tab">
+      <div className="udc:flex udc:flex-wrap udc:items-center udc:gap-x-4 udc:gap-y-1 udc:border-b udc:border-border udc:px-4 udc:py-2.5 udc:text-xs">
+        <span className="udc:flex udc:items-center udc:gap-1.5 udc:font-medium udc:text-foreground">
+          <FileCode2 className="udc:size-3.5 udc:text-muted-foreground" aria-hidden />
           {data ? (
-            <code data-testid="source-path" className="font-mono">
+            <code data-testid="source-path" className="udc:font-mono">
               {data.path}
             </code>
           ) : (
-            <Skeleton className="h-3 w-40" />
+            <Skeleton className="udc:h-3 udc:w-40" />
           )}
         </span>
         {data ? (
           <span
-            className="text-muted-foreground"
+            className="udc:text-muted-foreground"
             data-testid="source-mtime"
             data-mtime={data.mtime}
           >
@@ -52,7 +52,7 @@ export function SourceTab({ collection }: { collection: string }) {
           </span>
         ) : null}
         {data ? (
-          <span className="ml-auto text-muted-foreground tabular-nums">
+          <span className="udc:ml-auto udc:text-muted-foreground udc:tabular-nums">
             {t("APP", "SOURCE_LINES", { count: lines.length })}
           </span>
         ) : null}
@@ -60,43 +60,45 @@ export function SourceTab({ collection }: { collection: string }) {
       {data?.error ? (
         <div
           data-testid="source-error"
-          className="flex items-start gap-2 border-b border-border bg-sem-warning-bg px-4 py-2 text-xs text-foreground"
+          className="udc:flex udc:items-start udc:gap-2 udc:border-b udc:border-border udc:bg-sem-warning-bg udc:px-4 udc:py-2 udc:text-xs udc:text-foreground"
         >
-          <TriangleAlert className="mt-px size-3.5 shrink-0" aria-hidden />
+          <TriangleAlert className="udc:mt-px udc:size-3.5 udc:shrink-0" aria-hidden />
           <div>
-            <div className="font-medium">{t("APP", "SOURCE_STALE")}</div>
-            <pre className="mt-1 font-mono whitespace-pre-wrap text-muted-foreground">
+            <div className="udc:font-medium">{t("APP", "SOURCE_STALE")}</div>
+            <pre className="udc:mt-1 udc:font-mono udc:whitespace-pre-wrap udc:text-muted-foreground">
               {data.error}
             </pre>
           </div>
         </div>
       ) : null}
-      <div className="scroll-thin min-h-0 flex-1 overflow-auto bg-muted/40">
+      <div className="udc-scroll-thin udc:min-h-0 udc:flex-1 udc:overflow-auto udc:bg-muted/40">
         {data ? (
           <pre
             data-testid="source-text"
-            className="min-w-max py-3 font-mono text-[12.5px] leading-5 text-foreground"
+            className="udc:min-w-max udc:py-3 udc:font-mono udc:text-[12.5px] udc:leading-5 udc:text-foreground"
           >
             {lines.map((line, i) => (
               // biome-ignore lint/suspicious/noArrayIndexKey: a line is its number
-              <div key={i} className="flex">
+              <div key={i} className="udc:flex">
                 <span
                   aria-hidden
-                  className="w-12 shrink-0 pr-4 text-right text-muted-foreground/60 select-none tabular-nums"
+                  className="udc:w-12 udc:shrink-0 udc:pr-4 udc:text-right udc:text-muted-foreground/60 udc:select-none udc:tabular-nums"
                 >
                   {i + 1}
                 </span>
-                <code className={line.trimStart().startsWith("#") ? "text-muted-foreground" : ""}>
+                <code
+                  className={line.trimStart().startsWith("#") ? "udc:text-muted-foreground" : ""}
+                >
                   {line || " "}
                 </code>
               </div>
             ))}
           </pre>
         ) : (
-          <div className="flex flex-col gap-2 p-4">
-            <Skeleton className="h-3 w-2/3" />
-            <Skeleton className="h-3 w-1/2" />
-            <Skeleton className="h-3 w-3/5" />
+          <div className="udc:flex udc:flex-col udc:gap-2 udc:p-4">
+            <Skeleton className="udc:h-3 udc:w-2/3" />
+            <Skeleton className="udc:h-3 udc:w-1/2" />
+            <Skeleton className="udc:h-3 udc:w-3/5" />
           </div>
         )}
       </div>

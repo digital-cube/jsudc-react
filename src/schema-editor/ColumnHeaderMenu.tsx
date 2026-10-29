@@ -34,16 +34,16 @@ export function ColumnHeaderMenu({
         data-testid={`col-menu-${field}`}
         aria-label={t("APP", "COL_MENU", { label })}
         className={cn(
-          "grid size-6 shrink-0 place-items-center rounded-md text-muted-foreground outline-none transition-[opacity,background-color,color]",
-          "opacity-0 group-hover/th:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100",
-          "hover:bg-border/70 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring data-[state=open]:bg-border/70 data-[state=open]:text-foreground",
+          "udc:grid udc:size-6 udc:shrink-0 udc:place-items-center udc:rounded-md udc:text-muted-foreground udc:outline-none udc:transition-[opacity,background-color,color]",
+          "udc:opacity-0 udc:group-hover/th:opacity-100 udc:focus-visible:opacity-100 udc:data-[state=open]:opacity-100",
+          "udc:hover:bg-border/70 udc:hover:text-foreground udc:focus-visible:ring-2 udc:focus-visible:ring-ring udc:data-[state=open]:bg-border/70 udc:data-[state=open]:text-foreground",
           className,
         )}
       >
-        <EllipsisVertical className="size-3.5" />
+        <EllipsisVertical className="udc:size-3.5" />
       </DropdownMenuTrigger>
       <DropdownMenuContent data-testid="col-menu" align="end">
-        <DropdownMenuLabel className="truncate">{label}</DropdownMenuLabel>
+        <DropdownMenuLabel className="udc:truncate">{label}</DropdownMenuLabel>
         <DropdownMenuItem
           data-testid="col-menu-add-before"
           onSelect={() => onAction({ kind: "add", position: { where: "before", anchor: field } })}

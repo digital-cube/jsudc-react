@@ -19,19 +19,26 @@ function Panel({
   tone?: "muted" | "danger";
 }) {
   return (
-    <div data-testid={testId} className="flex flex-col items-center px-6 py-16 text-center">
+    <div
+      data-testid={testId}
+      className="udc:flex udc:flex-col udc:items-center udc:px-6 udc:py-16 udc:text-center"
+    >
       <div
         className={
           tone === "danger"
-            ? "mb-4 grid size-12 place-items-center rounded-xl bg-sem-danger-bg text-sem-danger"
-            : "mb-4 grid size-12 place-items-center rounded-xl border border-border bg-muted text-muted-foreground"
+            ? "udc:mb-4 udc:grid udc:size-12 udc:place-items-center udc:rounded-xl udc:bg-sem-danger-bg udc:text-sem-danger"
+            : "udc:mb-4 udc:grid udc:size-12 udc:place-items-center udc:rounded-xl udc:border udc:border-border udc:bg-muted udc:text-muted-foreground"
         }
       >
         {icon}
       </div>
-      <div className="text-sm font-semibold">{title}</div>
-      {body ? <div className="mt-1 max-w-sm text-[13px] text-muted-foreground">{body}</div> : null}
-      {action ? <div className="mt-4">{action}</div> : null}
+      <div className="udc:text-sm udc:font-semibold">{title}</div>
+      {body ? (
+        <div className="udc:mt-1 udc:max-w-sm udc:text-[13px] udc:text-muted-foreground">
+          {body}
+        </div>
+      ) : null}
+      {action ? <div className="udc:mt-4">{action}</div> : null}
     </div>
   );
 }
@@ -51,7 +58,7 @@ export function EmptyState({
   return filtered ? (
     <Panel
       testId="table-empty"
-      icon={<SearchX className="size-5" />}
+      icon={<SearchX className="udc:size-5" />}
       title={t("APP", "EMPTY_TITLE")}
       body={body ?? t("APP", "EMPTY_BODY")}
       action={
@@ -63,7 +70,7 @@ export function EmptyState({
   ) : (
     <Panel
       testId="table-empty"
-      icon={<Table2 className="size-5" />}
+      icon={<Table2 className="udc:size-5" />}
       title={t("APP", "EMPTY_TITLE")}
       body={body ?? t("APP", "EMPTY_PLAIN")}
     />
@@ -77,12 +84,12 @@ export function ErrorState({ error, onRetry }: { error: Error; onRetry: () => vo
     <Panel
       testId="table-error"
       tone="danger"
-      icon={<AlertTriangle className="size-5" />}
+      icon={<AlertTriangle className="udc:size-5" />}
       title={t("APP", "ERROR_TITLE")}
-      body={<span className="font-mono text-xs">{error.message}</span>}
+      body={<span className="udc:font-mono udc:text-xs">{error.message}</span>}
       action={
         <Button size="sm" onClick={onRetry} data-testid="retry">
-          <RotateCw className="size-3.5!" />
+          <RotateCw className="udc:size-3.5!" />
           {t("APP", "RETRY")}
         </Button>
       }

@@ -9,9 +9,12 @@ import { useMemo } from "react";
 export function DocTab({ markdown }: { markdown: string }) {
   const html = useMemo(() => marked.parse(markdown, { async: false, gfm: true }), [markdown]);
   return (
-    <div className="scroll-thin min-h-0 flex-1 overflow-y-auto" data-testid="doc-tab">
+    <div
+      className="udc-scroll-thin udc:min-h-0 udc:flex-1 udc:overflow-y-auto"
+      data-testid="doc-tab"
+    >
       <article
-        className="udc-prose mx-auto max-w-3xl px-8 py-7"
+        className="udc-prose udc:mx-auto udc:max-w-3xl udc:px-8 udc:py-7"
         // biome-ignore lint/security/noDangerouslySetInnerHtml: our own README, see above
         dangerouslySetInnerHTML={{ __html: html }}
       />

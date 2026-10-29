@@ -16,8 +16,8 @@ export const PopoverContent = forwardRef<HTMLDivElement, ComponentProps<typeof P
           align={align}
           sideOffset={sideOffset}
           className={cn(
-            "z-50 rounded-lg border border-border bg-surface-raised p-3 text-foreground shadow-lg shadow-black/5 outline-none",
-            "data-[state=open]:animate-in dark:shadow-black/40",
+            "udc:z-50 udc:rounded-lg udc:border udc:border-border udc:bg-surface-raised udc:p-3 udc:text-foreground udc:shadow-lg udc:shadow-black/5 udc:outline-none",
+            "udc:data-[state=open]:animate-in udc:dark:shadow-black/40",
             className,
           )}
           {...props}

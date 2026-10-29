@@ -166,8 +166,10 @@ function BoolValue({ value, style }: { value: unknown; style: unknown }) {
     return (
       <span
         className={cn(
-          "inline-flex h-5 items-center rounded-full px-2 text-[11px] font-medium",
-          on ? "bg-sem-success-bg text-sem-success" : "bg-muted text-muted-foreground",
+          "udc:inline-flex udc:h-5 udc:items-center udc:rounded-full udc:px-2 udc:text-[11px] udc:font-medium",
+          on
+            ? "udc:bg-sem-success-bg udc:text-sem-success"
+            : "udc:bg-muted udc:text-muted-foreground",
         )}
       >
         {on ? "✓" : "–"}
@@ -177,36 +179,36 @@ function BoolValue({ value, style }: { value: unknown; style: unknown }) {
   return on ? (
     <span
       data-bool="true"
-      className="inline-grid size-5 place-items-center rounded-full bg-sem-success-bg text-sem-success"
+      className="udc:inline-grid udc:size-5 udc:place-items-center udc:rounded-full udc:bg-sem-success-bg udc:text-sem-success"
     >
-      <Check className="size-3.5" strokeWidth={2.75} aria-label="true" />
+      <Check className="udc:size-3.5" strokeWidth={2.75} aria-label="true" />
     </span>
   ) : (
     <span
       data-bool="false"
-      className="inline-grid size-5 place-items-center rounded-full text-sem-muted/70"
+      className="udc:inline-grid udc:size-5 udc:place-items-center udc:rounded-full udc:text-sem-muted/70"
     >
-      <X className="size-3.5" strokeWidth={2.5} aria-label="false" />
+      <X className="udc:size-3.5" strokeWidth={2.5} aria-label="false" />
     </span>
   );
 }
 
 /** Badge tone → classes. Literal strings so Tailwind sees them. */
 const BADGE: Record<ColumnColor, string> = {
-  default: "bg-muted text-foreground",
-  accent: "bg-sem-accent-bg text-sem-accent",
-  success: "bg-sem-success-bg text-sem-success",
-  warning: "bg-sem-warning-bg text-sem-warning",
-  danger: "bg-sem-danger-bg text-sem-danger",
-  info: "bg-sem-info-bg text-sem-info",
-  muted: "bg-muted text-muted-foreground",
+  default: "udc:bg-muted udc:text-foreground",
+  accent: "udc:bg-sem-accent-bg udc:text-sem-accent",
+  success: "udc:bg-sem-success-bg udc:text-sem-success",
+  warning: "udc:bg-sem-warning-bg udc:text-sem-warning",
+  danger: "udc:bg-sem-danger-bg udc:text-sem-danger",
+  info: "udc:bg-sem-info-bg udc:text-sem-info",
+  muted: "udc:bg-muted udc:text-muted-foreground",
 };
 
 /** One pill per value (a `string_array` is several), toned by `render_options.map`. */
 export function Badges({ value, column }: { value: unknown; column: ColumnConfig }) {
   const values = (Array.isArray(value) ? value : [value]).filter((v) => !isBlank(v));
   return (
-    <span className="flex min-w-0 items-center gap-1 overflow-hidden">
+    <span className="udc:flex udc:min-w-0 udc:items-center udc:gap-1 udc:overflow-hidden">
       {values.map((v, i) => {
         const tone = badgeTone(v, column.render_options);
         return (
@@ -216,7 +218,7 @@ export function Badges({ value, column }: { value: unknown; column: ColumnConfig
             data-testid="badge"
             data-tone={tone}
             className={cn(
-              "inline-flex h-5 shrink-0 items-center rounded-full px-2 text-[11px] font-medium whitespace-nowrap",
+              "udc:inline-flex udc:h-5 udc:shrink-0 udc:items-center udc:rounded-full udc:px-2 udc:text-[11px] udc:font-medium udc:whitespace-nowrap",
               BADGE[tone],
             )}
           >
@@ -248,7 +250,7 @@ export function CellValue({
     return <BoolValue value={value} style={column.render_options?.style} />;
   }
   if (isBlank(value) || (Array.isArray(value) && value.length === 0)) {
-    return <span className="text-muted-foreground/50">—</span>;
+    return <span className="udc:text-muted-foreground/50">—</span>;
   }
   if (kind === "badge") return <Badges value={value} column={column} />;
   if (kind === "sparkline") {
@@ -267,7 +269,7 @@ export function CellValue({
     const Icon = resolveIcon(value);
     return Icon ? (
       <span title={String(value)} data-testid="icon-value" data-icon={String(value)}>
-        <Icon className="size-4 text-muted-foreground" aria-hidden />
+        <Icon className="udc:size-4 udc:text-muted-foreground" aria-hidden />
       </span>
     ) : null;
   }
@@ -275,8 +277,8 @@ export function CellValue({
   return (
     <span
       className={cn(
-        "block truncate",
-        kind === "number_format" || kind === "number" || kind === "bytes" ? "tabular-nums" : "",
+        "udc:block udc:truncate",
+        kind === "number_format" || kind === "number" || kind === "bytes" ? "udc:tabular-nums" : "",
       )}
       title={typeof value === "string" && value.length > 24 ? value : undefined}
     >

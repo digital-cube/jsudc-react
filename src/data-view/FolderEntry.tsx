@@ -27,12 +27,15 @@ export function FolderEntry({
   const icon = (
     <Icon
       aria-hidden
-      className={cn("size-4 shrink-0", dir ? "text-sem-info" : "text-muted-foreground")}
+      className={cn(
+        "udc:size-4 udc:shrink-0",
+        dir ? "udc:text-sem-info" : "udc:text-muted-foreground",
+      )}
     />
   );
   if (!onClick) {
     return (
-      <span className={cn("flex min-w-0 items-center gap-2", className)}>
+      <span className={cn("udc:flex udc:min-w-0 udc:items-center udc:gap-2", className)}>
         {icon}
         {children}
       </span>
@@ -48,10 +51,10 @@ export function FolderEntry({
         onClick();
       }}
       className={cn(
-        "flex min-w-0 items-center gap-2 rounded text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        "udc:flex udc:min-w-0 udc:items-center udc:gap-2 udc:rounded udc:text-left udc:focus-visible:outline-none udc:focus-visible:ring-2 udc:focus-visible:ring-ring",
         dir
-          ? "font-medium text-sem-info underline-offset-2 hover:underline"
-          : "hover:text-foreground hover:underline underline-offset-2",
+          ? "udc:font-medium udc:text-sem-info udc:underline-offset-2 udc:hover:underline"
+          : "udc:hover:text-foreground udc:hover:underline udc:underline-offset-2",
         className,
       )}
     >

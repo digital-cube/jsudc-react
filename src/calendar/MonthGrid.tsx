@@ -56,33 +56,33 @@ export function MonthGrid({
       }}
       onClick={(e) => onOpen(ev, e.currentTarget)}
       className={cn(
-        "flex w-full min-w-0 items-center gap-1 rounded border-l-[3px] px-1 py-px text-left text-[11px] leading-4 text-foreground",
-        !readOnly && "cursor-grab",
-        inPopover && "py-0.5",
+        "udc:flex udc:w-full udc:min-w-0 udc:items-center udc:gap-1 udc:rounded udc:border-l-[3px] udc:px-1 udc:py-px udc:text-left udc:text-[11px] udc:leading-4 udc:text-foreground",
+        !readOnly && "udc:cursor-grab",
+        inPopover && "udc:py-0.5",
       )}
       style={eventTint(ev.color, 14)}
     >
-      <span className="shrink-0 text-muted-foreground tabular-nums">
+      <span className="udc:shrink-0 udc:text-muted-foreground udc:tabular-nums">
         {formatTime(ev.start, intlLocale, timeZone)}
       </span>
-      <span className="truncate font-medium">{ev.title}</span>
+      <span className="udc:truncate udc:font-medium">{ev.title}</span>
     </button>
   );
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col" data-testid="cal-month">
-      <div className="grid grid-cols-7 border-b border-border bg-surface">
+    <div className="udc:flex udc:min-h-0 udc:flex-1 udc:flex-col" data-testid="cal-month">
+      <div className="udc:grid udc:grid-cols-7 udc:border-b udc:border-border udc:bg-surface">
         {weekdays.map((d) => (
           <div
             key={dayKey(d)}
-            className="border-l border-border py-1.5 text-center text-[11px] font-medium text-muted-foreground uppercase first:border-l-0"
+            className="udc:border-l udc:border-border udc:py-1.5 udc:text-center udc:text-[11px] udc:font-medium udc:text-muted-foreground udc:uppercase udc:first:border-l-0"
           >
             {formatDay(d, intlLocale, { weekday: "short" })}
           </div>
         ))}
       </div>
       <div
-        className="grid min-h-0 flex-1 grid-cols-7 overflow-y-auto"
+        className="udc:grid udc:min-h-0 udc:flex-1 udc:grid-cols-7 udc:overflow-y-auto"
         style={{ gridAutoRows: "minmax(7rem, 1fr)" }}
       >
         {win.days.map((day) => {
@@ -110,9 +110,9 @@ export function MonthGrid({
                 if (ev && !readOnly) onMoveToDay(ev, day);
               }}
               className={cn(
-                "flex min-w-0 flex-col gap-0.5 border-b border-l border-border p-1 [&:nth-child(7n+1)]:border-l-0",
-                outside && "bg-muted/40",
-                over === key && "bg-selected",
+                "udc:flex udc:min-w-0 udc:flex-col udc:gap-0.5 udc:border-b udc:border-l udc:border-border udc:p-1 udc:[&:nth-child(7n+1)]:border-l-0",
+                outside && "udc:bg-muted/40",
+                over === key && "udc:bg-selected",
               )}
             >
               <button
@@ -120,9 +120,10 @@ export function MonthGrid({
                 data-testid="cal-month-day"
                 onClick={() => onDay(day)}
                 className={cn(
-                  "mb-0.5 grid h-6 min-w-6 place-items-center self-start rounded-full px-1 text-xs font-semibold tabular-nums hover:bg-hover",
-                  outside && "text-muted-foreground",
-                  sameDay(day, today) && "bg-primary text-primary-foreground hover:bg-primary",
+                  "udc:mb-0.5 udc:grid udc:h-6 udc:min-w-6 udc:place-items-center udc:self-start udc:rounded-full udc:px-1 udc:text-xs udc:font-semibold udc:tabular-nums udc:hover:bg-hover",
+                  outside && "udc:text-muted-foreground",
+                  sameDay(day, today) &&
+                    "udc:bg-primary udc:text-primary-foreground udc:hover:bg-primary",
                 )}
               >
                 {day.d === 1
@@ -136,20 +137,20 @@ export function MonthGrid({
                     <button
                       type="button"
                       data-testid="cal-more"
-                      className="self-start rounded px-1 text-[11px] font-medium text-muted-foreground hover:bg-hover hover:text-foreground"
+                      className="udc:self-start udc:rounded udc:px-1 udc:text-[11px] udc:font-medium udc:text-muted-foreground udc:hover:bg-hover udc:hover:text-foreground"
                     >
                       {t("APP", "CAL_MORE", { n: hidden })}
                     </button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-64 p-2" data-testid="cal-more-popover">
-                    <div className="mb-1.5 px-1 text-xs font-semibold">
+                  <PopoverContent className="udc:w-64 udc:p-2" data-testid="cal-more-popover">
+                    <div className="udc:mb-1.5 udc:px-1 udc:text-xs udc:font-semibold">
                       {formatDay(day, intlLocale, {
                         weekday: "long",
                         day: "numeric",
                         month: "long",
                       })}
                     </div>
-                    <div className="flex max-h-72 flex-col gap-0.5 overflow-y-auto">
+                    <div className="udc:flex udc:max-h-72 udc:flex-col udc:gap-0.5 udc:overflow-y-auto">
                       {list.map((ev) => chip(ev, true))}
                     </div>
                   </PopoverContent>

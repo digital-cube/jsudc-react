@@ -108,7 +108,10 @@ export function KanbanRenderer(props: RendererProps) {
   const { t } = useI18n();
   if (!opts) {
     return (
-      <div className="p-8 text-center text-sm text-muted-foreground" data-testid="kanban-missing">
+      <div
+        className="udc:p-8 udc:text-center udc:text-sm udc:text-muted-foreground"
+        data-testid="kanban-missing"
+      >
         {t("APP", "KANBAN_NO_OPTIONS")}
       </div>
     );
@@ -458,9 +461,9 @@ function Board({
     return (
       <div
         data-testid="kanban-no-board"
-        className="flex flex-col items-center gap-2 px-6 py-16 text-center text-sm text-muted-foreground"
+        className="udc:flex udc:flex-col udc:items-center udc:gap-2 udc:px-6 udc:py-16 udc:text-center udc:text-sm udc:text-muted-foreground"
       >
-        <KanbanSquare className="size-6" />
+        <KanbanSquare className="udc:size-6" />
         {t("APP", "KANBAN_NO_BOARD")}
       </div>
     );
@@ -478,29 +481,29 @@ function Board({
 
   return (
     <div
-      className="flex min-h-0 flex-1 flex-col"
+      className="udc:flex udc:min-h-0 udc:flex-1 udc:flex-col"
       data-testid="kanban"
       data-board-id={boardId ?? undefined}
     >
       <AllRowsStatus result={cardsQ} />
       {noMatches ? (
-        <div className="border-b border-border">
+        <div className="udc:border-b udc:border-border">
           <EmptyState filtered onClear={onClearFilters} />
         </div>
       ) : null}
       <div
         data-testid="kanban-scroll"
-        className="scroll-thin flex min-h-0 flex-1 items-start gap-3 overflow-x-auto overflow-y-hidden bg-background/60 p-4"
+        className="udc-scroll-thin udc:flex udc:min-h-0 udc:flex-1 udc:items-start udc:gap-3 udc:overflow-x-auto udc:overflow-y-hidden udc:bg-background/60 udc:p-4"
       >
         {loading ? (
           SKELETON_COLUMNS.map((key, i) => (
             <div
               key={key}
-              className="flex w-72 shrink-0 flex-col gap-2 rounded-xl border border-border bg-muted/40 p-3"
+              className="udc:flex udc:w-72 udc:shrink-0 udc:flex-col udc:gap-2 udc:rounded-xl udc:border udc:border-border udc:bg-muted/40 udc:p-3"
             >
-              <Skeleton className="h-4 w-24" />
+              <Skeleton className="udc:h-4 udc:w-24" />
               {SKELETON_COLUMNS.slice(0, 3 - (i % 2)).map((card) => (
-                <Skeleton key={card} className="h-20 rounded-lg" />
+                <Skeleton key={card} className="udc:h-20 udc:rounded-lg" />
               ))}
             </div>
           ))
@@ -551,7 +554,7 @@ function Board({
                         )
                       : null,
                     opts,
-                  )} rotate-2 cursor-grabbing shadow-xl shadow-black/15`}
+                  )} udc:rotate-2 udc:cursor-grabbing udc:shadow-xl udc:shadow-black/15`}
                   style={{ width: opts.buckets.min_width_px - 16 }}
                 >
                   <KanbanCardBody row={activeRow} opts={opts} schema={schema} />

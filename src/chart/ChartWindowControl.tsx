@@ -52,7 +52,7 @@ export function ChartWindowControl({
   const wall = (t: number | null) => (t === null ? "" : wallOf(t, timeZone));
 
   return (
-    <div className="flex flex-wrap items-center gap-2" data-testid="chart-window">
+    <div className="udc:flex udc:flex-wrap udc:items-center udc:gap-2" data-testid="chart-window">
       <Segmented<string>
         aria-label={t("APP", "CHART_WINDOW")}
         data-testid="chart-presets"
@@ -67,26 +67,26 @@ export function ChartWindowControl({
         options={options}
       />
       {sel.kind === "custom" ? (
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <label htmlFor={`${id}-from`} className="flex items-center gap-1">
+        <div className="udc:flex udc:items-center udc:gap-1.5 udc:text-xs udc:text-muted-foreground">
+          <label htmlFor={`${id}-from`} className="udc:flex udc:items-center udc:gap-1">
             {t("APP", "CHART_FROM")}
             <Input
               id={`${id}-from`}
               type="datetime-local"
               data-testid="chart-from"
-              className="h-8 w-auto px-2 text-xs"
+              className="udc:h-8 udc:w-auto udc:px-2 udc:text-xs"
               value={sel.from ?? ""}
               max={sel.to ?? undefined}
               onChange={(e) => win.setSel({ ...sel, from: e.target.value || null })}
             />
           </label>
-          <label htmlFor={`${id}-to`} className="flex items-center gap-1">
+          <label htmlFor={`${id}-to`} className="udc:flex udc:items-center udc:gap-1">
             {t("APP", "CHART_TO")}
             <Input
               id={`${id}-to`}
               type="datetime-local"
               data-testid="chart-to"
-              className="h-8 w-auto px-2 text-xs"
+              className="udc:h-8 udc:w-auto udc:px-2 udc:text-xs"
               value={sel.to ?? ""}
               min={sel.from ?? undefined}
               onChange={(e) => win.setSel({ ...sel, to: e.target.value || null })}

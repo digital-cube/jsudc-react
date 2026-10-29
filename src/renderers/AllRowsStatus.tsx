@@ -13,13 +13,16 @@ export function AllRowsStatus({ result }: { result: UdcAllRowsResult }) {
   return (
     <>
       {result.isFetching ? (
-        <div className="pointer-events-none relative z-30 h-0" data-testid="all-rows-progress">
-          <div className="h-0.5 w-full overflow-hidden bg-primary/15">
+        <div
+          className="udc:pointer-events-none udc:relative udc:z-30 udc:h-0"
+          data-testid="all-rows-progress"
+        >
+          <div className="udc:h-0.5 udc:w-full udc:overflow-hidden udc:bg-primary/15">
             {pct === null ? (
-              <div className="h-full w-1/3 animate-[shimmer_1s_linear_infinite] bg-primary/70" />
+              <div className="udc:h-full udc:w-1/3 udc:animate-[shimmer_1s_linear_infinite] udc:bg-primary/70" />
             ) : (
               <div
-                className="h-full bg-primary/70 transition-[width]"
+                className="udc:h-full udc:bg-primary/70 udc:transition-[width]"
                 style={{ width: `${pct}%` }}
               />
             )}
@@ -29,7 +32,7 @@ export function AllRowsStatus({ result }: { result: UdcAllRowsResult }) {
       {result.capped && result.total !== null ? (
         <div
           data-testid="all-rows-capped"
-          className="border-b border-border bg-sem-warning-bg px-4 py-1.5 text-xs text-sem-warning"
+          className="udc:border-b udc:border-border udc:bg-sem-warning-bg udc:px-4 udc:py-1.5 udc:text-xs udc:text-sem-warning"
         >
           {t("APP", "CAPPED", { shown: fmt(result.rows.length), total: fmt(result.total) })}
         </div>

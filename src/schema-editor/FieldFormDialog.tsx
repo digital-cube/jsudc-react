@@ -126,9 +126,13 @@ export function FieldFormDialog({
       onEscapeKeyDown={(e) => pending && e.preventDefault()}
       onInteractOutside={(e) => pending && e.preventDefault()}
     >
-      <form noValidate onSubmit={(e) => void submit(e)} className="flex min-h-0 flex-col">
-        <DialogBody className="flex flex-col gap-4">
-          <div className="grid grid-cols-2 gap-3">
+      <form
+        noValidate
+        onSubmit={(e) => void submit(e)}
+        className="udc:flex udc:min-h-0 udc:flex-col"
+      >
+        <DialogBody className="udc:flex udc:flex-col udc:gap-4">
+          <div className="udc:grid udc:grid-cols-2 udc:gap-3">
             <Field
               id={`${id}-name`}
               label={t("APP", "FORM_NAME")}
@@ -150,10 +154,10 @@ export function FieldFormDialog({
                   set("name", e.target.value);
                 }}
                 className={cn(
-                  "font-mono text-[12.5px]",
-                  mode === "edit" && "bg-muted text-muted-foreground",
+                  "udc:font-mono udc:text-[12.5px]",
+                  mode === "edit" && "udc:bg-muted udc:text-muted-foreground",
                   nameError &&
-                    "border-sem-danger focus-visible:border-sem-danger focus-visible:ring-sem-danger/20",
+                    "udc:border-sem-danger udc:focus-visible:border-sem-danger udc:focus-visible:ring-sem-danger/20",
                 )}
               />
             </Field>
@@ -178,14 +182,14 @@ export function FieldFormDialog({
           {mode === "edit" ? (
             <p
               data-testid="type-locked"
-              className="-mt-2 flex items-start gap-1.5 text-xs text-muted-foreground"
+              className="udc:-mt-2 udc:flex udc:items-start udc:gap-1.5 udc:text-xs udc:text-muted-foreground"
             >
-              <Lock className="mt-px size-3 shrink-0" />
+              <Lock className="udc:mt-px udc:size-3 udc:shrink-0" />
               {t("APP", "FORM_TYPE_LOCKED")}
             </p>
           ) : null}
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="udc:grid udc:grid-cols-2 udc:gap-3">
             <Field id={`${id}-label-en`} label={t("APP", "FORM_LABEL_EN")} badge="EN">
               <Input
                 id={`${id}-label-en`}
@@ -221,12 +225,12 @@ export function FieldFormDialog({
                 inputMode="numeric"
                 value={draft.length}
                 onChange={(e) => set("length", e.target.value)}
-                className="w-32 tabular-nums"
+                className="udc:w-32 udc:tabular-nums"
               />
             </Field>
           ) : null}
           {controls.range ? (
-            <div className="grid grid-cols-2 gap-3">
+            <div className="udc:grid udc:grid-cols-2 udc:gap-3">
               {(["min", "max"] as const).map((k) => (
                 <Field
                   key={k}
@@ -242,7 +246,7 @@ export function FieldFormDialog({
                     value={draft[k]}
                     placeholder={t("APP", "FORM_NO_LIMIT")}
                     onChange={(e) => set(k, e.target.value)}
-                    className="tabular-nums"
+                    className="udc:tabular-nums"
                   />
                 </Field>
               ))}
@@ -265,7 +269,7 @@ export function FieldFormDialog({
             </Field>
           ) : null}
 
-          <div className="grid grid-cols-2 gap-3 rounded-lg border border-border bg-muted/40 p-3">
+          <div className="udc:grid udc:grid-cols-2 udc:gap-3 udc:rounded-lg udc:border udc:border-border udc:bg-muted/40 udc:p-3">
             <Toggle
               id={`${id}-required`}
               testId="field-required"
@@ -289,12 +293,14 @@ export function FieldFormDialog({
               role="alert"
               data-testid="field-form-error"
               data-code={serverError.code}
-              className="flex items-start gap-2 rounded-lg border border-sem-danger/30 bg-sem-danger-bg px-3 py-2.5 text-[13px] text-sem-danger"
+              className="udc:flex udc:items-start udc:gap-2 udc:rounded-lg udc:border udc:border-sem-danger/30 udc:bg-sem-danger-bg udc:px-3 udc:py-2.5 udc:text-[13px] udc:text-sem-danger"
             >
-              <AlertTriangle className="mt-0.5 size-4 shrink-0" />
-              <div className="min-w-0">
-                <div className="font-medium">{t("APP", "FORM_SERVER_ERROR")}</div>
-                <div className="mt-0.5 text-xs break-words opacity-90">{serverError.message}</div>
+              <AlertTriangle className="udc:mt-0.5 udc:size-4 udc:shrink-0" />
+              <div className="udc:min-w-0">
+                <div className="udc:font-medium">{t("APP", "FORM_SERVER_ERROR")}</div>
+                <div className="udc:mt-0.5 udc:text-xs udc:break-words udc:opacity-90">
+                  {serverError.message}
+                </div>
               </div>
             </div>
           ) : null}
@@ -334,22 +340,25 @@ function Field({
   children: ReactNode;
 }) {
   return (
-    <div className="flex min-w-0 flex-col gap-1.5">
-      <label htmlFor={id} className="flex items-center gap-1.5 text-xs font-medium">
+    <div className="udc:flex udc:min-w-0 udc:flex-col udc:gap-1.5">
+      <label
+        htmlFor={id}
+        className="udc:flex udc:items-center udc:gap-1.5 udc:text-xs udc:font-medium"
+      >
         {label}
         {badge ? (
-          <span className="rounded border border-border px-1 font-mono text-[9.5px] leading-3.5 text-muted-foreground">
+          <span className="udc:rounded udc:border udc:border-border udc:px-1 udc:font-mono udc:text-[9.5px] udc:leading-3.5 udc:text-muted-foreground">
             {badge}
           </span>
         ) : null}
       </label>
       {children}
       {error ? (
-        <p data-testid="field-error" data-for={id} className="text-xs text-sem-danger">
+        <p data-testid="field-error" data-for={id} className="udc:text-xs udc:text-sem-danger">
           {error}
         </p>
       ) : hint ? (
-        <p className="text-xs text-muted-foreground">{hint}</p>
+        <p className="udc:text-xs udc:text-muted-foreground">{hint}</p>
       ) : null}
     </div>
   );
@@ -372,17 +381,17 @@ function Toggle({
 }) {
   const { Checkbox } = useUiKit();
   return (
-    <div className="flex items-start gap-2.5">
+    <div className="udc:flex udc:items-start udc:gap-2.5">
       <Checkbox
         id={id}
         data-testid={testId}
         checked={checked}
         onCheckedChange={(v) => onChange(v === true)}
-        className="mt-0.5"
+        className="udc:mt-0.5"
       />
-      <label htmlFor={id} className="min-w-0 cursor-pointer select-none">
-        <span className="block text-[13px] leading-5 font-medium">{label}</span>
-        <span className="block text-xs text-muted-foreground">{hint}</span>
+      <label htmlFor={id} className="udc:min-w-0 udc:cursor-pointer udc:select-none">
+        <span className="udc:block udc:text-[13px] udc:leading-5 udc:font-medium">{label}</span>
+        <span className="udc:block udc:text-xs udc:text-muted-foreground">{hint}</span>
       </label>
     </div>
   );

@@ -257,24 +257,24 @@ export function TableRenderer(props: TableRendererProps) {
     if (!pin) return "";
     const edge = pin === "left" ? c.getIsLastColumn("left") : c.getIsFirstColumn("right");
     return cn(
-      "sticky z-[5]",
+      "udc:sticky udc:z-[5]",
       edge &&
         pin === "left" &&
-        "after:pointer-events-none after:absolute after:inset-y-0 after:-right-3 after:w-3 after:bg-gradient-to-r after:from-[var(--shadow-pin)] after:to-transparent after:opacity-0 after:transition-opacity",
-      edge && pin === "left" && edges.left && "after:opacity-100",
+        "udc:after:pointer-events-none udc:after:absolute udc:after:inset-y-0 udc:after:-right-3 udc:after:w-3 udc:after:bg-gradient-to-r udc:after:from-[var(--shadow-pin)] udc:after:to-transparent udc:after:opacity-0 udc:after:transition-opacity",
+      edge && pin === "left" && edges.left && "udc:after:opacity-100",
       edge &&
         pin === "right" &&
-        "before:pointer-events-none before:absolute before:inset-y-0 before:-left-3 before:w-3 before:bg-gradient-to-l before:from-[var(--shadow-pin)] before:to-transparent before:opacity-0 before:transition-opacity",
-      edge && pin === "right" && edges.right && "before:opacity-100",
+        "udc:before:pointer-events-none udc:before:absolute udc:before:inset-y-0 udc:before:-left-3 udc:before:w-3 udc:before:bg-gradient-to-l udc:before:from-[var(--shadow-pin)] udc:before:to-transparent udc:before:opacity-0 udc:before:transition-opacity",
+      edge && pin === "right" && edges.right && "udc:before:opacity-100",
     );
   };
 
   const alignClass = (c: Column<Row, unknown>) => {
     const a = meta(c).config.align;
     return a === "right"
-      ? "text-right justify-end"
+      ? "udc:text-right udc:justify-end"
       : a === "center"
-        ? "text-center justify-center"
+        ? "udc:text-center udc:justify-center"
         : "";
   };
 
@@ -292,14 +292,14 @@ export function TableRenderer(props: TableRendererProps) {
     const Icon = dir === "asc" ? ArrowUp : dir === "desc" ? ArrowDown : ChevronsUpDown;
     const menu = schemaEdit && def !== undefined && props.onSchemaAction;
     const text = (
-      <span className="flex min-w-0 items-baseline gap-0.5">
-        <span className="truncate">{label}</span>
+      <span className="udc:flex udc:min-w-0 udc:items-baseline udc:gap-0.5">
+        <span className="udc:truncate">{label}</span>
         {def?.required ? (
           // The star is CSS content, so the header's text stays the bare label.
           <span
             data-testid="required-marker"
             title={t("APP", "FORM_REQUIRED")}
-            className="text-sem-danger after:content-['*']"
+            className="udc:text-sem-danger udc:after:content-['*']"
           />
         ) : null}
       </span>
@@ -313,9 +313,9 @@ export function TableRenderer(props: TableRendererProps) {
         aria-sort={dir === "asc" ? "ascending" : dir === "desc" ? "descending" : undefined}
         style={pinStyle(c)}
         className={cn(
-          "group/th relative h-9 border-b border-border bg-muted p-0 text-left text-xs font-medium text-muted-foreground",
+          "udc:group/th udc:relative udc:h-9 udc:border-b udc:border-border udc:bg-muted udc:p-0 udc:text-left udc:text-xs udc:font-medium udc:text-muted-foreground",
           pinClass(c),
-          c.getIsPinned() ? "z-[15]" : "",
+          c.getIsPinned() ? "udc:z-[15]" : "",
         )}
       >
         {sortable ? (
@@ -325,28 +325,32 @@ export function TableRenderer(props: TableRendererProps) {
             onClick={(e) => props.onSort(config.field, e.shiftKey)}
             title={dir ? t("APP", dir === "asc" ? "SORT_ASC" : "SORT_DESC") : undefined}
             className={cn(
-              "flex h-full w-full items-center gap-1 px-3 outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
+              "udc:flex udc:h-full udc:w-full udc:items-center udc:gap-1 udc:px-3 udc:outline-none udc:transition-colors udc:hover:text-foreground udc:focus-visible:ring-2 udc:focus-visible:ring-ring udc:focus-visible:ring-inset",
               alignClass(c),
-              dir && "text-foreground",
+              dir && "udc:text-foreground",
             )}
           >
             {text}
             <Icon
               className={cn(
-                "size-3.5 shrink-0 transition-opacity",
-                dir ? "text-primary opacity-100" : "opacity-0 group-hover/th:opacity-60",
+                "udc:size-3.5 udc:shrink-0 udc:transition-opacity",
+                dir
+                  ? "udc:text-primary udc:opacity-100"
+                  : "udc:opacity-0 udc:group-hover/th:opacity-60",
               )}
             />
           </button>
         ) : (
-          <div className={cn("flex h-full items-center px-3", alignClass(c))}>{text}</div>
+          <div className={cn("udc:flex udc:h-full udc:items-center udc:px-3", alignClass(c))}>
+            {text}
+          </div>
         )}
         {menu ? (
           <ColumnHeaderMenu
             field={config.field}
             label={label}
             onAction={menu}
-            className="absolute top-1/2 right-1.5 -translate-y-1/2 bg-muted shadow-[-10px_0_8px_-2px_var(--muted)]"
+            className="udc:absolute udc:top-1/2 udc:right-1.5 udc:-translate-y-1/2 udc:bg-muted udc:shadow-[-10px_0_8px_-2px_var(--muted)]"
           />
         ) : null}
       </th>
@@ -357,7 +361,7 @@ export function TableRenderer(props: TableRendererProps) {
     <th
       key="__add"
       scope="col"
-      className="h-9 border-r border-b border-border bg-muted p-0"
+      className="udc:h-9 udc:border-r udc:border-b udc:border-border udc:bg-muted udc:p-0"
       style={{ width: ADD_COLUMN_WIDTH }}
     >
       <button
@@ -366,33 +370,37 @@ export function TableRenderer(props: TableRendererProps) {
         title={t("APP", "COL_ADD")}
         aria-label={t("APP", "COL_ADD")}
         onClick={() => props.onSchemaAction?.({ kind: "add", position: { where: "end" } })}
-        className="grid h-full w-full place-items-center text-muted-foreground outline-none transition-colors hover:bg-hover hover:text-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+        className="udc:grid udc:h-full udc:w-full udc:place-items-center udc:text-muted-foreground udc:outline-none udc:transition-colors udc:hover:bg-hover udc:hover:text-primary udc:focus-visible:ring-2 udc:focus-visible:ring-ring udc:focus-visible:ring-inset"
       >
-        <Plus className="size-4" />
+        <Plus className="udc:size-4" />
       </button>
     </th>
   ) : null;
   const addColumnCell = (key: string, className: string) =>
     schemaEdit ? (
-      <td key={key} aria-hidden className={cn("border-r border-b border-border p-0", className)} />
+      <td
+        key={key}
+        aria-hidden
+        className={cn("udc:border-r udc:border-b udc:border-border udc:p-0", className)}
+      />
     ) : null;
 
   const filler = (key: string, className?: string) => (
-    <td key={key} aria-hidden className={cn("p-0", className)} />
+    <td key={key} aria-hidden className={cn("udc:p-0", className)} />
   );
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <div className="udc:flex udc:min-h-0 udc:flex-1 udc:flex-col">
       <div
         ref={scrollRef}
         onScroll={measureEdges}
         data-testid="table-scroll"
-        className="scroll-thin relative min-h-0 flex-1 overflow-auto"
+        className="udc-scroll-thin udc:relative udc:min-h-0 udc:flex-1 udc:overflow-auto"
       >
         {data.isFetching && !data.isLoading && !isFetchingNextPage ? (
-          <div className="pointer-events-none sticky top-0 left-0 z-30 h-0">
-            <div className="h-0.5 w-full overflow-hidden bg-primary/15">
-              <div className="h-full w-1/3 animate-[shimmer_1s_linear_infinite] bg-primary/70 [background-size:200%_100%]" />
+          <div className="udc:pointer-events-none udc:sticky udc:top-0 udc:left-0 udc:z-30 udc:h-0">
+            <div className="udc:h-0.5 udc:w-full udc:overflow-hidden udc:bg-primary/15">
+              <div className="udc:h-full udc:w-1/3 udc:animate-[shimmer_1s_linear_infinite] udc:bg-primary/70 udc:[background-size:200%_100%]" />
             </div>
           </div>
         ) : null}
@@ -400,7 +408,7 @@ export function TableRenderer(props: TableRendererProps) {
           data-testid="udc-table"
           aria-busy={data.isFetching}
           aria-rowcount={total}
-          className="border-separate border-spacing-0 text-[13px]"
+          className="udc:border-separate udc:border-spacing-0 udc:text-[13px]"
           style={{ width: totalWidth, minWidth: "100%", tableLayout: "fixed" }}
         >
           <colgroup>
@@ -413,11 +421,11 @@ export function TableRenderer(props: TableRendererProps) {
               <col key={c.id} style={{ width: c.getSize() }} />
             ))}
           </colgroup>
-          <thead className="sticky top-0 z-30">
+          <thead className="udc:sticky udc:top-0 udc:z-30">
             <tr>
               {[...left, ...center].map(header)}
               {addColumnHeader}
-              <th aria-hidden className="border-b border-border bg-muted p-0" />
+              <th aria-hidden className="udc:border-b udc:border-border udc:bg-muted udc:p-0" />
               {right.map(header)}
             </tr>
           </thead>
@@ -430,23 +438,29 @@ export function TableRenderer(props: TableRendererProps) {
                       <td
                         key={c.id}
                         style={pinStyle(c)}
-                        className={cn("border-b border-border bg-surface px-3", pinClass(c))}
+                        className={cn(
+                          "udc:border-b udc:border-border udc:bg-surface udc:px-3",
+                          pinClass(c),
+                        )}
                       >
                         <Skeleton
-                          className="h-3"
+                          className="udc:h-3"
                           style={{ width: `${45 + ((i * 7 + j * 13) % 45)}%` }}
                         />
                       </td>
                     ))}
-                    {addColumnCell("a", "bg-surface")}
-                    {filler("f", "border-b border-border bg-surface")}
+                    {addColumnCell("a", "udc:bg-surface")}
+                    {filler("f", "udc:border-b udc:border-border udc:bg-surface")}
                     {right.map((c) => (
                       <td
                         key={c.id}
                         style={pinStyle(c)}
-                        className={cn("border-b border-border bg-surface px-3", pinClass(c))}
+                        className={cn(
+                          "udc:border-b udc:border-border udc:bg-surface udc:px-3",
+                          pinClass(c),
+                        )}
                       >
-                        <Skeleton className="h-3 w-2/3" />
+                        <Skeleton className="udc:h-3 udc:w-2/3" />
                       </td>
                     ))}
                   </tr>
@@ -485,18 +499,20 @@ export function TableRenderer(props: TableRendererProps) {
                     }
                     style={pinStyle(c)}
                     className={cn(
-                      "relative border-b border-border px-3 align-middle outline-none",
-                      bg && bg !== "default" ? BG_COLOR[bg] : "bg-surface group-hover/row:bg-hover",
+                      "udc:relative udc:border-b udc:border-border udc:px-3 udc:align-middle udc:outline-none",
+                      bg && bg !== "default"
+                        ? BG_COLOR[bg]
+                        : "udc:bg-surface udc:group-hover/row:bg-hover",
                       color ? TEXT_COLOR[color] : "",
-                      color === "info" || color === "accent" ? "font-medium" : "",
+                      color === "info" || color === "accent" ? "udc:font-medium" : "",
                       editable &&
-                        "cursor-text focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset hover:shadow-[inset_0_0_0_1px_var(--border-strong)]",
+                        "udc:cursor-text udc:focus-visible:ring-2 udc:focus-visible:ring-ring udc:focus-visible:ring-inset udc:hover:shadow-[inset_0_0_0_1px_var(--border-strong)]",
                       pinClass(c),
                       // Above the next rows, so the validation message under the cell shows.
-                      editing && "z-[25]",
+                      editing && "udc:z-[25]",
                     )}
                   >
-                    <div className={cn("flex min-w-0 items-center", alignClass(c))}>
+                    <div className={cn("udc:flex udc:min-w-0 udc:items-center", alignClass(c))}>
                       {props.folder && config.field === props.folder.options.label_field ? (
                         <FolderEntry row={row} nav={props.folder}>
                           <CellValue
@@ -541,12 +557,15 @@ export function TableRenderer(props: TableRendererProps) {
                   key={r.id}
                   data-testid="row"
                   data-row-id={row.__meta.id}
-                  className="group/row"
+                  className="udc:group/row"
                   style={{ height: rowHeight }}
                 >
                   {[...left, ...center].map(cell)}
-                  {addColumnCell("a", "bg-surface group-hover/row:bg-hover")}
-                  {filler("f", "border-b border-border bg-surface group-hover/row:bg-hover")}
+                  {addColumnCell("a", "udc:bg-surface udc:group-hover/row:bg-hover")}
+                  {filler(
+                    "f",
+                    "udc:border-b udc:border-border udc:bg-surface udc:group-hover/row:bg-hover",
+                  )}
                   {right.map(cell)}
                 </tr>
               );
@@ -560,7 +579,7 @@ export function TableRenderer(props: TableRendererProps) {
         {mode === "infinite" && data.rows.length > 0 ? (
           <div
             data-testid="infinite-footer"
-            className="sticky left-0 flex h-12 items-center justify-center gap-2 text-xs text-muted-foreground"
+            className="udc:sticky udc:left-0 udc:flex udc:h-12 udc:items-center udc:justify-center udc:gap-2 udc:text-xs udc:text-muted-foreground"
             style={{ width: scrollRef.current?.clientWidth }}
           >
             {isFetchingNextPage ? (
@@ -573,7 +592,7 @@ export function TableRenderer(props: TableRendererProps) {
             )}
           </div>
         ) : null}
-        <div ref={sentinelRef} data-testid="infinite-sentinel" className="h-px" />
+        <div ref={sentinelRef} data-testid="infinite-sentinel" className="udc:h-px" />
       </div>
 
       {mode === "pages" && !showError && (data.total ?? 0) > 0 ? (

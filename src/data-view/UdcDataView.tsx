@@ -161,7 +161,7 @@ export function UdcDataView({ collection }: { collection: string }) {
 
   if (describe.error) {
     return (
-      <div className="flex flex-1 items-center justify-center">
+      <div className="udc:flex udc:flex-1 udc:items-center udc:justify-center">
         <ErrorState error={describe.error} onRetry={() => void describe.refetch()} />
       </div>
     );
@@ -185,16 +185,18 @@ export function UdcDataView({ collection }: { collection: string }) {
 
   return (
     <div
-      className="flex min-h-0 flex-1 flex-col"
+      className="udc:flex udc:min-h-0 udc:flex-1 udc:flex-col"
       data-testid="data-view"
       data-collection={collection}
     >
-      <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2 px-6 pt-5 pb-4">
-        <div className="min-w-0">
-          <h1 className="text-lg font-semibold tracking-tight">{title}</h1>
-          {description ? <p className="text-[13px] text-muted-foreground">{description}</p> : null}
+      <header className="udc:flex udc:flex-wrap udc:items-end udc:justify-between udc:gap-x-6 udc:gap-y-2 udc:px-6 udc:pt-5 udc:pb-4">
+        <div className="udc:min-w-0">
+          <h1 className="udc:text-lg udc:font-semibold udc:tracking-tight">{title}</h1>
+          {description ? (
+            <p className="udc:text-[13px] udc:text-muted-foreground">{description}</p>
+          ) : null}
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="udc:flex udc:flex-wrap udc:items-center udc:gap-2">
           {view && paging ? (
             <Segmented<PagingMode>
               aria-label={t("APP", "PAGING")}
@@ -226,7 +228,7 @@ export function UdcDataView({ collection }: { collection: string }) {
             />
           ) : null}
           {view && paging && tabs.length > 1 ? (
-            <span aria-hidden className="mx-1 h-5 w-px bg-border-strong/70" />
+            <span aria-hidden className="udc:mx-1 udc:h-5 udc:w-px udc:bg-border-strong/70" />
           ) : null}
           {view && tabs.length > 1 ? (
             <Segmented
@@ -267,13 +269,13 @@ export function UdcDataView({ collection }: { collection: string }) {
         </div>
       </header>
 
-      <div className="mx-6 mb-6 flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-sm shadow-black/[0.03]">
+      <div className="udc:mx-6 udc:mb-6 udc:flex udc:min-h-0 udc:flex-1 udc:flex-col udc:overflow-hidden udc:rounded-xl udc:border udc:border-border udc:bg-surface udc:shadow-sm udc:shadow-black/[0.03]">
         <div
           data-testid="toolbar"
           className={
             onPage
-              ? "hidden"
-              : "flex flex-wrap items-center gap-2 border-b border-border px-3 py-2.5"
+              ? "udc:hidden"
+              : "udc:flex udc:flex-wrap udc:items-center udc:gap-2 udc:border-b udc:border-border udc:px-3 udc:py-2.5"
           }
         >
           {view ? (
@@ -291,7 +293,7 @@ export function UdcDataView({ collection }: { collection: string }) {
                 />
               ) : null}
               {/* Its natural width: on a narrow screen the chips wrap as one group, under the search. */}
-              <div className="flex flex-wrap items-center gap-1.5">
+              <div className="udc:flex udc:flex-wrap udc:items-center udc:gap-1.5">
                 {view.filters?.length ? (
                   <FilterChips
                     configs={view.filters}
@@ -309,20 +311,20 @@ export function UdcDataView({ collection }: { collection: string }) {
                   />
                 ) : null}
               </div>
-              <div className="ml-auto flex items-center gap-2">
+              <div className="udc:ml-auto udc:flex udc:items-center udc:gap-2">
                 {entry?.toolbar && live ? (
                   <entry.toolbar collection={collection} describe={live} />
                 ) : null}
                 {chartWindow ? <ChartWindowControl win={chartWindow} clearable={!onChart} /> : null}
                 <Freshness fetchedAt={fetchedAt} stale={stale} source={live?.source} />
                 <span
-                  className="text-xs whitespace-nowrap text-muted-foreground tabular-nums"
+                  className="udc:text-xs udc:whitespace-nowrap udc:text-muted-foreground udc:tabular-nums"
                   data-testid="row-count"
                   data-shown={shown}
                   data-total={total ?? undefined}
                 >
                   {total === null ? (
-                    <Skeleton className="h-3 w-24" />
+                    <Skeleton className="udc:h-3 udc:w-24" />
                   ) : ownCount?.unit === "nodes" && !paging ? (
                     shown === total ? (
                       t("APP", "TREE_NODES", { count: fmt(total) })
@@ -341,9 +343,9 @@ export function UdcDataView({ collection }: { collection: string }) {
             </>
           ) : (
             <>
-              <Skeleton className="h-8 w-80" />
-              <Skeleton className="h-7 w-20 rounded-full" />
-              <Skeleton className="h-7 w-24 rounded-full" />
+              <Skeleton className="udc:h-8 udc:w-80" />
+              <Skeleton className="udc:h-7 udc:w-20 udc:rounded-full" />
+              <Skeleton className="udc:h-7 udc:w-24 udc:rounded-full" />
             </>
           )}
         </div>
@@ -351,7 +353,7 @@ export function UdcDataView({ collection }: { collection: string }) {
         {live && userTree && !onPage ? (
           <div
             data-testid="filter-pills"
-            className="flex flex-wrap items-center gap-1.5 border-b border-border bg-muted/40 px-3 py-2"
+            className="udc:flex udc:flex-wrap udc:items-center udc:gap-1.5 udc:border-b udc:border-border udc:bg-muted/40 udc:px-3 udc:py-2"
           >
             <FilterPills
               fields={live.filterable.fields}
@@ -359,7 +361,12 @@ export function UdcDataView({ collection }: { collection: string }) {
               onChange={setUserTree}
               fieldLabel={fieldLabel}
             />
-            <Button size="sm" variant="ghost" className="ml-auto" onClick={() => setUserTree(null)}>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="udc:ml-auto"
+              onClick={() => setUserTree(null)}
+            >
               {t("APP", "CLEAR")}
             </Button>
           </div>
@@ -398,10 +405,10 @@ export function UdcDataView({ collection }: { collection: string }) {
             folder={folderNav}
           />
         ) : (
-          <div className="flex flex-col gap-3 p-4">
+          <div className="udc:flex udc:flex-col udc:gap-3 udc:p-4">
             {Array.from({ length: 10 }, (_, i) => (
               // biome-ignore lint/suspicious/noArrayIndexKey: placeholders
-              <Skeleton key={i} className="h-6" />
+              <Skeleton key={i} className="udc:h-6" />
             ))}
           </div>
         )}

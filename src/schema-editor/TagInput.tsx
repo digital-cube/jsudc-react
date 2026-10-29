@@ -39,26 +39,26 @@ export function TagInput({
     <div
       data-testid={testId}
       className={cn(
-        "flex min-h-8 w-full flex-wrap items-center gap-1 rounded-md border border-input bg-surface px-1.5 py-1 shadow-xs transition-[border-color,box-shadow]",
-        "focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/20",
+        "udc:flex udc:min-h-8 udc:w-full udc:flex-wrap udc:items-center udc:gap-1 udc:rounded-md udc:border udc:border-input udc:bg-surface udc:px-1.5 udc:py-1 udc:shadow-xs udc:transition-[border-color,box-shadow]",
+        "udc:focus-within:border-ring udc:focus-within:ring-3 udc:focus-within:ring-ring/20",
         invalid &&
-          "border-sem-danger focus-within:border-sem-danger focus-within:ring-sem-danger/20",
+          "udc:border-sem-danger udc:focus-within:border-sem-danger udc:focus-within:ring-sem-danger/20",
       )}
     >
       {value.map((v) => (
         <span
           key={v}
           data-testid="tag"
-          className="inline-flex h-6 items-center gap-1 rounded-md bg-selected pr-0.5 pl-2 text-xs font-medium"
+          className="udc:inline-flex udc:h-6 udc:items-center udc:gap-1 udc:rounded-md udc:bg-selected udc:pr-0.5 udc:pl-2 udc:text-xs udc:font-medium"
         >
           {v}
           <button
             type="button"
             aria-label={`Remove ${v}`}
             onClick={() => onChange(value.filter((x) => x !== v))}
-            className="grid size-5 place-items-center rounded text-muted-foreground hover:bg-hover hover:text-foreground"
+            className="udc:grid udc:size-5 udc:place-items-center udc:rounded udc:text-muted-foreground udc:hover:bg-hover udc:hover:text-foreground"
           >
-            <X className="size-3" />
+            <X className="udc:size-3" />
           </button>
         </span>
       ))}
@@ -69,7 +69,7 @@ export function TagInput({
         onKeyDown={onKeyDown}
         onBlur={add}
         placeholder={value.length ? undefined : placeholder}
-        className="h-6 min-w-24 flex-1 bg-transparent px-1 text-[13px] outline-none placeholder:text-muted-foreground/80"
+        className="udc:h-6 udc:min-w-24 udc:flex-1 udc:bg-transparent udc:px-1 udc:text-[13px] udc:outline-none udc:placeholder:text-muted-foreground/80"
       />
     </div>
   );

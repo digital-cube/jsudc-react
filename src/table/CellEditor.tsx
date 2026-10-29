@@ -127,24 +127,24 @@ export function CellEditor({
   };
 
   const shell = cn(
-    "absolute inset-0 z-20 flex items-center bg-surface px-1.5",
-    "ring-2 ring-inset",
-    error ? "ring-sem-danger" : "ring-ring",
+    "udc:absolute udc:inset-0 udc:z-20 udc:flex udc:items-center udc:bg-surface udc:px-1.5",
+    "udc:ring-2 udc:ring-inset",
+    error ? "udc:ring-sem-danger" : "udc:ring-ring",
   );
   const field = cn(
-    "h-full w-full min-w-0 bg-transparent text-[13px] text-foreground outline-none",
-    align === "right" && "text-right tabular-nums",
-    align === "center" && "text-center",
+    "udc:h-full udc:w-full udc:min-w-0 udc:bg-transparent udc:text-[13px] udc:text-foreground udc:outline-none",
+    align === "right" && "udc:text-right udc:tabular-nums",
+    align === "center" && "udc:text-center",
   );
 
   return (
     <div className={shell} data-testid="cell-editor">
       {kind === "checkbox" ? (
-        <label className="flex h-full w-full cursor-pointer items-center justify-center">
+        <label className="udc:flex udc:h-full udc:w-full udc:cursor-pointer udc:items-center udc:justify-center">
           <input
             ref={ref}
             type="checkbox"
-            className="size-4 accent-[var(--primary)]"
+            className="udc:size-4 udc:accent-[var(--primary)]"
             checked={raw === true}
             disabled={saving}
             onChange={(e) => setRaw(e.target.checked)}
@@ -155,7 +155,7 @@ export function CellEditor({
       ) : kind === "select" ? (
         <select
           ref={ref}
-          className={cn(field, "bg-surface")}
+          className={cn(field, "udc:bg-surface")}
           value={String(raw)}
           disabled={saving}
           onChange={(e) => setRaw(e.target.value)}
@@ -181,7 +181,7 @@ export function CellEditor({
                   ? "datetime-local"
                   : "text"
           }
-          className={cn(field, "[&::-webkit-inner-spin-button]:hidden")}
+          className={cn(field, "udc:[&::-webkit-inner-spin-button]:hidden")}
           value={String(raw)}
           readOnly={saving}
           maxLength={kind === "text" ? def?.length : undefined}
@@ -195,12 +195,12 @@ export function CellEditor({
           onBlur={() => commit("blur")}
         />
       )}
-      {saving ? <Spinner className="ml-1 shrink-0 text-muted-foreground" /> : null}
+      {saving ? <Spinner className="udc:ml-1 udc:shrink-0 udc:text-muted-foreground" /> : null}
       {error ? (
         <div
           role="alert"
           data-testid="cell-error"
-          className="absolute top-full left-0 z-30 mt-1 w-max max-w-72 rounded-md border border-sem-danger/40 bg-sem-danger-bg px-2 py-1 text-xs font-medium text-sem-danger shadow-md"
+          className="udc:absolute udc:top-full udc:left-0 udc:z-30 udc:mt-1 udc:w-max udc:max-w-72 udc:rounded-md udc:border udc:border-sem-danger/40 udc:bg-sem-danger-bg udc:px-2 udc:py-1 udc:text-xs udc:font-medium udc:text-sem-danger udc:shadow-md"
         >
           {error}
         </div>

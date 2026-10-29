@@ -2,14 +2,14 @@ import type { ComponentProps } from "react";
 import { cn } from "../../lib/utils";
 
 export function Skeleton({ className, ...props }: ComponentProps<"div">) {
-  return <div className={cn("skeleton rounded", className)} {...props} />;
+  return <div className={cn("udc-skeleton udc:rounded", className)} {...props} />;
 }
 
 export function Kbd({ className, ...props }: ComponentProps<"kbd">) {
   return (
     <kbd
       className={cn(
-        "inline-flex h-5 items-center rounded border border-border bg-muted px-1.5 font-mono text-[10px] text-muted-foreground",
+        "udc:inline-flex udc:h-5 udc:items-center udc:rounded udc:border udc:border-border udc:bg-muted udc:px-1.5 udc:font-mono udc:text-[10px] udc:text-muted-foreground",
         className,
       )}
       {...props}
@@ -22,7 +22,7 @@ export function Spinner({ className }: { className?: string }) {
     <span
       aria-hidden
       className={cn(
-        "inline-block size-3.5 animate-spin rounded-full border-2 border-current border-r-transparent",
+        "udc:inline-block udc:size-3.5 udc:animate-spin udc:rounded-full udc:border-2 udc:border-current udc:border-r-transparent",
         className,
       )}
     />
