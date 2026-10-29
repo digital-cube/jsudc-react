@@ -32,6 +32,7 @@ import {
 import { Toaster } from "../src/components/ui/toast";
 import { TooltipProvider } from "../src/components/ui/tooltip";
 import { UdcI18nProvider } from "../src/i18n/i18n";
+import { UdcReactRouterUrlState } from "../src/react-router";
 import { rendererEntry } from "../src/renderers/registry";
 import type { RendererProps } from "../src/renderers/types";
 import { CellValue } from "../src/table/cells";
@@ -408,7 +409,9 @@ describe("CalendarRenderer", () => {
               <TooltipProvider>
                 <Toaster>
                   <MemoryRouter initialEntries={["/udc/appointments?date=2026-10-27"]}>
-                    <CalendarRenderer {...props} />
+                    <UdcReactRouterUrlState>
+                      <CalendarRenderer {...props} />
+                    </UdcReactRouterUrlState>
                   </MemoryRouter>
                 </Toaster>
               </TooltipProvider>

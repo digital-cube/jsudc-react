@@ -9,7 +9,6 @@ import {
 } from "@jsudc/core";
 import { ChevronLeft, ChevronRight, Globe } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router";
 import { Button } from "../components/ui/button";
 import { Segmented } from "../components/ui/segmented";
 import { useToast } from "../components/ui/toast";
@@ -29,6 +28,7 @@ import {
   zoneCity,
 } from "../time/zoned";
 import { useUdcAllRows, useUdcMutate } from "../udc/hooks";
+import { useUrlSearchParams } from "../url-state/UrlState";
 import { EventDetail } from "./EventDetail";
 import { MonthGrid } from "./MonthGrid";
 import {
@@ -51,7 +51,7 @@ export const DATE_PARAM = "date";
 
 /** `?preset=&date=`: what the calendar shows. The zone is a preference, not URL state. */
 function useCalendarUrl(opts: CalendarOptions, today: CivilDay) {
-  const [params, setParams] = useSearchParams();
+  const [params, setParams] = useUrlSearchParams();
   const presetOf = (p: URLSearchParams): CalendarPreset => {
     const raw = p.get(PRESET_PARAM);
     return isCalendarPreset(raw) && opts.available_presets.includes(raw)
@@ -59,14 +59,18 @@ function useCalendarUrl(opts: CalendarOptions, today: CivilDay) {
       : opts.default_preset;
   };
   const anchorOf = (p: URLSearchParams) => parseDayKey(p.get(DATE_PARAM)) ?? today;
-  // Every change starts from the address bar as it is now, not as the last render saw it:
-  // navigations render in a transition, so two quick clicks would both step from the same day.
-  const update = (edit: (p: URLSearchParams) => Record<string, string>) => {
-    const now = new URLSearchParams(window.location.search);
-    const next = new URLSearchParams(now);
-    for (const [k, v] of Object.entries(edit(now))) next.set(k, v);
-    setParams(next, { replace: true });
-  };
+  // Every change starts from the address bar as it is now (the updater's argument), not as
+  // the last render saw it: navigations render in a transition, so two quick clicks would
+  // both step from the same day.
+  const update = (edit: (p: URLSearchParams) => Record<string, string>) =>
+    setParams(
+      (now) => {
+        const next = new URLSearchParams(now);
+        for (const [k, v] of Object.entries(edit(now))) next.set(k, v);
+        return next;
+      },
+      { replace: true },
+    );
   return {
     preset: presetOf(params),
     anchor: anchorOf(params),

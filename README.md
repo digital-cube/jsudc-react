@@ -26,7 +26,7 @@ What is in the package:
 
 ```sh
 npm install @jsudc/react @jsudc/core \
-  react react-dom react-router @tanstack/react-query @tanstack/react-table \
+  react react-dom @tanstack/react-query @tanstack/react-table \
   radix-ui lucide-react leaflet recharts @dnd-kit/core @dnd-kit/sortable @dnd-kit/utilities
 # or straight from a GitHub tag:
 npm install github:digital-cube/jsudc-core#v0.1.1 github:digital-cube/jsudc-react#v0.1.1
@@ -47,7 +47,6 @@ import {
 } from "@jsudc/react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter } from "react-router";
 
 const client = new UdcClient({ httpUrl: "" }); // same origin; or "https://api.example.com"
 
@@ -57,11 +56,9 @@ createRoot(document.getElementById("root") as HTMLElement).render(
       <UdcI18nProvider>
         <TooltipProvider>
           <Toaster>
-            <BrowserRouter>
-              <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
-                <UdcDataView collection="companies" />
-              </div>
-            </BrowserRouter>
+            <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
+              <UdcDataView collection="companies" />
+            </div>
           </Toaster>
         </TooltipProvider>
       </UdcI18nProvider>
@@ -82,16 +79,124 @@ collections, so each one starts from a fresh view.
 
 ### The providers a host wraps
 
-| Provider                                                          | Needed | Why                                                                                                                                 |
-| ----------------------------------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `UdcProvider client={new UdcClient(...)}`                         | yes    | every hook reads the client from it                                                                                                 |
-| `QueryClientProvider client={createUdcQueryClient()}`             | yes    | the hooks are TanStack Query; `createUdcQueryClient` retries transport failures only, never a protocol error                        |
-| `UdcI18nProvider`                                                 | yes    | every string goes through `useI18n()`                                                                                               |
-| `TooltipProvider`                                                 | yes    | Radix tooltips on headers, chips and buttons                                                                                        |
-| `Toaster`                                                         | yes    | save, conflict and schema-edit toasts (`useToast`)                                                                                  |
-| a react-router router (`BrowserRouter`, `createBrowserRouter`, …) | yes    | search, filters, sort, paging and the tab live in the URL (`useSearchParams`)                                                       |
-| `TimezoneProvider`                                                | no     | without it instants are shown in the browser's zone; with it the user's pick, kept in `localStorage` (`udc-tz`)                     |
-| `ThemeProvider`                                                   | no     | `useTheme()` toggles the `dark` class on `<html>` and keeps the choice (`udc-theme`); any other way of setting that class works too |
+| Provider                                              | Needed | Why                                                                                                                                 |
+| ----------------------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `UdcProvider client={new UdcClient(...)}`             | yes    | every hook reads the client from it                                                                                                 |
+| `QueryClientProvider client={createUdcQueryClient()}` | yes    | the hooks are TanStack Query; `createUdcQueryClient` retries transport failures only, never a protocol error                        |
+| `UdcI18nProvider`                                     | yes    | every string goes through `useI18n()`                                                                                               |
+| `TooltipProvider`                                     | yes    | Radix tooltips on headers, chips and buttons                                                                                        |
+| `Toaster`                                             | yes    | save, conflict and schema-edit toasts (`useToast`)                                                                                  |
+| `UdcUrlStateProvider` / `UdcReactRouterUrlState`      | no     | where search, filters, sort, paging and the tab live; without it `window.location` (see [URL state](#url-state))                    |
+| `TimezoneProvider`                                    | no     | without it instants are shown in the browser's zone; with it the user's pick, kept in `localStorage` (`udc-tz`)                     |
+| `ThemeProvider`                                       | no     | `useTheme()` toggles the `dark` class on `<html>` and keeps the choice (`udc-theme`); any other way of setting that class works too |
+
+## URL state
+
+The data view keeps what the user chose in the query string, so a link or a
+reload opens the same view: the tab (`?tab=`), the search (`?q=`), the chips
+and the filter tree, the sort, the paging mode and the page, the kanban board
+(`?board=`), the chart window (`?win=`, `?from=&to=`) and the calendar
+(`?preset=&date=`). Filters, sort and windows **replace** the current history
+entry; they are not a step the Back button walks through.
+
+It reaches the address bar through a `UrlStateAdapter`:
+
+```ts
+interface UrlStateAdapter {
+  get(): URLSearchParams;
+  set(next: URLSearchParams, opts?: { replace?: boolean }): void;
+  subscribe(listener: () => void): () => void; // back / forward
+}
+```
+
+**Default: no router needed.** Without a provider the view uses
+`windowLocationAdapter`: `window.location.search`, written with
+`history.pushState` / `replaceState`, the path and the hash left alone, read
+again on `popstate`. That is all a plain React page needs.
+
+**On react-router** (^7), mount the adapter from the subpath inside your
+router, around the views. It is the only module of the package that imports
+react-router, and react-router is an optional peer for it:
+
+```tsx
+import { UdcReactRouterUrlState } from "@jsudc/react/react-router";
+
+<BrowserRouter>
+  <UdcReactRouterUrlState>
+    <App />
+  </UdcReactRouterUrlState>
+</BrowserRouter>;
+```
+
+With a data router, put it in the root route's element. Use it whenever the
+host navigates with react-router: the default adapter writes the History API
+behind the router's back, so the router would not see the change.
+
+**Any other router**: write the three calls and mount them with
+`UdcUrlStateProvider`. `get` is called during render, so return the current
+query string cheaply; `subscribe` only has to report changes the view did not
+make itself, or none at all when a new adapter object is passed on every
+location change (that re-renders the view's hooks too). Two sketches, to adapt
+to your router's version. TanStack Router:
+
+```tsx
+import { UdcUrlStateProvider, type UrlStateAdapter } from "@jsudc/react";
+import { useLocation, useRouter } from "@tanstack/react-router";
+import { useMemo } from "react";
+
+function TanStackUrlState({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const searchStr = useLocation({ select: (l) => l.searchStr });
+  const adapter = useMemo<UrlStateAdapter>(
+    () => ({
+      get: () => new URLSearchParams(router.state.location.searchStr),
+      set: (next, opts) => {
+        const qs = next.toString();
+        router.history[opts?.replace ? "replace" : "push"](
+          `${router.state.location.pathname}${qs ? `?${qs}` : ""}`,
+        );
+      },
+      subscribe: () => () => {},
+    }),
+    // biome-ignore lint/correctness/useExhaustiveDependencies: a new adapter per query string
+    [router, searchStr],
+  );
+  return <UdcUrlStateProvider adapter={adapter}>{children}</UdcUrlStateProvider>;
+}
+```
+
+Next.js (App Router, a client component):
+
+```tsx
+"use client";
+import { UdcUrlStateProvider, type UrlStateAdapter } from "@jsudc/react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useMemo } from "react";
+
+export function NextUrlState({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const search = useSearchParams().toString();
+  const adapter = useMemo<UrlStateAdapter>(
+    () => ({
+      get: () => new URLSearchParams(search),
+      set: (next, opts) => {
+        const qs = next.toString();
+        const url = `${pathname}${qs ? `?${qs}` : ""}`;
+        if (opts?.replace) router.replace(url, { scroll: false });
+        else router.push(url, { scroll: false });
+      },
+      subscribe: () => () => {},
+    }),
+    [router, pathname, search],
+  );
+  return <UdcUrlStateProvider adapter={adapter}>{children}</UdcUrlStateProvider>;
+}
+```
+
+`useUrlSearchParams()` gives your own components the same
+`[params, setParams]` pair the view uses, over whichever adapter is in effect;
+a function passed to `setParams` receives the query string as it is now.
 
 ## Peer dependencies
 
@@ -103,13 +208,14 @@ so there is one copy of it in the bundle:
 - `react`, `react-dom` ^19 — one React, or hooks break;
 - `@tanstack/react-query` ^5 — one `QueryClient` context, shared with the
   host's own queries;
-- `react-router` ^7 — the view keeps its state in the host's router;
+- `react-router` ^7 — **optional**, only for `@jsudc/react/react-router`
+  (see [URL state](#url-state)); the package root never imports it;
 - `@tanstack/react-table`, `radix-ui`, `lucide-react` — the table and the
   primitives;
 - `leaflet` (map), `recharts` (chart), `@dnd-kit/core`, `@dnd-kit/sortable`,
   `@dnd-kit/utilities` (kanban, tree) — the renderers.
 
-All of them are required in 0.1: the registry imports every renderer. Optional
+All of them but `react-router` are required: the registry imports every renderer. Optional
 renderer subpaths (`@jsudc/react/map`, `@jsudc/react/chart`) that let a host
 skip Leaflet or Recharts are planned. The regular dependencies are
 `clsx`, `tailwind-merge` and `marked` (the Doc tab).
@@ -202,11 +308,13 @@ const messages: Messages = {
 
 ## API
 
-Everything is exported from the package root; see `dist/index.d.ts`. Beyond
+Everything is exported from the package root (`dist/index.d.ts`), except
+`UdcReactRouterUrlState` on `@jsudc/react/react-router`. Beyond
 the above: `RENDERERS`, `rendererTabs`, `resolveTab` and the `RendererProps` /
 `RendererEntry` types; `EmptyState` / `ErrorState`; `mergeMessages`, `makeT`,
 `lookup`, `schemaLabelTerms`, `tableSection`, `TRANSLATIONS`, `LOCALES`;
-`cn`, `storage`, `humanize`; `resolveIcon` with the `lucide:<name>` icons the
+`cn`, `storage`, `humanize`; `UdcUrlStateProvider`, `useUrlSearchParams`,
+`windowLocationAdapter` and the `UrlStateAdapter` type; `resolveIcon` with the `lucide:<name>` icons the
 package bundles (`LUCIDE_ICONS`); and the zone helpers `allZones`,
 `offsetLabel`, `zoneCity`.
 

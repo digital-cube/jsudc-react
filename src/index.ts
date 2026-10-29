@@ -124,3 +124,14 @@ export {
 } from "./udc/hooks";
 export { type ListKeyParams, type PagingMode, udcKeys } from "./udc/keys";
 export { createUdcQueryClient, shouldRetry, UdcProvider, useUdcClient } from "./udc/provider";
+// URL state: where the data view keeps filters, sort and page. `window.location` by default;
+// a router's adapter through the provider (the package ships one on a subpath, see README).
+export {
+  type SetUrlSearchParams,
+  UdcUrlStateProvider,
+  type UdcUrlStateProviderProps,
+  type UrlStateAdapter,
+  useUrlSearchParams,
+  useUrlStateAdapter,
+  windowLocationAdapter,
+} from "./url-state";

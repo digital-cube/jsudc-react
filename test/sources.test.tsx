@@ -9,6 +9,7 @@ import { describe, expect, it } from "vitest";
 import { ageText } from "../src/data-view/Freshness";
 import { folderCrumbs, joinFolder, splitFolder } from "../src/data-view/folder";
 import { DOC_TAB, useDataViewState } from "../src/data-view/useDataViewState";
+import { UdcReactRouterUrlState } from "../src/react-router";
 import { Badges, badgeTone, formatBytes } from "../src/table/cells";
 import { pollInterval, useUdcAllRows, useUdcCollection } from "../src/udc/hooks";
 import { createUdcQueryClient, UdcProvider } from "../src/udc/provider";
@@ -37,7 +38,9 @@ describe("the Doc tab", () => {
   const at = (url: string, v: ViewConfig, doc: boolean) =>
     renderHook(() => useDataViewState("c", v, { doc }), {
       wrapper: ({ children }: { children: ReactNode }) => (
-        <MemoryRouter initialEntries={[url]}>{children}</MemoryRouter>
+        <MemoryRouter initialEntries={[url]}>
+          <UdcReactRouterUrlState>{children}</UdcReactRouterUrlState>
+        </MemoryRouter>
       ),
     }).result;
 

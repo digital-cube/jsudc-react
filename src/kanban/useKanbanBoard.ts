@@ -1,7 +1,7 @@
 import type { DescribeResponse, KanbanOptions } from "@jsudc/core";
 import { useCallback, useMemo } from "react";
-import { useSearchParams } from "react-router";
 import { useUdcCollection, useUdcDescribe } from "../udc/hooks";
+import { useUrlSearchParams } from "../url-state/UrlState";
 import { boardSource } from "./model";
 
 export const BOARD_PARAM = "board";
@@ -52,7 +52,7 @@ export function useKanbanBoard(describe: DescribeResponse): KanbanBoardState {
     [list.rows, source?.labelField],
   );
 
-  const [params, setParams] = useSearchParams();
+  const [params, setParams] = useUrlSearchParams();
   const wanted = params.get(BOARD_PARAM);
   // Without a board collection the URL alone names the board.
   const boardId = source

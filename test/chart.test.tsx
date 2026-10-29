@@ -32,6 +32,7 @@ import {
   writeWindow,
 } from "../src/chart/window";
 import { UdcI18nProvider } from "../src/i18n/i18n";
+import { UdcReactRouterUrlState } from "../src/react-router";
 import { rendererEntry } from "../src/renderers/registry";
 import { TimezoneProvider, useTimezone } from "../src/time/timezone";
 import { row } from "./fetchMock";
@@ -179,12 +180,14 @@ describe("the window in the URL", () => {
     render(
       <TimezoneProvider>
         <MemoryRouter initialEntries={["/udc/metrics?tab=chart"]}>
-          <Probe
-            onState={(w, set) => {
-              state = w;
-              setZone = set;
-            }}
-          />
+          <UdcReactRouterUrlState>
+            <Probe
+              onState={(w, set) => {
+                state = w;
+                setZone = set;
+              }}
+            />
+          </UdcReactRouterUrlState>
         </MemoryRouter>
       </TimezoneProvider>,
     );

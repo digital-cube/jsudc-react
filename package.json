@@ -40,6 +40,10 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./react-router": {
+      "types": "./dist/react-router/index.d.ts",
+      "default": "./dist/react-router.js"
+    },
     "./styles.css": "./dist/styles.css",
     "./tokens.css": "./dist/tokens.css",
     "./package.json": "./package.json"
@@ -80,6 +84,11 @@
     "react-dom": "^19",
     "react-router": "^7",
     "recharts": "^3.10.1"
+  },
+  "peerDependenciesMeta": {
+    "react-router": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.15",

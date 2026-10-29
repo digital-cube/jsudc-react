@@ -13,6 +13,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Toaster } from "../src/components/ui/toast";
 import { TooltipProvider } from "../src/components/ui/tooltip";
 import { UdcI18nProvider } from "../src/i18n/i18n";
+import { UdcReactRouterUrlState } from "../src/react-router";
 import type { RendererProps } from "../src/renderers/types";
 import {
   expandStorageKey,
@@ -427,7 +428,9 @@ describe("<TreeRenderer>", () => {
             <TooltipProvider>
               <Toaster>
                 <MemoryRouter>
-                  <TreeRenderer {...props} />
+                  <UdcReactRouterUrlState>
+                    <TreeRenderer {...props} />
+                  </UdcReactRouterUrlState>
                 </MemoryRouter>
               </Toaster>
             </TooltipProvider>

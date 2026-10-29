@@ -1,9 +1,9 @@
 import type { FilterNode, SortKey, ViewConfig } from "@jsudc/core";
 import { useCallback, useMemo } from "react";
-import { useSearchParams } from "react-router";
 import { storage } from "../lib/utils";
 import { resolveTab } from "../renderers/registry";
 import type { PagingMode } from "../udc/keys";
+import { useUrlSearchParams } from "../url-state/UrlState";
 import {
   type ChipState,
   decodeChipParam,
@@ -63,7 +63,7 @@ export function useDataViewState(
   view: ViewConfig | undefined,
   opts: { doc?: boolean; source?: boolean } = {},
 ): DataViewState {
-  const [params, setParams] = useSearchParams();
+  const [params, setParams] = useUrlSearchParams();
 
   const update = useCallback(
     (edit: (p: URLSearchParams) => void, resetPage = false) =>

@@ -9,12 +9,17 @@ const external = [...Object.keys(pkg.dependencies), ...Object.keys(pkg.peerDepen
 const isExternal = (id: string) => external.some((d) => id === d || id.startsWith(`${d}/`));
 
 // Library mode, ESM only, one output file per source module so a host's
-// bundler can drop what it does not import. Types come from `tsc`
+// bundler can drop what it does not import. Two entries: the package and
+// `@jsudc/react/react-router` (dist/react-router.js), the only module that
+// imports react-router. Types come from `tsc`
 // (tsconfig.build.json), the stylesheet from the Tailwind CLI (`build:css`).
 export default defineConfig({
   plugins: [react()],
   build: {
-    lib: { entry: "src/index.ts", formats: ["es"] },
+    lib: {
+      entry: { index: "src/index.ts", "react-router": "src/react-router/index.ts" },
+      formats: ["es"],
+    },
     outDir: "dist",
     emptyOutDir: true,
     target: "es2022",
@@ -25,7 +30,8 @@ export default defineConfig({
       output: {
         preserveModules: true,
         preserveModulesRoot: "src",
-        entryFileNames: "[name].js",
+        entryFileNames: (chunk) =>
+          chunk.isEntry && chunk.name === "react-router/index" ? "react-router.js" : "[name].js",
       },
     },
   },

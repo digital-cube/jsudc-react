@@ -7,6 +7,31 @@ All notable changes to `@jsudc/react` are recorded here. The format follows
 
 ## [Unreleased]
 
+### Changed (breaking)
+
+- **`react-router` is no longer a required peer.** The URL state of the data
+  view (tab, search, chips, filter tree, sort, paging mode and page, the
+  kanban `?board=`, the chart window, the calendar `?preset=&date=`) goes
+  through a `UrlStateAdapter`. Without a provider the view uses
+  `window.location` and the History API, so a page without a router works.
+  **A host on react-router mounts `UdcReactRouterUrlState`** from
+  `@jsudc/react/react-router` inside its router; otherwise the view writes the
+  address bar behind the router's back. `react-router` ^7 stays listed as a
+  peer, marked optional in `peerDependenciesMeta`, for that subpath only.
+- The calendar's updates read the adapter's current query string instead of
+  `window.location.search`, so they also step correctly under a
+  `MemoryRouter`. Which keys are written, and replace vs push, are unchanged.
+
+### Added
+
+- `UrlStateAdapter`, `UdcUrlStateProvider`, `useUrlSearchParams()`
+  (`[params, setParams]`, react-router's shape), `useUrlStateAdapter()` and
+  `windowLocationAdapter`, from the package root.
+- The `@jsudc/react/react-router` subpath (`dist/react-router.js`) with
+  `UdcReactRouterUrlState`.
+- README: a "URL state" section — the default, the react-router adapter,
+  writing one for Next.js or TanStack Router.
+
 ## [0.1.1] - 2026-10-29
 
 First release on npmjs.org. No change to the code or the API.

@@ -26,6 +26,7 @@ import {
   quickAddRow,
 } from "../src/kanban/model";
 import { persistOrder } from "../src/kanban/persist";
+import { UdcReactRouterUrlState } from "../src/react-router";
 import { rendererEntry, rendererTabs, resolveTab } from "../src/renderers/registry";
 import type { RendererProps } from "../src/renderers/types";
 import type { UdcCollectionResult } from "../src/udc/hooks";
@@ -385,7 +386,9 @@ describe("KanbanRenderer read-only gating", () => {
             <TooltipProvider>
               <Toaster>
                 <MemoryRouter>
-                  <KanbanRenderer {...props} />
+                  <UdcReactRouterUrlState>
+                    <KanbanRenderer {...props} />
+                  </UdcReactRouterUrlState>
                 </MemoryRouter>
               </Toaster>
             </TooltipProvider>
