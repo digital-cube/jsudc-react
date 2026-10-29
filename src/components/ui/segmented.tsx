@@ -1,16 +1,9 @@
 import { ToggleGroup } from "radix-ui";
-import type { ReactNode } from "react";
 import { cn } from "../../lib/utils";
+import type { SegmentedOption } from "../../ui-kit/types";
 import { Tip } from "./tooltip";
 
-export interface SegmentedOption<V extends string> {
-  value: V;
-  label: ReactNode;
-  testId?: string;
-  /** Shown, not choosable; `tooltip` says why. */
-  disabled?: boolean;
-  tooltip?: string;
-}
+export type { SegmentedOption };
 
 /** A single-choice segmented control (pages | infinite, table | cards, en | sr). */
 export function Segmented<V extends string>({

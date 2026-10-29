@@ -3,16 +3,9 @@ import { CSS } from "@dnd-kit/utilities";
 import type { KanbanOptions, Row, SchemaDoc } from "@jsudc/core";
 import { MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
 import { type KeyboardEvent, useState } from "react";
-import { Button } from "../components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "../components/ui/dropdown-menu";
-import { Input } from "../components/ui/input";
 import { useI18n } from "../i18n/i18n";
 import { cn } from "../lib/utils";
+import { useUiKit } from "../ui-kit/context";
 import { KanbanCard, PendingCard, TONE_DOT } from "./KanbanCard";
 import type { AddWhere, Bucket } from "./model";
 
@@ -58,6 +51,7 @@ function useTextEntry(commit: (text: string) => void, close: () => void) {
 }
 
 function QuickAdd({ where, onAdd }: { where: AddWhere; onAdd: (title: string) => void }) {
+  const { Input } = useUiKit();
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const onKeyDown = useTextEntry(onAdd, () => setOpen(false));
@@ -88,6 +82,14 @@ function QuickAdd({ where, onAdd }: { where: AddWhere; onAdd: (title: string) =>
 }
 
 export function KanbanColumn(props: KanbanColumnProps) {
+  const {
+    Button,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+    Input,
+  } = useUiKit();
   const { bucket, ids, rowById, opts, schema, readOnly } = props;
   const { t, intlLocale } = useI18n();
   const [renaming, setRenaming] = useState(false);
@@ -279,6 +281,7 @@ export function KanbanColumn(props: KanbanColumnProps) {
 
 /** The `+ Add bucket` slot after the last column. */
 export function AddBucketSlot({ onAdd }: { onAdd: (name: string) => void }) {
+  const { Input } = useUiKit();
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const onKeyDown = useTextEntry(

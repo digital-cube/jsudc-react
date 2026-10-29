@@ -26,7 +26,6 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Skeleton } from "../components/ui/misc";
 import { tableSection, useI18n } from "../i18n/i18n";
 import { cn, humanize } from "../lib/utils";
 import { AllRowsStatus } from "../renderers/AllRowsStatus";
@@ -35,6 +34,7 @@ import { CellValue } from "../table/cells";
 import { EmptyState, ErrorState } from "../table/states";
 import { isoInZone } from "../time/zoned";
 import { useUdcAllRows, useUdcCollection } from "../udc/hooks";
+import { useUiKit } from "../ui-kit/context";
 import {
   axisFrames,
   barSize,
@@ -75,6 +75,7 @@ function ChartTab({
   onCount,
   opts,
 }: RendererProps & { opts: ChartOptions }) {
+  const { Skeleton } = useUiKit();
   const { schema, capabilities, view } = describe;
   const xKind = chartXKind(opts, schema);
   // Pages in x order, so a cut by max_rows keeps the start of the window; a pie keeps its biggest.

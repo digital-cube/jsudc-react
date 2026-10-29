@@ -37,14 +37,8 @@ npm install github:digital-cube/jsudc-core#v0.1.1 github:digital-cube/jsudc-reac
 ```tsx
 import "@jsudc/react/styles.css";
 import { UdcClient } from "@jsudc/core/client";
-import {
-  createUdcQueryClient,
-  Toaster,
-  TooltipProvider,
-  UdcDataView,
-  UdcI18nProvider,
-  UdcProvider,
-} from "@jsudc/react";
+import { createUdcQueryClient, UdcDataView, UdcI18nProvider, UdcProvider } from "@jsudc/react";
+import { Toaster, TooltipProvider } from "@jsudc/react/ui";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { createRoot } from "react-dom/client";
 
@@ -79,16 +73,16 @@ collections, so each one starts from a fresh view.
 
 ### The providers a host wraps
 
-| Provider                                              | Needed | Why                                                                                                                                 |
-| ----------------------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `UdcProvider client={new UdcClient(...)}`             | yes    | every hook reads the client from it                                                                                                 |
-| `QueryClientProvider client={createUdcQueryClient()}` | yes    | the hooks are TanStack Query; `createUdcQueryClient` retries transport failures only, never a protocol error                        |
-| `UdcI18nProvider`                                     | yes    | every string goes through `useI18n()`                                                                                               |
-| `TooltipProvider`                                     | yes    | Radix tooltips on headers, chips and buttons                                                                                        |
-| `Toaster`                                             | yes    | save, conflict and schema-edit toasts (`useToast`)                                                                                  |
-| `UdcUrlStateProvider` / `UdcReactRouterUrlState`      | no     | where search, filters, sort, paging and the tab live; without it `window.location` (see [URL state](#url-state))                    |
-| `TimezoneProvider`                                    | no     | without it instants are shown in the browser's zone; with it the user's pick, kept in `localStorage` (`udc-tz`)                     |
-| `ThemeProvider`                                       | no     | `useTheme()` toggles the `dark` class on `<html>` and keeps the choice (`udc-theme`); any other way of setting that class works too |
+| Provider                                              | Needed | Why                                                                                                                                                  |
+| ----------------------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `UdcProvider client={new UdcClient(...)}`             | yes    | every hook reads the client from it                                                                                                                  |
+| `QueryClientProvider client={createUdcQueryClient()}` | yes    | the hooks are TanStack Query; `createUdcQueryClient` retries transport failures only, never a protocol error                                         |
+| `UdcI18nProvider`                                     | yes    | every string goes through `useI18n()`                                                                                                                |
+| `TooltipProvider`                                     | yes    | Radix tooltips on headers, chips and buttons; with your own kit, `kit.TooltipProvider` (see [Bring your own primitives](#bring-your-own-primitives)) |
+| `Toaster`                                             | yes    | save, conflict and schema-edit toasts (`useToast`); with your own kit, `kit.Toaster`                                                                 |
+| `UdcUrlStateProvider` / `UdcReactRouterUrlState`      | no     | where search, filters, sort, paging and the tab live; without it `window.location` (see [URL state](#url-state))                                     |
+| `TimezoneProvider`                                    | no     | without it instants are shown in the browser's zone; with it the user's pick, kept in `localStorage` (`udc-tz`)                                      |
+| `ThemeProvider`                                       | no     | `useTheme()` toggles the `dark` class on `<html>` and keeps the choice (`udc-theme`); any other way of setting that class works too                  |
 
 ## URL state
 
@@ -198,6 +192,84 @@ export function NextUrlState({ children }: { children: React.ReactNode }) {
 `[params, setParams]` pair the view uses, over whichever adapter is in effect;
 a function passed to `setParams` receives the query string as it is now.
 
+## Bring your own primitives
+
+The renderers never import a button, a dialog or a menu. They take every
+primitive from a **UI kit** in context: `const { Button, Popover } = useUiKit()`.
+The kit the package ships, Radix primitives styled with Tailwind, is
+`defaultUiKit` from `@jsudc/react/ui`, and it is what the view uses when you
+pass nothing. Hand another kit to `UdcProvider` (or mount `UdcUiProvider`
+yourself) to draw the same view with MUI, Ant Design, or your own shadcn
+components:
+
+```tsx
+import { UdcProvider } from "@jsudc/react";
+import { myKit } from "./myKit"; // a module constant: `const myKit: UiKit = {...}`
+
+<UdcProvider client={client} kit={myKit}>
+  <myKit.TooltipProvider>
+    <myKit.Toaster>
+      <UdcDataView collection="companies" />
+    </myKit.Toaster>
+  </myKit.TooltipProvider>
+</UdcProvider>;
+```
+
+`UdcProvider` without `kit` leaves the kit alone: an outer `UdcUiProvider`'s
+wins, else the default. `useUiKit()` returns the kit in effect, so your own
+components can draw with the same primitives.
+
+**The contract** is the `UiKit` interface (exported from the package root
+with one props type per primitive, `UiButtonProps`, `UiDialogContentProps` and
+so on). It lists exactly the props the renderers pass, no more:
+
+| Family  | Members                                                                                                                                             |
+| ------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Fields  | `Button` (`variant`, `size`), `Input`, `NativeSelect`, `Checkbox`, `Select` (an options list), `Segmented`                                          |
+| Small   | `Spinner`, `Skeleton`, `Kbd`                                                                                                                        |
+| Dialog  | `Dialog` (controlled), `DialogContent` (`title`, `description`, a close button), `DialogBody`, `DialogFooter`                                       |
+| Menu    | `DropdownMenu`, `DropdownMenuTrigger`, `DropdownMenuContent`, `DropdownMenuItem` (`onSelect`, `tone`), `DropdownMenuLabel`, `DropdownMenuSeparator` |
+| Popover | `Popover` (controlled or not), `PopoverTrigger`, `PopoverContent`, `PopoverAnchor` (a `virtualRef`)                                                 |
+| Tooltip | `TooltipProvider`, `Tip` (`label` on its single child)                                                                                              |
+| Toast   | `Toaster` (the stack and its viewport), `useToast()` → `{ toast({ title, description?, variant? }) }`                                               |
+
+Three things a kit must honour: a trigger with `asChild` merges into its single
+child instead of drawing a button; `DialogContent`'s `onEscapeKeyDown` /
+`onInteractOutside` and `PopoverContent`'s `onOpenAutoFocus` get an event whose
+`preventDefault()` keeps the dialog open or the focus in place; `useToast` is
+called as a hook. Keep the kit object stable (a module constant): it is read on
+every render.
+
+**The smallest kit** is plain HTML. The package's own test suite has one,
+[`test/stubKit.tsx`](test/stubKit.tsx), and renders every renderer with it;
+a few of its members:
+
+```tsx
+import type { UiKit } from "@jsudc/react";
+
+export const stubKit: UiKit = {
+  Button: ({ variant, size, type, ...props }) => (
+    <button data-variant={variant} data-size={size} type={type ?? "button"} {...props} />
+  ),
+  Input: (props) => <input {...props} />,
+  Checkbox: ({ onCheckedChange, ...props }) => (
+    <input type="checkbox" {...props} onChange={(e) => onCheckedChange(e.target.checked)} />
+  ),
+  Spinner: ({ className }) => <span aria-hidden className={className} />,
+  Tip: ({ label, children }) => (
+    <span title={typeof label === "string" ? label : undefined}>{children}</span>
+  ),
+  // … Dialog, DropdownMenu and Popover keep their open state in a small context;
+  // see test/stubKit.tsx for all of it.
+};
+```
+
+**The default kit's primitives** are exported one by one from
+`@jsudc/react/ui` too (`Button`, `Dialog`, `DialogContent`, `Popover`,
+`Select`, `Segmented`, `Toaster`, `useToast`, `Tip`, …), for a host page that
+wants the same look outside the view. Radix (`radix-ui`) is still a required
+peer while the default kit is the fallback.
+
 ## Peer dependencies
 
 Everything the components import that a host is likely to have too is a peer,
@@ -210,8 +282,9 @@ so there is one copy of it in the bundle:
   host's own queries;
 - `react-router` ^7 — **optional**, only for `@jsudc/react/react-router`
   (see [URL state](#url-state)); the package root never imports it;
-- `@tanstack/react-table`, `radix-ui`, `lucide-react` — the table and the
-  primitives;
+- `@tanstack/react-table`, `lucide-react` — the table and the icons;
+- `radix-ui` — the default UI kit (`@jsudc/react/ui`), the fallback when no
+  other kit is given (see [Bring your own primitives](#bring-your-own-primitives));
 - `leaflet` (map), `recharts` (chart), `@dnd-kit/core`, `@dnd-kit/sortable`,
   `@dnd-kit/utilities` (kanban, tree) — the renderers.
 
@@ -309,12 +382,15 @@ const messages: Messages = {
 ## API
 
 Everything is exported from the package root (`dist/index.d.ts`), except
-`UdcReactRouterUrlState` on `@jsudc/react/react-router`. Beyond
+`UdcReactRouterUrlState` on `@jsudc/react/react-router` and the default UI kit
+with its primitives on `@jsudc/react/ui` (`defaultUiKit`, `Button`, `Dialog`,
+`Toaster`, `TooltipProvider`, …). Beyond
 the above: `RENDERERS`, `rendererTabs`, `resolveTab` and the `RendererProps` /
 `RendererEntry` types; `EmptyState` / `ErrorState`; `mergeMessages`, `makeT`,
 `lookup`, `schemaLabelTerms`, `tableSection`, `TRANSLATIONS`, `LOCALES`;
 `cn`, `storage`, `humanize`; `UdcUrlStateProvider`, `useUrlSearchParams`,
-`windowLocationAdapter` and the `UrlStateAdapter` type; `resolveIcon` with the `lucide:<name>` icons the
+`windowLocationAdapter` and the `UrlStateAdapter` type; `UdcUiProvider`,
+`useUiKit` and the `UiKit` type with its props types; `resolveIcon` with the `lucide:<name>` icons the
 package bundles (`LUCIDE_ICONS`); and the zone helpers `allZones`,
 `offsetLabel`, `zoneCity`.
 

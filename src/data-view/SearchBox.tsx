@@ -1,8 +1,7 @@
 import { Search, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { inputClass } from "../components/ui/input";
 import { useI18n } from "../i18n/i18n";
-import { cn } from "../lib/utils";
+import { useUiKit } from "../ui-kit/context";
 
 export const SEARCH_DEBOUNCE_MS = 300;
 
@@ -16,6 +15,7 @@ export function SearchBox({
   onChange: (q: string) => void;
   placeholder: string;
 }) {
+  const { Input } = useUiKit();
   const { t } = useI18n();
   const [text, setText] = useState(value);
   const emitted = useRef(value);
@@ -48,7 +48,7 @@ export function SearchBox({
   return (
     <div className="relative w-72 shrink-0">
       <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-      <input
+      <Input
         ref={inputRef}
         type="search"
         data-testid="search-input"
@@ -62,7 +62,7 @@ export function SearchBox({
             clear();
           }
         }}
-        className={cn(inputClass, "pr-8 pl-8 [&::-webkit-search-cancel-button]:hidden")}
+        className="pr-8 pl-8 [&::-webkit-search-cancel-button]:hidden"
       />
       {text ? (
         <button

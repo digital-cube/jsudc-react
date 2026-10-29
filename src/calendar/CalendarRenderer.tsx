@@ -9,9 +9,6 @@ import {
 } from "@jsudc/core";
 import { ChevronLeft, ChevronRight, Globe } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Button } from "../components/ui/button";
-import { Segmented } from "../components/ui/segmented";
-import { useToast } from "../components/ui/toast";
 import { useI18n } from "../i18n/i18n";
 import { useKanbanBoard } from "../kanban/useKanbanBoard";
 import { AllRowsStatus } from "../renderers/AllRowsStatus";
@@ -28,6 +25,7 @@ import {
   zoneCity,
 } from "../time/zoned";
 import { useUdcAllRows, useUdcMutate } from "../udc/hooks";
+import { useUiKit } from "../ui-kit/context";
 import { useUrlSearchParams } from "../url-state/UrlState";
 import { EventDetail } from "./EventDetail";
 import { MonthGrid } from "./MonthGrid";
@@ -140,6 +138,7 @@ function Calendar({
   onCount,
   opts,
 }: RendererProps & { opts: CalendarOptions }) {
+  const { Button, Segmented, useToast } = useUiKit();
   const { t, intlLocale } = useI18n();
   const { toast } = useToast();
   const { timeZone, setPickerOpen } = useTimezone();

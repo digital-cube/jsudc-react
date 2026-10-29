@@ -4,15 +4,13 @@ import L from "leaflet";
 import { Maximize } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Button } from "../components/ui/button";
-import { Skeleton } from "../components/ui/misc";
-import { Segmented } from "../components/ui/segmented";
 import { tableSection, useI18n } from "../i18n/i18n";
 import { AllRowsStatus } from "../renderers/AllRowsStatus";
 import type { RendererProps } from "../renderers/types";
 import { CellValue } from "../table/cells";
 import { EmptyState, ErrorState } from "../table/states";
 import { useUdcAllRows } from "../udc/hooks";
+import { useUiKit } from "../ui-kit/context";
 import {
   airplaneHtml,
   boundsOf,
@@ -98,6 +96,7 @@ function MapView({
   onCount,
   opts,
 }: RendererProps & { opts: MapOptions }) {
+  const { Skeleton } = useUiKit();
   const { t } = useI18n();
   const q = useUdcAllRows({
     collection,
@@ -377,6 +376,7 @@ export function MapToolbar({
   onFitAll: () => void;
   canFit: boolean;
 }) {
+  const { Button, Segmented } = useUiKit();
   const { t } = useI18n();
   const regions = opts.regions ?? [];
   return (

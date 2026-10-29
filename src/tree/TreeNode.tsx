@@ -2,17 +2,10 @@ import { useDraggable, useDroppable } from "@dnd-kit/core";
 import type { Row } from "@jsudc/core";
 import { ChevronRight, CornerLeftUp, MoreVertical } from "lucide-react";
 import { type KeyboardEvent, useEffect, useRef, useState } from "react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "../components/ui/dropdown-menu";
-import { Spinner } from "../components/ui/misc";
-import { Tip } from "../components/ui/tooltip";
 import { useI18n } from "../i18n/i18n";
 import { resolveIcon } from "../icons/resolve";
 import { cn } from "../lib/utils";
+import { useUiKit } from "../ui-kit/context";
 import { canDrop, dropId, highlightParts, i18nKey, idOf, numberOf } from "./model";
 import { LazyChildren, NodeList, useTree } from "./TreeRenderer";
 
@@ -64,6 +57,8 @@ function focusRow(from: HTMLElement, where: -1 | 1 | string) {
 }
 
 export function TreeNode({ row, depth }: { row: Row; depth: number }) {
+  const { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Tip } =
+    useUiKit();
   const { t } = useI18n();
   const ctx = useTree();
   const { opts, lazy, can, drag } = ctx;
@@ -306,6 +301,7 @@ function ReplyBox({
   onSend: (text: string) => Promise<void>;
   onCancel: () => void;
 }) {
+  const { Spinner } = useUiKit();
   const { t } = useI18n();
   const [busy, setBusy] = useState(false);
   return (

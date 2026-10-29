@@ -1,12 +1,9 @@
 import type { Condition, FilterableField, FilterNode, FilterOp } from "@jsudc/core";
 import { ListFilter, Plus, Trash2, X } from "lucide-react";
 import { type ReactNode, useState } from "react";
-import { Button } from "../components/ui/button";
-import { Input, NativeSelect } from "../components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover";
-import { Select } from "../components/ui/select";
 import { useI18n } from "../i18n/i18n";
 import { cn } from "../lib/utils";
+import { useUiKit } from "../ui-kit/context";
 import { conditionsToTree, treeToConditions } from "./compose";
 
 /** Ops that take no value: the builder hides the value input for them. */
@@ -86,6 +83,7 @@ export function FilterBuilder({
   onChange: (tree: FilterNode | null) => void;
   fieldLabel: (field: string) => string;
 }) {
+  const { Button, Popover, PopoverContent, PopoverTrigger, Select } = useUiKit();
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<DraftRow[]>([]);
@@ -318,6 +316,7 @@ function ValueInput({
   field: FilterableField | undefined;
   onChange: (p: Partial<DraftRow>) => void;
 }) {
+  const { Input, NativeSelect } = useUiKit();
   const { t } = useI18n();
   if (NULLARY_OPS.includes(row.op)) return <span />;
   const widget = field?.widget ?? "text";

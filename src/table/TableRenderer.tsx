@@ -11,8 +11,6 @@ import {
 import { type Column, type ColumnDef, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { ArrowDown, ArrowUp, ChevronsUpDown, Plus } from "lucide-react";
 import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
-import { Skeleton, Spinner } from "../components/ui/misc";
-import { useToast } from "../components/ui/toast";
 import { FolderEntry } from "../data-view/FolderEntry";
 import { tableSection, useI18n } from "../i18n/i18n";
 import { cn } from "../lib/utils";
@@ -22,6 +20,7 @@ import type { SchemaAction } from "../schema-editor/fieldForm";
 import type { UdcCollectionResult } from "../udc/hooks";
 import { useUdcMutate } from "../udc/hooks";
 import type { PagingMode } from "../udc/keys";
+import { useUiKit } from "../ui-kit/context";
 import {
   CellEditor,
   type CommitReason,
@@ -85,6 +84,7 @@ export interface TableRendererProps {
 type EditTarget = { rowId: string; colId: string };
 
 export function TableRenderer(props: TableRendererProps) {
+  const { Skeleton, Spinner, useToast } = useUiKit();
   const { collection, describe, data, mode, sort } = props;
   const { view, schema, capabilities } = describe;
   const { t, locale, intlLocale } = useI18n();

@@ -4,10 +4,10 @@ import type { ColumnColor, KanbanOptions, Row, SchemaDoc } from "@jsudc/core";
 import { CalendarDays } from "lucide-react";
 import type { CSSProperties, KeyboardEvent } from "react";
 import { avatarTone, initials } from "../cards/cardModel";
-import { Spinner } from "../components/ui/misc";
 import { useI18n } from "../i18n/i18n";
 import { cn } from "../lib/utils";
 import { formatDate } from "../table/cells";
+import { useUiKit } from "../ui-kit/context";
 import { isOverdue, priorityTone } from "./model";
 
 /** Literal classes, so Tailwind sees them. */
@@ -235,6 +235,7 @@ export function KanbanCard({
 
 /** A quick-added card until the server row arrives. */
 export function PendingCard({ title }: { title: string }) {
+  const { Spinner } = useUiKit();
   return (
     <div
       data-testid="kanban-pending-card"

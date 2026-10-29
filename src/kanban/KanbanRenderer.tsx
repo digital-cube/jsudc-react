@@ -30,8 +30,6 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { KanbanSquare } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Skeleton } from "../components/ui/misc";
-import { useToast } from "../components/ui/toast";
 import { useI18n } from "../i18n/i18n";
 import { AllRowsStatus } from "../renderers/AllRowsStatus";
 import type { RendererProps } from "../renderers/types";
@@ -39,6 +37,7 @@ import { EmptyState, ErrorState } from "../table/states";
 import { useUdcAllRows, useUdcCollection, useUdcMutate } from "../udc/hooks";
 import { udcKeys } from "../udc/keys";
 import { useUdcClient } from "../udc/provider";
+import { useUiKit } from "../ui-kit/context";
 import { CardDetailDialog } from "./CardDetailDialog";
 import { cardShellClass, KanbanCardBody } from "./KanbanCard";
 import {
@@ -126,6 +125,7 @@ function Board({
   onCount,
   opts,
 }: RendererProps & { opts: KanbanOptions }) {
+  const { Skeleton, useToast } = useUiKit();
   const { t } = useI18n();
   const { toast } = useToast();
   const client = useUdcClient();

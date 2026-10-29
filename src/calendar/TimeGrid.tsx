@@ -7,7 +7,6 @@ import {
   useRef,
   useState,
 } from "react";
-import { Input } from "../components/ui/input";
 import { useI18n } from "../i18n/i18n";
 import { cn } from "../lib/utils";
 import {
@@ -22,6 +21,7 @@ import {
   startOfDay,
   zonedFormat,
 } from "../time/zoned";
+import { useUiKit } from "../ui-kit/context";
 import { EventBlock } from "./EventBlock";
 import {
   type CalendarEvent,
@@ -354,6 +354,7 @@ function CreateForm({
   onSubmit: (title: string) => void;
   onCancel: () => void;
 }) {
+  const { Input } = useUiKit();
   const [title, setTitle] = useState("");
   return (
     <form

@@ -1,14 +1,7 @@
 import { ArrowLeftToLine, ArrowRightToLine, EllipsisVertical, Pencil, Trash2 } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "../components/ui/dropdown-menu";
 import { useI18n } from "../i18n/i18n";
 import { cn } from "../lib/utils";
+import { useUiKit } from "../ui-kit/context";
 import type { SchemaAction } from "./fieldForm";
 
 /**
@@ -26,6 +19,14 @@ export function ColumnHeaderMenu({
   onAction: (a: SchemaAction) => void;
   className?: string;
 }) {
+  const {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+  } = useUiKit();
   const { t } = useI18n();
   return (
     <DropdownMenu modal={false}>

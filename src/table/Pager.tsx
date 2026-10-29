@@ -1,9 +1,8 @@
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 import type { ReactNode } from "react";
-import { Button } from "../components/ui/button";
-import { Tip } from "../components/ui/tooltip";
 import { useI18n } from "../i18n/i18n";
 import { cn } from "../lib/utils";
+import { useUiKit } from "../ui-kit/context";
 
 /** Page numbers to show: first, last, and a window around the current one; `null` is a gap. */
 export function pageWindow(page: number, pages: number, radius = 1): (number | null)[] {
@@ -30,6 +29,7 @@ export function Pager({
   total: number;
   onPage: (page: number) => void;
 }) {
+  const { Button, Tip } = useUiKit();
   const { t, intlLocale } = useI18n();
   const pages = Math.max(1, Math.ceil(total / limit));
   const fmt = (n: number) => new Intl.NumberFormat(intlLocale).format(n);

@@ -1,9 +1,8 @@
 import type { Row } from "@jsudc/core";
 import { useQuery } from "@tanstack/react-query";
-import { Dialog, DialogBody, DialogContent } from "../components/ui/dialog";
-import { Skeleton } from "../components/ui/misc";
 import { useI18n } from "../i18n/i18n";
 import { useUdcClient } from "../udc/provider";
+import { useUiKit } from "../ui-kit/context";
 
 const IMAGE = /\.(png|jpe?g|gif|webp|svg)$/i;
 
@@ -25,6 +24,7 @@ export function FilePreview({
   pathField: string;
   onClose: () => void;
 }) {
+  const { Dialog, DialogBody, DialogContent, Skeleton } = useUiKit();
   const { t } = useI18n();
   const client = useUdcClient();
   const path = row ? String(row[pathField] ?? "") : "";

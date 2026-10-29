@@ -1,9 +1,9 @@
 import type { SourceInfo } from "@jsudc/core";
 import { CloudOff, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Tip } from "../components/ui/tooltip";
 import { useI18n } from "../i18n/i18n";
 import { cn } from "../lib/utils";
+import { useUiKit } from "../ui-kit/context";
 
 /** "12 s ago", "3 min ago", "pre 12 s": the age of a fetched copy. */
 export function ageText(fetchedAt: string, now: number, intlLocale: string): string {
@@ -43,6 +43,7 @@ export function Freshness({
   stale: boolean;
   source?: SourceInfo | undefined;
 }) {
+  const { Tip } = useUiKit();
   const { t, intlLocale } = useI18n();
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {

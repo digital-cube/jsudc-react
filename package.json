@@ -40,6 +40,10 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./ui": {
+      "types": "./dist/ui-kit/ui.d.ts",
+      "default": "./dist/ui.js"
+    },
     "./react-router": {
       "types": "./dist/react-router/index.d.ts",
       "default": "./dist/react-router.js"

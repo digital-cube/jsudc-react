@@ -2,14 +2,9 @@ import { AlertTriangle, CheckCircle2, Info, X } from "lucide-react";
 import { Toast as T } from "radix-ui";
 import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from "react";
 import { cn } from "../../lib/utils";
+import type { ToastInput, ToastVariant } from "../../ui-kit/types";
 
-export type ToastVariant = "info" | "success" | "warning" | "danger";
-
-export interface ToastInput {
-  title: string;
-  description?: string;
-  variant?: ToastVariant;
-}
+export type { ToastInput, ToastVariant };
 
 interface ToastItem extends ToastInput {
   id: number;

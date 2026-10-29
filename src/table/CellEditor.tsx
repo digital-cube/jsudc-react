@@ -1,7 +1,7 @@
 import type { FieldDef } from "@jsudc/core";
 import { type KeyboardEvent, useEffect, useRef, useState } from "react";
-import { Spinner } from "../components/ui/misc";
 import { cn } from "../lib/utils";
+import { useUiKit } from "../ui-kit/context";
 
 export type CommitReason = "enter" | "tab" | "shift-tab" | "blur";
 
@@ -88,6 +88,7 @@ export function CellEditor({
   onCommit: (raw: string | boolean, reason: CommitReason) => void;
   onCancel: () => void;
 }) {
+  const { Spinner } = useUiKit();
   const kind = editorKind(def);
   const [raw, setRaw] = useState<string | boolean>(() => toEditorValue(initial, kind));
   const ref = useRef<HTMLInputElement & HTMLSelectElement>(null);

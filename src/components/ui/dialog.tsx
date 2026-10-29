@@ -10,7 +10,8 @@ export const DialogClose = D.Close;
 /** A centred Radix dialog over a dimmed backdrop, with a title row and a close button. */
 export const DialogContent = forwardRef<
   HTMLDivElement,
-  ComponentProps<typeof D.Content> & { title: ReactNode; description?: ReactNode }
+  // The HTML `title` attribute is dropped: here it is the heading, any node.
+  Omit<ComponentProps<typeof D.Content>, "title"> & { title: ReactNode; description?: ReactNode }
 >(function DialogContent({ className, title, description, children, ...props }, ref) {
   return (
     <D.Portal>

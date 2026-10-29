@@ -1,10 +1,10 @@
 import { FileCode2, TriangleAlert } from "lucide-react";
-import { Skeleton } from "../components/ui/misc";
 import { useI18n } from "../i18n/i18n";
 import { formatDateTime } from "../table/cells";
 import { ErrorState } from "../table/states";
 import { useTimezone } from "../time/timezone";
 import { useUdcSource } from "../udc/hooks";
+import { useUiKit } from "../ui-kit/context";
 
 /**
  * The file a `source_yaml` collection is read from, as written: its path
@@ -13,6 +13,7 @@ import { useUdcSource } from "../udc/hooks";
  * is shown above the text.
  */
 export function SourceTab({ collection }: { collection: string }) {
+  const { Skeleton } = useUiKit();
   const { t, intlLocale } = useI18n();
   const { timeZone } = useTimezone();
   const source = useUdcSource(collection);

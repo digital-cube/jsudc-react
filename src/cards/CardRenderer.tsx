@@ -1,6 +1,5 @@
 import type { ColumnColor, DescribeResponse, Row } from "@jsudc/core";
 import { useEffect, useMemo, useRef } from "react";
-import { Skeleton, Spinner } from "../components/ui/misc";
 import { FolderEntry } from "../data-view/FolderEntry";
 import { tableSection, useI18n } from "../i18n/i18n";
 import { cn } from "../lib/utils";
@@ -14,6 +13,7 @@ import { useInfiniteSentinel } from "../table/useInfiniteSentinel";
 import { useTimezone } from "../time/timezone";
 import type { UdcCollectionResult } from "../udc/hooks";
 import type { PagingMode } from "../udc/keys";
+import { useUiKit } from "../ui-kit/context";
 import {
   avatarTone,
   CARD_MIN_WIDTH,
@@ -67,6 +67,7 @@ export interface CardRendererProps {
  * data, paging and states as the table; read-only in phase 1.
  */
 export function CardRenderer(props: CardRendererProps) {
+  const { Spinner } = useUiKit();
   const { collection, describe, data, mode } = props;
   const { view } = describe;
   const { t, intlLocale } = useI18n();
@@ -334,6 +335,7 @@ function Card({
 }
 
 function SkeletonCard({ meta, seed }: { meta: number; seed: number }) {
+  const { Skeleton } = useUiKit();
   return (
     <div
       data-testid="skeleton-card"

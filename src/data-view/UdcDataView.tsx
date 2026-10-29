@@ -4,9 +4,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { ChartWindowControl } from "../chart/ChartWindowControl";
 import { useChartWindow } from "../chart/useChartWindow";
 import { andWindow } from "../chart/window";
-import { Button } from "../components/ui/button";
-import { Skeleton } from "../components/ui/misc";
-import { Segmented } from "../components/ui/segmented";
 import { schemaLabelTerms, tableSection, useI18n } from "../i18n/i18n";
 import { humanize } from "../lib/utils";
 import { rendererEntry, rendererTabs } from "../renderers/registry";
@@ -15,6 +12,7 @@ import { useSchemaEditor } from "../schema-editor/useSchemaEditor";
 import { ErrorState } from "../table/states";
 import { useUdcCollection, useUdcDescribe } from "../udc/hooks";
 import type { PagingMode } from "../udc/keys";
+import { useUiKit } from "../ui-kit/context";
 import { composeFilter } from "./compose";
 import { DocTab } from "./DocTab";
 import { FilePreview } from "./FilePreview";
@@ -35,6 +33,7 @@ import { DOC_TAB, SOURCE_TAB, useDataViewState } from "./useDataViewState";
  * in the URL (see `useDataViewState`).
  */
 export function UdcDataView({ collection }: { collection: string }) {
+  const { Button, Segmented, Skeleton } = useUiKit();
   const { t, tMaybe, locale, intlLocale, setSectionTerms } = useI18n();
   const describe = useUdcDescribe(collection);
   // Soft-deleted fields leave the chips, search, cards and any sort or filter in the URL.

@@ -28,9 +28,6 @@ import {
   useRef,
   useState,
 } from "react";
-import { Button } from "../components/ui/button";
-import { Skeleton, Spinner } from "../components/ui/misc";
-import { useToast } from "../components/ui/toast";
 import { useI18n } from "../i18n/i18n";
 import { CardDetailDialog } from "../kanban/CardDetailDialog";
 import { AllRowsStatus } from "../renderers/AllRowsStatus";
@@ -39,6 +36,7 @@ import { EmptyState, ErrorState } from "../table/states";
 import { useUdcAllRows, useUdcCollection, useUdcMutate } from "../udc/hooks";
 import { udcKeys } from "../udc/keys";
 import { useUdcClient } from "../udc/provider";
+import { useUiKit } from "../ui-kit/context";
 import { type TreeExpand, useTreeExpand } from "./expand";
 import {
   type BuiltTree,
@@ -150,6 +148,7 @@ function Tree({
   onCount,
   opts,
 }: RendererProps & { opts: TreeOptions }) {
+  const { Button, Skeleton, useToast } = useUiKit();
   const { t } = useI18n();
   const { toast } = useToast();
   const client = useUdcClient();
@@ -533,6 +532,7 @@ export function NodeList({ rows, depth }: { rows: readonly Row[]; depth: number 
 
 /** One level of a lazy tree, read when its parent opens. */
 export function LazyChildren({ parent, depth }: { parent: string; depth: number }) {
+  const { Spinner } = useUiKit();
   const { t } = useI18n();
   const ctx = useTree();
   const { opts, collection, moved, report, dataFilter } = ctx;

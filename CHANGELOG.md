@@ -21,6 +21,18 @@ All notable changes to `@jsudc/react` are recorded here. The format follows
 - The calendar's updates read the adapter's current query string instead of
   `window.location.search`, so they also step correctly under a
   `MemoryRouter`. Which keys are written, and replace vs push, are unchanged.
+- **The UI primitives moved to `@jsudc/react/ui`.** The package root no longer
+  re-exports `Button`, `Checkbox`, `Dialog*`, `DropdownMenu*`, `Input`,
+  `inputClass`, `NativeSelect`, `Kbd`, `Skeleton`, `Spinner`, `Popover*`,
+  `Segmented`, `Select`, `Toaster`, `useToast`, `Tip` and `TooltipProvider`;
+  import them from `@jsudc/react/ui` (same names, same components). A host
+  that only mounts `Toaster` and `TooltipProvider` changes that one import.
+  The `SegmentedOption`, `SelectOption`, `ToastInput` and `ToastVariant`
+  types stay on the root as well.
+- The renderers take their primitives from a `UiKit` in context instead of
+  importing them. With no kit given nothing changes: the default kit is the
+  same Radix + Tailwind components. `DialogContent`'s `title` is typed
+  `ReactNode` now; Radix's HTML `title` attribute had narrowed it to `string`.
 
 ### Added
 
@@ -31,6 +43,21 @@ All notable changes to `@jsudc/react` are recorded here. The format follows
   `UdcReactRouterUrlState`.
 - README: a "URL state" section — the default, the react-router adapter,
   writing one for Next.js or TanStack Router.
+- The UI kit contract: `UiKit` (one entry per primitive the renderers draw,
+  typed by the props they pass) and its props types, `UdcUiProvider kit={…}`
+  and `useUiKit()`, from the package root. `UdcProvider` takes an optional
+  `kit` and mounts `UdcUiProvider` with it.
+- The `@jsudc/react/ui` subpath (`dist/ui.js`): `defaultUiKit` and the
+  primitives it is built from.
+- README: "Bring your own primitives" — the interface, the provider, and the
+  test suite's plain-HTML stub kit as the smallest example.
+
+### Follow-up
+
+- `radix-ui` is still a required peer: the default kit is the fallback when no
+  kit is given, so the root entry reaches it through `UdcProvider` and
+  `useUiKit()`. Making it an optional peer (a host on its own kit installs no
+  Radix) is a later change.
 
 ## [0.1.1] - 2026-10-29
 

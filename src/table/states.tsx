@@ -1,7 +1,7 @@
 import { AlertTriangle, RotateCw, SearchX, Table2 } from "lucide-react";
 import type { ReactNode } from "react";
-import { Button } from "../components/ui/button";
 import { useI18n } from "../i18n/i18n";
+import { useUiKit } from "../ui-kit/context";
 
 function Panel({
   icon,
@@ -46,6 +46,7 @@ export function EmptyState({
   onClear: () => void;
   body?: string | undefined;
 }) {
+  const { Button } = useUiKit();
   const { t } = useI18n();
   return filtered ? (
     <Panel
@@ -70,6 +71,7 @@ export function EmptyState({
 }
 
 export function ErrorState({ error, onRetry }: { error: Error; onRetry: () => void }) {
+  const { Button } = useUiKit();
   const { t } = useI18n();
   return (
     <Panel

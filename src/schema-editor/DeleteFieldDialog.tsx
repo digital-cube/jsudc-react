@@ -1,11 +1,9 @@
 import { isUdcError } from "@jsudc/core";
 import { AlertTriangle, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { Button } from "../components/ui/button";
-import { DialogBody, DialogContent, DialogFooter } from "../components/ui/dialog";
-import { Spinner } from "../components/ui/misc";
 import { useI18n } from "../i18n/i18n";
 import { useUdcSchema } from "../udc/hooks";
+import { useUiKit } from "../ui-kit/context";
 
 /** Confirms a soft delete: the column goes, the data stays. */
 export function DeleteFieldDialog({
@@ -21,6 +19,7 @@ export function DeleteFieldDialog({
   onDeleted: () => void;
   onCancel: () => void;
 }) {
+  const { Button, DialogBody, DialogContent, DialogFooter, Spinner } = useUiKit();
   const { t } = useI18n();
   const { softDeleteField } = useUdcSchema(collection);
   const [error, setError] = useState<string | null>(null);

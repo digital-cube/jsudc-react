@@ -1,9 +1,9 @@
 import type { CalendarOptions } from "@jsudc/core";
 import { useState } from "react";
-import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover";
 import { useI18n } from "../i18n/i18n";
 import { cn } from "../lib/utils";
 import { type CivilDay, dayKey, formatDay, formatTime, sameDay } from "../time/zoned";
+import { useUiKit } from "../ui-kit/context";
 import { eventTint } from "./EventBlock";
 import { type CalendarEvent, type CalendarWindow, eventsOnDay } from "./model";
 
@@ -35,6 +35,7 @@ export function MonthGrid({
   onOpen: (ev: CalendarEvent, el: HTMLElement) => void;
   onDay: (day: CivilDay) => void;
 }) {
+  const { Popover, PopoverContent, PopoverTrigger } = useUiKit();
   const { t, intlLocale } = useI18n();
   const [over, setOver] = useState<string | null>(null);
   const weekdays = win.days.slice(0, 7);

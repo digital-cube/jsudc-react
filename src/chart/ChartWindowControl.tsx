@@ -1,10 +1,8 @@
 import { parseWindowPreset } from "@jsudc/core";
 import { X } from "lucide-react";
-import { Button } from "../components/ui/button";
-import { inputClass } from "../components/ui/input";
-import { Segmented } from "../components/ui/segmented";
+import { useId } from "react";
 import { useI18n } from "../i18n/i18n";
-import { cn } from "../lib/utils";
+import { useUiKit } from "../ui-kit/context";
 import type { ChartWindowState } from "./useChartWindow";
 import { wallOf } from "./window";
 
@@ -29,7 +27,9 @@ export function ChartWindowControl({
   win: ChartWindowState;
   clearable: boolean;
 }) {
+  const { Button, Input, Segmented } = useUiKit();
   const { t } = useI18n();
+  const id = useId();
   const { cfg, sel, range, timeZone } = win;
   const value = sel.kind === "custom" ? CUSTOM : sel.preset;
   const options = [
@@ -68,23 +68,25 @@ export function ChartWindowControl({
       />
       {sel.kind === "custom" ? (
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <label className="flex items-center gap-1">
+          <label htmlFor={`${id}-from`} className="flex items-center gap-1">
             {t("APP", "CHART_FROM")}
-            <input
+            <Input
+              id={`${id}-from`}
               type="datetime-local"
               data-testid="chart-from"
-              className={cn(inputClass, "h-8 w-auto px-2 text-xs")}
+              className="h-8 w-auto px-2 text-xs"
               value={sel.from ?? ""}
               max={sel.to ?? undefined}
               onChange={(e) => win.setSel({ ...sel, from: e.target.value || null })}
             />
           </label>
-          <label className="flex items-center gap-1">
+          <label htmlFor={`${id}-to`} className="flex items-center gap-1">
             {t("APP", "CHART_TO")}
-            <input
+            <Input
+              id={`${id}-to`}
               type="datetime-local"
               data-testid="chart-to"
-              className={cn(inputClass, "h-8 w-auto px-2 text-xs")}
+              className="h-8 w-auto px-2 text-xs"
               value={sel.to ?? ""}
               min={sel.from ?? undefined}
               onChange={(e) => win.setSel({ ...sel, to: e.target.value || null })}

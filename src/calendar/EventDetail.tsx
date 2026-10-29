@@ -1,12 +1,11 @@
 import type { CalendarOptions, DescribeResponse } from "@jsudc/core";
 import { Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { Button } from "../components/ui/button";
-import { Popover, PopoverAnchor, PopoverContent } from "../components/ui/popover";
 import { tableSection, useI18n } from "../i18n/i18n";
 import { CellEditor, editorKind, fromEditorValue, sameValue } from "../table/CellEditor";
 import { CellValue } from "../table/cells";
 import { formatDay, formatTime, zonedParts } from "../time/zoned";
+import { useUiKit } from "../ui-kit/context";
 import { eventTint } from "./EventBlock";
 import type { CalendarEvent } from "./model";
 
@@ -39,6 +38,7 @@ export function EventDetail({
   onSave: (field: string, value: unknown) => Promise<void>;
   onDelete: () => Promise<void>;
 }) {
+  const { Button, Popover, PopoverAnchor, PopoverContent } = useUiKit();
   const { t, locale, intlLocale } = useI18n();
   const { schema, view } = describe;
   const section = tableSection(collection);

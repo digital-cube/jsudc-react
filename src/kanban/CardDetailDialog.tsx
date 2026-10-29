@@ -1,7 +1,7 @@
 import type { DescribeResponse, Row } from "@jsudc/core";
-import { Dialog, DialogBody, DialogContent } from "../components/ui/dialog";
 import { tableSection, useI18n } from "../i18n/i18n";
 import { CellValue } from "../table/cells";
+import { useUiKit } from "../ui-kit/context";
 
 /**
  * A card, read-only: its title and body, then every live field as the table
@@ -28,6 +28,7 @@ export function CardDetailDialog({
   bodyField?: string | undefined;
   testId?: string;
 }) {
+  const { Dialog, DialogBody, DialogContent } = useUiKit();
   const { t, locale, intlLocale } = useI18n();
   const { schema, view } = describe;
   const section = tableSection(collection);

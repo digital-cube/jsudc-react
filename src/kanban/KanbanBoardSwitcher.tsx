@@ -1,7 +1,6 @@
 import type { DescribeResponse } from "@jsudc/core";
-import { Skeleton } from "../components/ui/misc";
-import { Select } from "../components/ui/select";
 import { useI18n } from "../i18n/i18n";
+import { useUiKit } from "../ui-kit/context";
 import { useKanbanBoard } from "./useKanbanBoard";
 
 /** The board select in the toolbar; writes `?board=`. */
@@ -11,6 +10,7 @@ export function KanbanBoardSwitcher({
   collection: string;
   describe: DescribeResponse;
 }) {
+  const { Select, Skeleton } = useUiKit();
   const { t } = useI18n();
   const { boards, boardId, setBoard, isLoading } = useKanbanBoard(describe);
   if (isLoading) return <Skeleton className="h-8 w-44" />;

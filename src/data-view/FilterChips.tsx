@@ -1,12 +1,9 @@
 import type { FilterChipConfig } from "@jsudc/core";
 import { Check, ChevronDown, PlusCircle, X } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
-import { Button } from "../components/ui/button";
-import { Checkbox } from "../components/ui/checkbox";
-import { Input } from "../components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover";
 import { useI18n } from "../i18n/i18n";
 import { cn, humanize } from "../lib/utils";
+import { useUiKit } from "../ui-kit/context";
 import { type ChipState, type ChipValue, isEmptyChip } from "./urlState";
 
 type Label = (cfg: FilterChipConfig) => string;
@@ -80,6 +77,7 @@ function ChipTrigger({
   summary: string | null;
   onClear: () => void;
 }) {
+  const { PopoverTrigger } = useUiKit();
   const { t } = useI18n();
   const active = summary !== null;
   return (
@@ -152,6 +150,7 @@ function SelectChip({
   onChange: (values: string[]) => void;
   onClear: () => void;
 }) {
+  const { Button, Checkbox, Input, Popover, PopoverContent } = useUiKit();
   const { t } = useI18n();
   const [needle, setNeedle] = useState("");
   const selected = value?.values ?? [];
@@ -221,6 +220,7 @@ function RangeChip({
   onChange: (min: number | null, max: number | null) => void;
   onClear: () => void;
 }) {
+  const { Button, Input, Popover, PopoverContent } = useUiKit();
   const { t, intlLocale } = useI18n();
   const [open, setOpen] = useState(false);
   const [lo, setLo] = useState("");
@@ -320,6 +320,7 @@ function BoolChip({
   onChange: (v: boolean | null) => void;
   onClear: () => void;
 }) {
+  const { Popover, PopoverContent } = useUiKit();
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const current = value === undefined ? null : value.value;

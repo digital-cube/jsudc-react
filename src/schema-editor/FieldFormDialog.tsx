@@ -1,14 +1,10 @@
 import { type FieldType, isUdcError, type SchemaDoc, type SchemaPosition } from "@jsudc/core";
 import { AlertTriangle, Lock } from "lucide-react";
 import { type FormEvent, type ReactNode, useId, useState } from "react";
-import { Button } from "../components/ui/button";
-import { Checkbox } from "../components/ui/checkbox";
-import { DialogBody, DialogContent, DialogFooter } from "../components/ui/dialog";
-import { Input, NativeSelect } from "../components/ui/input";
-import { Spinner } from "../components/ui/misc";
 import { useI18n } from "../i18n/i18n";
 import { cn } from "../lib/utils";
 import { useUdcSchema } from "../udc/hooks";
+import { useUiKit } from "../ui-kit/context";
 import {
   type DraftErrors,
   draftFromDef,
@@ -48,6 +44,8 @@ export function FieldFormDialog({
   onSaved: (name: string, label: string) => void;
   onCancel: () => void;
 }) {
+  const { Button, DialogBody, DialogContent, DialogFooter, Input, NativeSelect, Spinner } =
+    useUiKit();
   const { t, locale } = useI18n();
   const id = useId();
   const { addField, updateField } = useUdcSchema(collection);
@@ -372,6 +370,7 @@ function Toggle({
   label: string;
   hint: string;
 }) {
+  const { Checkbox } = useUiKit();
   return (
     <div className="flex items-start gap-2.5">
       <Checkbox

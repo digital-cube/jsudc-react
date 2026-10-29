@@ -1,11 +1,9 @@
 import { Check, ChevronDown } from "lucide-react";
 import { Select as S } from "radix-ui";
 import { cn } from "../../lib/utils";
+import type { SelectOption } from "../../ui-kit/types";
 
-export interface SelectOption {
-  value: string;
-  label: string;
-}
+export type { SelectOption };
 
 /** A Radix select with the input look. `value` must not be "" (Radix reserves it). */
 export function Select({
