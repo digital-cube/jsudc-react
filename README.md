@@ -131,8 +131,12 @@ table.
 | `@jsudc/react/all`            | `RENDERERS` and every `…Renderer` definition                  | all of the above                                                |
 | `@jsudc/react/headless`       | hooks and models, no markup (below)                           | none: `react`, `@tanstack/react-query`, `@jsudc/core` only      |
 
-Importing a subpath whose peer is not installed fails at that import with the
-bundler's "could not resolve `leaflet`" error, and nowhere else.
+A subpath whose peer is not installed fails at that import and nowhere else:
+Node stops with `ERR_MODULE_NOT_FOUND` for `leaflet`; Vite, which knows the
+peer is optional, builds and the import throws
+`Could not resolve "leaflet/dist/leaflet.css" imported by "@jsudc/react". Is it installed?`
+when the module loads. The root, `/table`, `/cards`, `/calendar` and
+`/headless` load without it.
 
 ## Headless
 
