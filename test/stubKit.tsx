@@ -19,6 +19,9 @@ import type { ToastInput, UiKit, UiTriggerProps } from "../src";
 
 const stub = (name: string) => ({ "data-kit": "stub", "data-stub": name });
 
+// Plain HTML, but what floats has to sit above the table's sticky header.
+const floating = { position: "absolute", zIndex: 50, background: "white" } as const;
+
 interface Open {
   open: boolean;
   setOpen: (open: boolean) => void;
@@ -157,6 +160,7 @@ export const stubKit: UiKit = {
       <dialog
         open
         aria-modal
+        style={floating}
         {...stub("DialogContent")}
         {...props}
         onKeyDown={(e) => {
@@ -185,7 +189,7 @@ export const stubKit: UiKit = {
   },
   DropdownMenuContent: function DropdownMenuContent({ align: _align, ...props }) {
     return useContext(MenuCtx).open ? (
-      <div role="menu" {...stub("DropdownMenuContent")} {...props} />
+      <div role="menu" style={floating} {...stub("DropdownMenuContent")} {...props} />
     ) : null;
   },
   DropdownMenuItem: function DropdownMenuItem({ tone, onSelect, ...props }) {
@@ -229,6 +233,7 @@ export const stubKit: UiKit = {
     return (
       <dialog
         open
+        style={floating}
         {...stub("PopoverContent")}
         {...props}
         onKeyDown={(e) => e.key === "Escape" && setOpen(false)}
