@@ -2,7 +2,6 @@ import {
   type CalendarOptions,
   type CalendarPreset,
   type FilterNode,
-  isCalendarPreset,
   isCondition,
   isVersionConflict,
   type SchemaDoc,
@@ -15,18 +14,9 @@ import { AllRowsStatus } from "../renderers/AllRowsStatus";
 import type { RendererProps } from "../renderers/types";
 import { EmptyState, ErrorState } from "../table/states";
 import { useTimezone } from "../time/timezone";
-import {
-  type CivilDay,
-  dayKey,
-  dayOf,
-  offsetLabel,
-  offsetMinutes,
-  parseDayKey,
-  zoneCity,
-} from "../time/zoned";
+import { dayKey, dayOf, offsetLabel, offsetMinutes, zoneCity } from "../time/zoned";
 import { useUdcAllRows, useUdcMutate } from "../udc/hooks";
 import { useUiKit } from "../ui-kit/context";
-import { useUrlSearchParams } from "../url-state/UrlState";
 import { EventDetail } from "./EventDetail";
 import { MonthGrid } from "./MonthGrid";
 import {
@@ -36,49 +26,13 @@ import {
   movePatch,
   moveToDay,
   newEventRow,
-  stepAnchor,
   toEvents,
   windowBetween,
   windowFilter,
   windowLabel,
 } from "./model";
 import { TimeGrid } from "./TimeGrid";
-
-export const PRESET_PARAM = "preset";
-export const DATE_PARAM = "date";
-
-/** `?preset=&date=`: what the calendar shows. The zone is a preference, not URL state. */
-function useCalendarUrl(opts: CalendarOptions, today: CivilDay) {
-  const [params, setParams] = useUrlSearchParams();
-  const presetOf = (p: URLSearchParams): CalendarPreset => {
-    const raw = p.get(PRESET_PARAM);
-    return isCalendarPreset(raw) && opts.available_presets.includes(raw)
-      ? raw
-      : opts.default_preset;
-  };
-  const anchorOf = (p: URLSearchParams) => parseDayKey(p.get(DATE_PARAM)) ?? today;
-  // Every change starts from the address bar as it is now (the updater's argument), not as
-  // the last render saw it: navigations render in a transition, so two quick clicks would
-  // both step from the same day.
-  const update = (edit: (p: URLSearchParams) => Record<string, string>) =>
-    setParams(
-      (now) => {
-        const next = new URLSearchParams(now);
-        for (const [k, v] of Object.entries(edit(now))) next.set(k, v);
-        return next;
-      },
-      { replace: true },
-    );
-  return {
-    preset: presetOf(params),
-    anchor: anchorOf(params),
-    setPreset: (p: CalendarPreset) => update(() => ({ [PRESET_PARAM]: p })),
-    setAnchor: (d: CivilDay) => update(() => ({ [DATE_PARAM]: dayKey(d) })),
-    step: (dir: 1 | -1) =>
-      update((p) => ({ [DATE_PARAM]: dayKey(stepAnchor(presetOf(p), anchorOf(p), dir)) })),
-    openDay: (d: CivilDay) => update(() => ({ [PRESET_PARAM]: "day", [DATE_PARAM]: dayKey(d) })),
-  };
-}
+import { useCalendarUrl } from "./useCalendarUrl";
 
 /** The clock, a tick a minute: the now line and "today". */
 function useNow(everyMs = 60_000): number {

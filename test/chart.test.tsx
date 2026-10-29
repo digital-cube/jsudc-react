@@ -9,6 +9,7 @@ import {
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, useLocation } from "react-router";
 import { describe, expect, it } from "vitest";
+import { RENDERERS } from "../src/all";
 import { ChartView } from "../src/chart/ChartRenderer";
 import {
   axisFrames,
@@ -51,7 +52,7 @@ const win = (block: Record<string, unknown> = {}) =>
 
 describe("the registry", () => {
   it("has the chart tab: no paging, no edit mode", () => {
-    expect(rendererEntry("chart")).toMatchObject({
+    expect(rendererEntry(RENDERERS, "chart")).toMatchObject({
       labelKey: "TAB_CHART",
       paging: false,
       editMode: false,

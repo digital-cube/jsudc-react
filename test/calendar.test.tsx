@@ -11,6 +11,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
+import { RENDERERS } from "../src/all";
 import { CalendarRenderer, prefillFromFilter } from "../src/calendar/CalendarRenderer";
 import {
   canCreate,
@@ -404,7 +405,7 @@ describe("CalendarRenderer", () => {
     render(
       <UdcI18nProvider>
         <TimezoneProvider>
-          <UdcProvider client={client}>
+          <UdcProvider client={client} renderers={RENDERERS}>
             <QueryClientProvider client={createUdcQueryClient()}>
               <TooltipProvider>
                 <Toaster>
@@ -424,7 +425,7 @@ describe("CalendarRenderer", () => {
   }
 
   it("is registered without paging", () => {
-    expect(rendererEntry("calendar")).toMatchObject({ paging: false, editMode: false });
+    expect(rendererEntry(RENDERERS, "calendar")).toMatchObject({ paging: false, editMode: false });
   });
 
   it("asks for the work week of ?date= in the zone and draws the event there", async () => {

@@ -1,6 +1,6 @@
 import { FileCode2, TriangleAlert } from "lucide-react";
 import { useI18n } from "../i18n/i18n";
-import { formatDateTime } from "../table/cells";
+import { formatDateTime } from "../table/format";
 import { ErrorState } from "../table/states";
 import { useTimezone } from "../time/timezone";
 import { useUdcSource } from "../udc/hooks";

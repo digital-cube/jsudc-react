@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { RENDERERS } from "../src/all";
 import { UdcDataView } from "../src/data-view/UdcDataView";
 import { UdcI18nProvider } from "../src/i18n/i18n";
 import { createUdcQueryClient, UdcProvider } from "../src/udc/provider";
@@ -84,7 +85,7 @@ function mountView(
   const client = new UdcClient({ httpUrl: "http://api", fetch: mock.fetch });
   render(
     <UdcI18nProvider>
-      <UdcProvider client={client} kit={stubKit}>
+      <UdcProvider client={client} kit={stubKit} renderers={RENDERERS}>
         <QueryClientProvider client={createUdcQueryClient()}>
           <stubKit.TooltipProvider>
             <stubKit.Toaster>

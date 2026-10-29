@@ -16,5 +16,5 @@ globalThis.IntersectionObserver ??= NoopObserver as unknown as typeof Intersecti
 
 afterEach(() => {
   cleanup();
-  localStorage.clear();
+  globalThis.localStorage?.clear();
 });

@@ -6,7 +6,7 @@ import type { CSSProperties, KeyboardEvent } from "react";
 import { avatarTone, initials } from "../cards/cardModel";
 import { useI18n } from "../i18n/i18n";
 import { cn } from "../lib/utils";
-import { formatDate } from "../table/cells";
+import { formatDate } from "../table/format";
 import { useUiKit } from "../ui-kit/context";
 import { isOverdue, priorityTone } from "./model";
 

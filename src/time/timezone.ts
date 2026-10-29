@@ -1,5 +1,13 @@
-import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from "react";
-import { storage } from "../lib/utils";
+import {
+  createContext,
+  createElement,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from "react";
+import { storage } from "../lib/storage";
 import { browserZone, isValidZone } from "./zoned";
 
 /** The zone this browser shows instants in: a preference, not URL state. */
@@ -69,7 +77,7 @@ export function TimezoneProvider({ children }: { children: ReactNode }) {
     }),
     [choice, browser, setTimeZone, pickerOpen],
   );
-  return <TimezoneContext.Provider value={value}>{children}</TimezoneContext.Provider>;
+  return createElement(TimezoneContext.Provider, { value }, children);
 }
 
 /**

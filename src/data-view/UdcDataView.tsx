@@ -6,10 +6,11 @@ import { useChartWindow } from "../chart/useChartWindow";
 import { andWindow } from "../chart/window";
 import { schemaLabelTerms, tableSection, useI18n } from "../i18n/i18n";
 import { cn, humanize } from "../lib/utils";
+import { useRendererRegistry } from "../renderers/context";
 import { rendererEntry, rendererTabs } from "../renderers/registry";
-import type { FolderNav, RendererCount } from "../renderers/types";
+import type { FolderNav, RendererCount, RendererRegistry } from "../renderers/types";
 import { useSchemaEditor } from "../schema-editor/useSchemaEditor";
-import { ErrorState } from "../table/states";
+import { ErrorState, NoRendererState } from "../table/states";
 import { useUdcCollection, useUdcDescribe } from "../udc/hooks";
 import type { PagingMode } from "../udc/keys";
 import { useUiKit } from "../ui-kit/context";
@@ -32,7 +33,15 @@ import { DOC_TAB, SOURCE_TAB, useDataViewState } from "./useDataViewState";
  * renderer tabs) over the active renderer. Everything the user picks lives
  * in the URL (see `useDataViewState`).
  */
-export function UdcDataView({ collection }: { collection: string }) {
+export interface UdcDataViewProps {
+  collection: string;
+  /** The renderers this view draws its tabs with; the provider's registry when absent. */
+  renderers?: RendererRegistry;
+}
+
+export function UdcDataView({ collection, renderers }: UdcDataViewProps) {
+  const provided = useRendererRegistry();
+  const registry = renderers ?? provided;
   const { Button, Segmented, Skeleton } = useUiKit();
   const { t, tMaybe, locale, intlLocale, setSectionTerms } = useI18n();
   const describe = useUdcDescribe(collection);
@@ -47,7 +56,11 @@ export function UdcDataView({ collection }: { collection: string }) {
   const docs: Partial<Record<string, string>> | undefined = live?.docs;
   const docText = docs?.[locale] ?? docs?.en;
   const hasSource = live?.capabilities.source_yaml === true;
-  const state = useDataViewState(collection, view, { doc: Boolean(docText), source: hasSource });
+  const state = useDataViewState(collection, view, {
+    doc: Boolean(docText),
+    source: hasSource,
+    renderers: registry,
+  });
   // The README and the source file are pages of their own: no rows, no toolbar.
   const onSource = state.tab === SOURCE_TAB;
   const onDoc = state.tab === DOC_TAB;
@@ -129,7 +142,7 @@ export function UdcDataView({ collection }: { collection: string }) {
     [userBaseFilter, windowCond],
   );
 
-  const entry = onPage ? undefined : rendererEntry(state.tab);
+  const entry = onPage ? undefined : rendererEntry(registry, state.tab);
   const paging = !onPage && (entry?.paging ?? true);
   // A renderer without paging loads its own rows; the count it reports replaces the list's.
   const [ownCount, setOwnCount] = useState<RendererCount | null>(null);
@@ -177,7 +190,7 @@ export function UdcDataView({ collection }: { collection: string }) {
   const tabs = view
     ? [
         ...(docText ? [{ name: DOC_TAB, entry: undefined, doc: true }] : []),
-        ...rendererTabs(view.available_renderers).map((tab) => ({ ...tab, doc: false })),
+        ...rendererTabs(registry, view.available_renderers).map((tab) => ({ ...tab, doc: false })),
         ...(hasSource ? [{ name: SOURCE_TAB, entry: undefined, doc: true }] : []),
       ]
     : [];
@@ -405,6 +418,8 @@ export function UdcDataView({ collection }: { collection: string }) {
             onCount={setOwnCount}
             folder={folderNav}
           />
+        ) : live ? (
+          <NoRendererState name={state.tab} />
         ) : (
           <div className="udc:flex udc:flex-col udc:gap-3 udc:p-4">
             {Array.from({ length: 10 }, (_, i) => (

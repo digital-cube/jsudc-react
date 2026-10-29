@@ -96,3 +96,19 @@ export function ErrorState({ error, onRetry }: { error: Error; onRetry: () => vo
     />
   );
 }
+
+/**
+ * A tab whose renderer the host did not register: the registry is explicit
+ * (`UdcProvider renderers={…}`), so this is a setup error, not missing data.
+ */
+export function NoRendererState({ name }: { name: string }) {
+  const { t } = useI18n();
+  return (
+    <Panel
+      testId="no-renderer"
+      icon={<Table2 className="udc:size-5" />}
+      title={t("APP", "NO_RENDERER_TITLE", { name })}
+      body={t("APP", "NO_RENDERER_BODY")}
+    />
+  );
+}

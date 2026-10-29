@@ -1,49 +1,33 @@
-import { isUdcError } from "@jsudc/core";
 import type { UdcClient } from "@jsudc/core/client";
-import { QueryClient } from "@tanstack/react-query";
-import { createContext, type ReactNode, useContext } from "react";
+import type { ReactNode } from "react";
+import { UdcRenderersProvider } from "../renderers/context";
+import type { RendererRegistry } from "../renderers/types";
 import { UdcUiProvider } from "../ui-kit/context";
 import type { UiKit } from "../ui-kit/types";
+import { UdcClientContext } from "./client";
 
-const UdcClientContext = createContext<UdcClient | null>(null);
+export { createUdcQueryClient, shouldRetry, useUdcClient } from "./client";
 
 /**
- * The root provider: the client, and optionally the UI kit the renderers draw
- * with. Without `kit` the kit in effect is kept (an outer `UdcUiProvider`'s,
- * else `defaultUiKit`), so a host on the default kit changes nothing.
+ * The root provider: the client, the renderers `UdcDataView` draws its tabs
+ * with, and optionally the UI kit they draw with. Without `kit` the kit in
+ * effect is kept (an outer `UdcUiProvider`'s, else `defaultUiKit`); without
+ * `renderers` the outer `UdcRenderersProvider`'s registry is kept (else none:
+ * every tab says no renderer is registered).
  */
 export function UdcProvider({
   client,
   kit,
+  renderers,
   children,
 }: {
   client: UdcClient;
   kit?: UiKit;
+  /** `createRendererRegistry(tableRenderer, …)`, or `RENDERERS` from `@jsudc/react/all`. */
+  renderers?: RendererRegistry;
   children: ReactNode;
 }) {
-  const inner = <UdcClientContext.Provider value={client}>{children}</UdcClientContext.Provider>;
+  let inner = <UdcClientContext.Provider value={client}>{children}</UdcClientContext.Provider>;
+  if (renderers) inner = <UdcRenderersProvider renderers={renderers}>{inner}</UdcRenderersProvider>;
   return kit ? <UdcUiProvider kit={kit}>{inner}</UdcUiProvider> : inner;
-}
-
-export function useUdcClient(): UdcClient {
-  const client = useContext(UdcClientContext);
-  if (!client) throw new Error("useUdcClient needs a <UdcProvider client={...}> above it");
-  return client;
-}
-
-/**
- * A protocol error is the server's answer, not a hiccup: asking again gives
- * the same answer. Only transport failures are retried, twice.
- */
-export function shouldRetry(failureCount: number, error: unknown): boolean {
-  return !isUdcError(error) && failureCount < 2;
-}
-
-export function createUdcQueryClient(): QueryClient {
-  return new QueryClient({
-    defaultOptions: {
-      queries: { retry: shouldRetry, refetchOnWindowFocus: false },
-      mutations: { retry: false },
-    },
-  });
 }

@@ -1,5 +1,6 @@
 import {
   createContext,
+  createElement,
   type ReactNode,
   useCallback,
   useContext,
@@ -17,7 +18,7 @@ export interface UdcUrlStateProviderProps {
 
 /** Route the data view's URL state through `adapter`; without it, `windowLocationAdapter`. */
 export function UdcUrlStateProvider({ adapter, children }: UdcUrlStateProviderProps) {
-  return <UrlStateContext.Provider value={adapter}>{children}</UrlStateContext.Provider>;
+  return createElement(UrlStateContext.Provider, { value: adapter }, children);
 }
 
 /** The adapter in effect: the nearest provider's, else `windowLocationAdapter`. */
