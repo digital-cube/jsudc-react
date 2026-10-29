@@ -1,6 +1,6 @@
 {
   "name": "@jsudc/react",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": false,
   "type": "module",
   "description": "React components for UDC collections: the data view with its table, cards, kanban, calendar, tree, map and chart renderers, the schema editor, the hooks over @jsudc/core's client, i18n, theme and a compiled stylesheet.",
@@ -8,6 +8,8 @@
     "udc",
     "jsudc",
     "universal-data-collection",
+    "universal-data-collections",
+    "data-grid",
     "react",
     "data-table",
     "kanban",
@@ -17,9 +19,14 @@
   ],
   "license": "MIT",
   "author": "DigitalCube",
-  "repository": "github:digital-cube/jsudc-react",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/digital-cube/jsudc-react.git"
+  },
   "homepage": "https://github.com/digital-cube/jsudc-react#readme",
-  "bugs": "https://github.com/digital-cube/jsudc-react/issues",
+  "bugs": {
+    "url": "https://github.com/digital-cube/jsudc-react/issues"
+  },
   "engines": {
     "node": ">=24"
   },
@@ -42,6 +49,9 @@
     "README.md",
     "LICENSE"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "vite build && tsc -p tsconfig.build.json && npm run build:css",
     "build:css": "tailwindcss -i src/styles.css -o dist/styles.css --minify && node -e \"require('node:fs').copyFileSync('src/tokens.css', 'dist/tokens.css')\"",
@@ -52,7 +62,6 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@jsudc/core": "github:digital-cube/jsudc-core#v0.1.0",
     "clsx": "^2.1.1",
     "marked": "^18.1.2",
     "tailwind-merge": "^3.7.0"
@@ -61,6 +70,7 @@
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
+    "@jsudc/core": "^0.1.1",
     "@tanstack/react-query": "^5.104.4",
     "@tanstack/react-table": "^8.21.3",
     "leaflet": "^1.9.4",
@@ -76,6 +86,7 @@
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
+    "@jsudc/core": "github:digital-cube/jsudc-core#v0.1.0",
     "@tailwindcss/cli": "^4.3.3",
     "@tanstack/react-query": "^5.104.4",
     "@tanstack/react-table": "^8.21.3",

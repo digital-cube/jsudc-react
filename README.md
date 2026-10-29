@@ -28,8 +28,8 @@ What is in the package:
 npm install @jsudc/react @jsudc/core \
   react react-dom react-router @tanstack/react-query @tanstack/react-table \
   radix-ui lucide-react leaflet recharts @dnd-kit/core @dnd-kit/sortable @dnd-kit/utilities
-# before the npm release, from a tag:
-npm install github:digital-cube/jsudc-core#v0.1.0 github:digital-cube/jsudc-react#v0.1.0
+# or straight from a GitHub tag:
+npm install github:digital-cube/jsudc-core#v0.1.1 github:digital-cube/jsudc-react#v0.1.1
 ```
 
 ## Quick start
@@ -98,6 +98,8 @@ collections, so each one starts from a fresh view.
 Everything the components import that a host is likely to have too is a peer,
 so there is one copy of it in the bundle:
 
+- `@jsudc/core` ^0.1.1 — one copy of the protocol, shared with the host's
+  own `UdcClient`;
 - `react`, `react-dom` ^19 — one React, or hooks break;
 - `@tanstack/react-query` ^5 — one `QueryClient` context, shared with the
   host's own queries;
@@ -110,7 +112,7 @@ so there is one copy of it in the bundle:
 All of them are required in 0.1: the registry imports every renderer. Optional
 renderer subpaths (`@jsudc/react/map`, `@jsudc/react/chart`) that let a host
 skip Leaflet or Recharts are planned. The regular dependencies are
-`@jsudc/core`, `clsx`, `tailwind-merge` and `marked` (the Doc tab).
+`clsx`, `tailwind-merge` and `marked` (the Doc tab).
 
 The map renderer imports `leaflet/dist/leaflet.css` itself; your bundler picks
 it up from the `leaflet` you installed.
@@ -215,7 +217,7 @@ The build is ESM only, one file per source module (tree-shakeable), with
 
 ```sh
 nvm use          # Node 24
-npm install      # also builds dist (prepare)
+npm ci           # also builds dist (prepare)
 npm run typecheck
 npm run lint     # Biome
 npm test         # Vitest + Testing Library in jsdom, no server needed
