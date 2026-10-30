@@ -51,7 +51,7 @@ export function FolderEntry({
         onClick();
       }}
       className={cn(
-        "udc:flex udc:min-w-0 udc:items-center udc:gap-2 udc:rounded udc:text-left udc:focus-visible:outline-none udc:focus-visible:ring-2 udc:focus-visible:ring-ring",
+        "udc:flex udc:min-w-0 udc:items-center udc:gap-2 udc:rounded-sm udc:text-left udc:focus-visible:outline-none udc:focus-visible:ring-2 udc:focus-visible:ring-ring",
         dir
           ? "udc:font-medium udc:text-sem-info udc:underline-offset-2 udc:hover:underline"
           : "udc:hover:text-foreground udc:hover:underline udc:underline-offset-2",

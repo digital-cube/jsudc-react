@@ -399,7 +399,7 @@ function CartesianView({ collection, describe, rows, opts, range, timeZone }: Ch
                   aria-pressed={!off}
                   onClick={() => toggle(s.field)}
                   className={cn(
-                    "udc:inline-flex udc:items-center udc:gap-1.5 udc:rounded udc:px-1.5 udc:py-0.5 udc:text-xs udc:text-foreground udc:hover:bg-hover",
+                    "udc:inline-flex udc:items-center udc:gap-1.5 udc:rounded-sm udc:px-1.5 udc:py-0.5 udc:text-xs udc:text-foreground udc:hover:bg-hover",
                     off && "udc:text-muted-foreground udc:line-through",
                   )}
                 >

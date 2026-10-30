@@ -439,7 +439,7 @@ function AllDayRow({
             data-testid="cal-all-day-event"
             data-event-id={ev.id}
             onClick={(e) => onOpen(ev, e.currentTarget)}
-            className="udc:mx-0.5 udc:truncate udc:rounded udc:px-1.5 udc:py-0.5 udc:text-left udc:text-[11px] udc:font-medium udc:text-foreground"
+            className="udc:mx-0.5 udc:truncate udc:rounded-sm udc:px-1.5 udc:py-0.5 udc:text-left udc:text-[11px] udc:font-medium udc:text-foreground"
             style={{
               gridColumn: `${a + 1} / ${b + 2}`,
               gridRow: r + 1,

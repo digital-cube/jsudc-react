@@ -13,7 +13,7 @@ export function FolderBar({
   const { t } = useI18n();
   const crumbs = folderCrumbs(folder);
   const btn =
-    "udc:rounded udc:px-1.5 udc:py-0.5 udc:hover:bg-hover udc:hover:text-foreground udc:focus-visible:outline-none udc:focus-visible:ring-2 udc:focus-visible:ring-ring";
+    "udc:rounded-sm udc:px-1.5 udc:py-0.5 udc:hover:bg-hover udc:hover:text-foreground udc:focus-visible:outline-none udc:focus-visible:ring-2 udc:focus-visible:ring-ring";
   return (
     <nav
       aria-label={t("APP", "FOLDER_PATH")}

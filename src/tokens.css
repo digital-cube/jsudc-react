@@ -11,10 +11,18 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /*
- * Design tokens. Every colour the components use is one of these, so the
- * light and dark themes differ only here.
+ * Design tokens. Every colour, radius and font the components use is one of
+ * these, so the light and dark themes differ only here.
  */
 :root {
+  /* The base corner radius: every `rounded-*` step is a multiple of it, so
+     `--radius: 0` squares every corner. */
+  --radius: 0.5rem;
+  --font-sans:
+    "Inter Variable", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+
   --background: oklch(0.985 0.002 260);
   --foreground: oklch(0.21 0.02 265);
   --surface: oklch(1 0 0);
@@ -132,10 +140,21 @@
   --color-sem-info-bg: var(--sem-info-bg);
   --color-sem-muted-bg: var(--sem-muted-bg);
 
-  --font-sans:
-    "Inter Variable", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
-  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  /* Inline like the colours: the compiled utilities read `var(--radius)` and
+     `var(--font-sans)` themselves, so a host's value applies wherever it is set. */
+  --radius-xs: calc(var(--radius) * 0.25);
+  --radius-sm: calc(var(--radius) * 0.5);
+  --radius-md: calc(var(--radius) * 0.75);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.5);
+  --radius-2xl: calc(var(--radius) * 2);
+  --radius-3xl: calc(var(--radius) * 3);
+  --radius-4xl: calc(var(--radius) * 4);
+
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --default-font-family: var(--font-sans);
+  --default-mono-font-family: var(--font-mono);
 
   --animate-shimmer: shimmer 1.6s ease-in-out infinite;
   --animate-in: fade-in 140ms ease-out;
@@ -168,7 +187,7 @@
   body {
     background: var(--background);
     color: var(--foreground);
-    font-family: --theme(--font-sans);
+    font-family: var(--font-sans);
     font-size: 14px;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -223,7 +242,7 @@
    the theme's tokens by tone, so a muted row is a muted circle in both themes. */
 .udc-map.leaflet-container {
   background: var(--muted);
-  font-family: --theme(--font-sans);
+  font-family: var(--font-sans);
 }
 .dark .udc-map .leaflet-tile-pane {
   filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9) saturate(0.55);
@@ -424,15 +443,15 @@
   color: var(--foreground);
 }
 .udc-prose code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 0.85em;
   padding: 0.1rem 0.35rem;
-  border-radius: 4px;
+  border-radius: calc(var(--radius) * 0.5);
   background: var(--muted);
 }
 .udc-prose pre {
   padding: 0.8rem 1rem;
-  border-radius: 8px;
+  border-radius: var(--radius);
   background: var(--muted);
   overflow-x: auto;
 }

@@ -99,7 +99,7 @@ export function Freshness({
           // biome-ignore lint/a11y/noNoninteractiveTabindex: the tooltip opens on focus too
           tabIndex={0}
           className={cn(
-            "udc:inline-flex udc:items-center udc:gap-1 udc:rounded udc:text-xs udc:whitespace-nowrap udc:text-muted-foreground udc:tabular-nums udc:outline-none udc:focus-visible:ring-2 udc:focus-visible:ring-ring",
+            "udc:inline-flex udc:items-center udc:gap-1 udc:rounded-sm udc:text-xs udc:whitespace-nowrap udc:text-muted-foreground udc:tabular-nums udc:outline-none udc:focus-visible:ring-2 udc:focus-visible:ring-ring",
           )}
         >
           <RefreshCw className="udc:size-3" />

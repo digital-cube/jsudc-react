@@ -57,7 +57,7 @@ export function MonthGrid({
       onClick={(e) => onOpen(ev, e.currentTarget)}
       className={cn(
         "udc-calendar-event",
-        "udc:flex udc:w-full udc:min-w-0 udc:items-center udc:gap-1 udc:rounded udc:border-l-[3px] udc:px-1 udc:py-px udc:text-left udc:text-[11px] udc:leading-4 udc:text-foreground",
+        "udc:flex udc:w-full udc:min-w-0 udc:items-center udc:gap-1 udc:rounded-sm udc:border-l-[3px] udc:px-1 udc:py-px udc:text-left udc:text-[11px] udc:leading-4 udc:text-foreground",
         !readOnly && "udc:cursor-grab",
         inPopover && "udc:py-0.5",
       )}
@@ -138,7 +138,7 @@ export function MonthGrid({
                     <button
                       type="button"
                       data-testid="cal-more"
-                      className="udc:self-start udc:rounded udc:px-1 udc:text-[11px] udc:font-medium udc:text-muted-foreground udc:hover:bg-hover udc:hover:text-foreground"
+                      className="udc:self-start udc:rounded-sm udc:px-1 udc:text-[11px] udc:font-medium udc:text-muted-foreground udc:hover:bg-hover udc:hover:text-foreground"
                     >
                       {t("APP", "CAL_MORE", { n: hidden })}
                     </button>

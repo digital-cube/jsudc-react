@@ -52,7 +52,7 @@ export function DeleteFieldDialog({
           <p data-testid="delete-field-body">{t("APP", "DELETE_BODY")}</p>
           <p className="udc:mt-2">
             {t("APP", "DELETE_FIELD_NAME")}{" "}
-            <code className="udc:rounded udc:bg-muted udc:px-1 udc:py-0.5 udc:font-mono udc:text-xs udc:text-foreground">
+            <code className="udc:rounded-sm udc:bg-muted udc:px-1 udc:py-0.5 udc:font-mono udc:text-xs udc:text-foreground">
               {field}
             </code>
           </p>

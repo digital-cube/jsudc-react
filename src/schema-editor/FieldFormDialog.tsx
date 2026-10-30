@@ -348,7 +348,7 @@ function Field({
       >
         {label}
         {badge ? (
-          <span className="udc:rounded udc:border udc:border-border udc:px-1 udc:font-mono udc:text-[9.5px] udc:leading-3.5 udc:text-muted-foreground">
+          <span className="udc:rounded-sm udc:border udc:border-border udc:px-1 udc:font-mono udc:text-[9.5px] udc:leading-3.5 udc:text-muted-foreground">
             {badge}
           </span>
         ) : null}
