@@ -3,16 +3,9 @@ import { CSS } from "@dnd-kit/utilities";
 import type { KanbanOptions, Row, SchemaDoc } from "@jsudc/core";
 import { MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
 import { type KeyboardEvent, useState } from "react";
-import { Button } from "../components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "../components/ui/dropdown-menu";
-import { Input } from "../components/ui/input";
 import { useI18n } from "../i18n/i18n";
 import { cn } from "../lib/utils";
+import { useUiKit } from "../ui-kit/context";
 import { KanbanCard, PendingCard, TONE_DOT } from "./KanbanCard";
 import type { AddWhere, Bucket } from "./model";
 
@@ -58,6 +51,7 @@ function useTextEntry(commit: (text: string) => void, close: () => void) {
 }
 
 function QuickAdd({ where, onAdd }: { where: AddWhere; onAdd: (title: string) => void }) {
+  const { Input } = useUiKit();
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const onKeyDown = useTextEntry(onAdd, () => setOpen(false));
@@ -67,9 +61,9 @@ function QuickAdd({ where, onAdd }: { where: AddWhere; onAdd: (title: string) =>
         type="button"
         data-testid={`kanban-add-${where}`}
         onClick={() => setOpen(true)}
-        className="flex h-8 w-full items-center gap-1.5 rounded-md px-2 text-xs font-medium text-muted-foreground outline-none hover:bg-hover hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+        className="udc:flex udc:h-8 udc:w-full udc:items-center udc:gap-1.5 udc:rounded-md udc:px-2 udc:text-xs udc:font-medium udc:text-muted-foreground udc:outline-none udc:hover:bg-hover udc:hover:text-foreground udc:focus-visible:ring-2 udc:focus-visible:ring-ring"
       >
-        <Plus className="size-3.5" />
+        <Plus className="udc:size-3.5" />
         {t("APP", "KANBAN_ADD_TICKET")}
       </button>
     );
@@ -88,6 +82,14 @@ function QuickAdd({ where, onAdd }: { where: AddWhere; onAdd: (title: string) =>
 }
 
 export function KanbanColumn(props: KanbanColumnProps) {
+  const {
+    Button,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+    Input,
+  } = useUiKit();
   const { bucket, ids, rowById, opts, schema, readOnly } = props;
   const { t, intlLocale } = useI18n();
   const [renaming, setRenaming] = useState(false);
@@ -135,8 +137,9 @@ export function KanbanColumn(props: KanbanColumnProps) {
         minWidth: opts.buckets.min_width_px,
       }}
       className={cn(
-        "flex max-h-full shrink-0 flex-col rounded-xl border border-border/80 bg-muted/45 dark:bg-muted/30",
-        isDragging && "opacity-50",
+        "udc-kanban-column",
+        "udc:flex udc:max-h-full udc:shrink-0 udc:flex-col udc:rounded-xl udc:border udc:border-border/80 udc:bg-muted/45 udc:dark:bg-muted/30",
+        isDragging && "udc:opacity-50",
       )}
     >
       <header
@@ -144,20 +147,23 @@ export function KanbanColumn(props: KanbanColumnProps) {
         {...(sortable ? { ...attributes, ...listeners } : {})}
         data-testid="kanban-column-header"
         className={cn(
-          "flex h-11 shrink-0 items-center gap-2 rounded-t-xl pr-1.5 pl-3 outline-none focus-visible:ring-2 focus-visible:ring-ring",
-          sortable && "cursor-grab active:cursor-grabbing",
+          "udc:flex udc:h-11 udc:shrink-0 udc:items-center udc:gap-2 udc:rounded-t-xl udc:pr-1.5 udc:pl-3 udc:outline-none udc:focus-visible:ring-2 udc:focus-visible:ring-ring",
+          sortable && "udc:cursor-grab udc:active:cursor-grabbing",
         )}
       >
         <span
           aria-hidden
-          className={cn("size-2.5 shrink-0 rounded-full", TONE_DOT[bucket.color ?? "default"])}
+          className={cn(
+            "udc:size-2.5 udc:shrink-0 udc:rounded-full",
+            TONE_DOT[bucket.color ?? "default"],
+          )}
         />
         {renaming ? (
           <Input
             autoFocus
             data-testid="kanban-rename-input"
             defaultValue={bucket.label}
-            className="h-7"
+            className="udc:h-7"
             onKeyDown={onRenameKey}
             onPointerDown={(e) => e.stopPropagation()}
             onBlur={() => setRenaming(false)}
@@ -165,7 +171,7 @@ export function KanbanColumn(props: KanbanColumnProps) {
         ) : (
           <h3
             data-testid="kanban-column-name"
-            className="min-w-0 truncate text-[13px] font-semibold tracking-tight"
+            className="udc:min-w-0 udc:truncate udc:text-[13px] udc:font-semibold udc:tracking-tight"
             title={bucket.label}
             onDoubleClick={readOnly ? undefined : () => setRenaming(true)}
           >
@@ -175,12 +181,12 @@ export function KanbanColumn(props: KanbanColumnProps) {
         {opts.buckets.show_count && !renaming ? (
           <span
             data-testid="kanban-column-count"
-            className="rounded-full bg-surface px-1.5 text-[11px] font-medium text-muted-foreground tabular-nums ring-1 ring-border"
+            className="udc:rounded-full udc:bg-surface udc:px-1.5 udc:text-[11px] udc:font-medium udc:text-muted-foreground udc:tabular-nums udc:ring-1 udc:ring-border"
           >
             {new Intl.NumberFormat(intlLocale).format(ids.length)}
           </span>
         ) : null}
-        <span className="flex-1" />
+        <span className="udc:flex-1" />
         {readOnly ? null : (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -191,7 +197,7 @@ export function KanbanColumn(props: KanbanColumnProps) {
                 aria-label={t("APP", "KANBAN_BUCKET_MENU", { name: bucket.label })}
                 onPointerDown={(e) => e.stopPropagation()}
               >
-                <MoreHorizontal className="size-4" />
+                <MoreHorizontal className="udc:size-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
@@ -214,7 +220,7 @@ export function KanbanColumn(props: KanbanColumnProps) {
       </header>
 
       {showAdd ? (
-        <div className="px-2 pb-1">
+        <div className="udc:px-2 udc:pb-1">
           <QuickAdd where="top" onAdd={(title) => props.onQuickAdd("top", title)} />
         </div>
       ) : null}
@@ -226,7 +232,7 @@ export function KanbanColumn(props: KanbanColumnProps) {
       >
         <div
           data-testid="kanban-column-cards"
-          className="scroll-thin flex min-h-16 flex-1 flex-col gap-2 overflow-y-auto px-2 pt-0.5 pb-2"
+          className="udc-scroll-thin udc:flex udc:min-h-16 udc:flex-1 udc:flex-col udc:gap-2 udc:overflow-y-auto udc:px-2 udc:pt-0.5 udc:pb-2"
         >
           {top.map((p) => (
             <PendingCard key={p.key} title={p.title} />
@@ -258,7 +264,7 @@ export function KanbanColumn(props: KanbanColumnProps) {
             </Button>
           ) : null}
           {ids.length === 0 && props.pending.length === 0 ? (
-            <div className="grid h-16 place-items-center rounded-lg border border-dashed border-border text-xs text-muted-foreground/80">
+            <div className="udc:grid udc:h-16 udc:place-items-center udc:rounded-lg udc:border udc:border-dashed udc:border-border udc:text-xs udc:text-muted-foreground/80">
               {t("APP", "KANBAN_EMPTY_COLUMN")}
             </div>
           ) : null}
@@ -269,7 +275,7 @@ export function KanbanColumn(props: KanbanColumnProps) {
       </SortableContext>
 
       {showAdd ? (
-        <div className="border-t border-border/60 px-2 py-1.5">
+        <div className="udc:border-t udc:border-border/60 udc:px-2 udc:py-1.5">
           <QuickAdd where="bottom" onAdd={(title) => props.onQuickAdd("bottom", title)} />
         </div>
       ) : null}
@@ -279,6 +285,7 @@ export function KanbanColumn(props: KanbanColumnProps) {
 
 /** The `+ Add bucket` slot after the last column. */
 export function AddBucketSlot({ onAdd }: { onAdd: (name: string) => void }) {
+  const { Input } = useUiKit();
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const onKeyDown = useTextEntry(
@@ -289,7 +296,7 @@ export function AddBucketSlot({ onAdd }: { onAdd: (name: string) => void }) {
     () => setOpen(false),
   );
   return (
-    <div className="w-64 shrink-0">
+    <div className="udc:w-64 udc:shrink-0">
       {open ? (
         <Input
           autoFocus
@@ -303,9 +310,9 @@ export function AddBucketSlot({ onAdd }: { onAdd: (name: string) => void }) {
           type="button"
           data-testid="kanban-add-bucket"
           onClick={() => setOpen(true)}
-          className="flex h-11 w-full items-center gap-1.5 rounded-xl border border-dashed border-border-strong/70 px-3 text-[13px] font-medium text-muted-foreground outline-none hover:bg-hover hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+          className="udc:flex udc:h-11 udc:w-full udc:items-center udc:gap-1.5 udc:rounded-xl udc:border udc:border-dashed udc:border-border-strong/70 udc:px-3 udc:text-[13px] udc:font-medium udc:text-muted-foreground udc:outline-none udc:hover:bg-hover udc:hover:text-foreground udc:focus-visible:ring-2 udc:focus-visible:ring-ring"
         >
-          <Plus className="size-4" />
+          <Plus className="udc:size-4" />
           {t("APP", "KANBAN_ADD_BUCKET")}
         </button>
       )}

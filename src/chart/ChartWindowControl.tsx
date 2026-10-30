@@ -1,10 +1,8 @@
 import { parseWindowPreset } from "@jsudc/core";
 import { X } from "lucide-react";
-import { Button } from "../components/ui/button";
-import { inputClass } from "../components/ui/input";
-import { Segmented } from "../components/ui/segmented";
+import { useId } from "react";
 import { useI18n } from "../i18n/i18n";
-import { cn } from "../lib/utils";
+import { useUiKit } from "../ui-kit/context";
 import type { ChartWindowState } from "./useChartWindow";
 import { wallOf } from "./window";
 
@@ -29,7 +27,9 @@ export function ChartWindowControl({
   win: ChartWindowState;
   clearable: boolean;
 }) {
+  const { Button, Input, Segmented } = useUiKit();
   const { t } = useI18n();
+  const id = useId();
   const { cfg, sel, range, timeZone } = win;
   const value = sel.kind === "custom" ? CUSTOM : sel.preset;
   const options = [
@@ -52,7 +52,7 @@ export function ChartWindowControl({
   const wall = (t: number | null) => (t === null ? "" : wallOf(t, timeZone));
 
   return (
-    <div className="flex flex-wrap items-center gap-2" data-testid="chart-window">
+    <div className="udc:flex udc:flex-wrap udc:items-center udc:gap-2" data-testid="chart-window">
       <Segmented<string>
         aria-label={t("APP", "CHART_WINDOW")}
         data-testid="chart-presets"
@@ -67,24 +67,26 @@ export function ChartWindowControl({
         options={options}
       />
       {sel.kind === "custom" ? (
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <label className="flex items-center gap-1">
+        <div className="udc:flex udc:items-center udc:gap-1.5 udc:text-xs udc:text-muted-foreground">
+          <label htmlFor={`${id}-from`} className="udc:flex udc:items-center udc:gap-1">
             {t("APP", "CHART_FROM")}
-            <input
+            <Input
+              id={`${id}-from`}
               type="datetime-local"
               data-testid="chart-from"
-              className={cn(inputClass, "h-8 w-auto px-2 text-xs")}
+              className="udc:h-8 udc:w-auto udc:px-2 udc:text-xs"
               value={sel.from ?? ""}
               max={sel.to ?? undefined}
               onChange={(e) => win.setSel({ ...sel, from: e.target.value || null })}
             />
           </label>
-          <label className="flex items-center gap-1">
+          <label htmlFor={`${id}-to`} className="udc:flex udc:items-center udc:gap-1">
             {t("APP", "CHART_TO")}
-            <input
+            <Input
+              id={`${id}-to`}
               type="datetime-local"
               data-testid="chart-to"
-              className={cn(inputClass, "h-8 w-auto px-2 text-xs")}
+              className="udc:h-8 udc:w-auto udc:px-2 udc:text-xs"
               value={sel.to ?? ""}
               min={sel.from ?? undefined}
               onChange={(e) => win.setSel({ ...sel, to: e.target.value || null })}

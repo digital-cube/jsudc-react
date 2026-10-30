@@ -9,6 +9,7 @@ import { UdcClient } from "@jsudc/core/client";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+import { RENDERERS } from "../src/all";
 import { CardRenderer } from "../src/cards/CardRenderer";
 import { cardSlots, metricText } from "../src/cards/cardModel";
 import { TooltipProvider } from "../src/components/ui/tooltip";
@@ -395,7 +396,7 @@ describe("the map across a poll", () => {
     } as unknown as RendererProps;
     const utils = render(
       <UdcI18nProvider>
-        <UdcProvider client={client}>
+        <UdcProvider client={client} renderers={RENDERERS}>
           <QueryClientProvider client={qc}>
             <MapRenderer {...props} />
           </QueryClientProvider>

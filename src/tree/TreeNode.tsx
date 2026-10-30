@@ -2,17 +2,10 @@ import { useDraggable, useDroppable } from "@dnd-kit/core";
 import type { Row } from "@jsudc/core";
 import { ChevronRight, CornerLeftUp, MoreVertical } from "lucide-react";
 import { type KeyboardEvent, useEffect, useRef, useState } from "react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "../components/ui/dropdown-menu";
-import { Spinner } from "../components/ui/misc";
-import { Tip } from "../components/ui/tooltip";
 import { useI18n } from "../i18n/i18n";
 import { resolveIcon } from "../icons/resolve";
 import { cn } from "../lib/utils";
+import { useUiKit } from "../ui-kit/context";
 import { canDrop, dropId, highlightParts, i18nKey, idOf, numberOf } from "./model";
 import { LazyChildren, NodeList, useTree } from "./TreeRenderer";
 
@@ -39,7 +32,7 @@ export function TreeNodeLabel({ row }: { row: Row }) {
           <mark
             key={p.at}
             data-testid="tree-highlight"
-            className="rounded-sm bg-sem-warning-bg px-0.5 text-foreground"
+            className="udc:rounded-sm udc:bg-sem-warning-bg udc:px-0.5 udc:text-foreground"
           >
             {p.text}
           </mark>
@@ -64,6 +57,8 @@ function focusRow(from: HTMLElement, where: -1 | 1 | string) {
 }
 
 export function TreeNode({ row, depth }: { row: Row; depth: number }) {
+  const { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Tip } =
+    useUiKit();
   const { t } = useI18n();
   const ctx = useTree();
   const { opts, lazy, can, drag } = ctx;
@@ -130,16 +125,18 @@ export function TreeNode({ row, depth }: { row: Row; depth: number }) {
   ];
 
   return (
-    <div data-testid="tree-node" data-id={id} data-depth={depth}>
-      <div className="relative">
+    <div className="udc-tree-node" data-testid="tree-node" data-id={id} data-depth={depth}>
+      <div className="udc:relative">
         {drag && !dragging ? (
           <div
             ref={dropBefore.setNodeRef}
             data-testid="tree-drop-before"
-            className="pointer-events-none absolute inset-x-0 -top-1 z-10 h-2"
+            className="udc:pointer-events-none udc:absolute udc:inset-x-0 udc:-top-1 udc:z-10 udc:h-2"
             style={{ paddingLeft: 12 + depth * INDENT }}
           >
-            {dropBefore.isOver ? <div className="mt-[3px] h-0.5 rounded-full bg-primary" /> : null}
+            {dropBefore.isOver ? (
+              <div className="udc:mt-[3px] udc:h-0.5 udc:rounded-full udc:bg-primary" />
+            ) : null}
           </div>
         ) : null}
         <div
@@ -163,11 +160,11 @@ export function TreeNode({ row, depth }: { row: Row; depth: number }) {
           onKeyDown={onKeyDown}
           onDoubleClick={() => can.rename && setRenaming(true)}
           className={cn(
-            "group flex min-h-8 cursor-default items-start gap-1.5 rounded-md py-1 pr-2 text-[13px] outline-none",
-            "hover:bg-hover focus-visible:bg-selected focus-visible:ring-2 focus-visible:ring-ring/60",
-            dragging && "opacity-40",
-            dropInto.isOver && "bg-primary/10 ring-2 ring-primary/50",
-            can.reparent && "cursor-grab",
+            "udc:group udc:flex udc:min-h-8 udc:cursor-default udc:items-start udc:gap-1.5 udc:rounded-md udc:py-1 udc:pr-2 udc:text-[13px] udc:outline-none",
+            "udc:hover:bg-hover udc:focus-visible:bg-selected udc:focus-visible:ring-2 udc:focus-visible:ring-ring/60",
+            dragging && "udc:opacity-40",
+            dropInto.isOver && "udc:bg-primary/10 udc:ring-2 udc:ring-primary/50",
+            can.reparent && "udc:cursor-grab",
           )}
           style={{ paddingLeft: 12 + depth * INDENT }}
         >
@@ -179,29 +176,34 @@ export function TreeNode({ row, depth }: { row: Row; depth: number }) {
               aria-label={t("APP", open ? "TREE_COLLAPSE" : "TREE_EXPAND")}
               onPointerDown={(e) => e.stopPropagation()}
               onClick={() => ctx.setOpen(id, !open)}
-              className="mt-0.5 grid size-5 shrink-0 place-items-center rounded text-muted-foreground hover:bg-selected hover:text-foreground"
+              className="udc:mt-0.5 udc:grid udc:size-5 udc:shrink-0 udc:place-items-center udc:rounded udc:text-muted-foreground udc:hover:bg-selected udc:hover:text-foreground"
             >
-              <ChevronRight className={cn("size-3.5 transition-transform", open && "rotate-90")} />
+              <ChevronRight
+                className={cn("udc:size-3.5 udc:transition-transform", open && "udc:rotate-90")}
+              />
             </button>
           ) : (
-            <span className="size-5 shrink-0" />
+            <span className="udc:size-5 udc:shrink-0" />
           )}
           {typeof avatar === "string" && avatar ? (
-            <span className="mt-px grid size-6 shrink-0 place-items-center rounded-full bg-primary/12 text-[10px] font-semibold text-primary">
+            <span className="udc:mt-px udc:grid udc:size-6 udc:shrink-0 udc:place-items-center udc:rounded-full udc:bg-primary/12 udc:text-[10px] udc:font-semibold udc:text-primary">
               {avatar}
             </span>
           ) : Icon ? (
-            <Icon className="mt-1 size-3.5 shrink-0 text-muted-foreground" />
+            <Icon className="udc:mt-1 udc:size-3.5 udc:shrink-0 udc:text-muted-foreground" />
           ) : null}
           {orphan ? (
             <Tip label={t("APP", "TREE_ORPHAN")}>
               <CornerLeftUp
                 data-testid="tree-orphan"
-                className="mt-1 size-3.5 shrink-0 text-muted-foreground/60"
+                className="udc:mt-1 udc:size-3.5 udc:shrink-0 udc:text-muted-foreground/60"
               />
             </Tip>
           ) : null}
-          <div className="min-w-0 flex-1 pt-0.5 leading-snug" data-testid="tree-label">
+          <div
+            className="udc:min-w-0 udc:flex-1 udc:pt-0.5 udc:leading-snug"
+            data-testid="tree-label"
+          >
             {renaming ? (
               <RenameInput
                 initial={label}
@@ -214,7 +216,7 @@ export function TreeNode({ row, depth }: { row: Row; depth: number }) {
               <>
                 <TreeNodeLabel row={row} />
                 {typeof path === "string" && path ? (
-                  <span className="ml-2 text-xs text-muted-foreground">{path}</span>
+                  <span className="udc:ml-2 udc:text-xs udc:text-muted-foreground">{path}</span>
                 ) : null}
               </>
             )}
@@ -222,7 +224,7 @@ export function TreeNode({ row, depth }: { row: Row; depth: number }) {
           {count > 0 ? (
             <span
               data-testid="tree-count"
-              className="mt-0.5 shrink-0 rounded-full bg-muted px-1.5 text-[11px] text-muted-foreground tabular-nums"
+              className="udc:mt-0.5 udc:shrink-0 udc:rounded-full udc:bg-muted udc:px-1.5 udc:text-[11px] udc:text-muted-foreground udc:tabular-nums"
             >
               {count}
             </span>
@@ -235,9 +237,9 @@ export function TreeNode({ row, depth }: { row: Row; depth: number }) {
                 data-testid="tree-menu"
                 aria-label={t("APP", "TREE_MENU")}
                 onPointerDown={(e) => e.stopPropagation()}
-                className="grid size-6 shrink-0 place-items-center rounded text-muted-foreground opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 hover:bg-selected hover:text-foreground data-[state=open]:opacity-100"
+                className="udc:grid udc:size-6 udc:shrink-0 udc:place-items-center udc:rounded udc:text-muted-foreground udc:opacity-0 udc:group-hover:opacity-100 udc:group-focus-visible:opacity-100 udc:hover:bg-selected udc:hover:text-foreground udc:data-[state=open]:opacity-100"
               >
-                <MoreVertical className="size-3.5" />
+                <MoreVertical className="udc:size-3.5" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -292,7 +294,7 @@ function RenameInput({ initial, onDone }: { initial: string; onDone: (v: string 
         if (e.key === "Escape") finish(null);
       }}
       onBlur={(e) => finish(e.currentTarget.value.trim() || null)}
-      className="h-6 w-full rounded border border-border-strong bg-surface px-1.5 text-[13px] outline-none focus:ring-2 focus:ring-ring/60"
+      className="udc:h-6 udc:w-full udc:rounded udc:border udc:border-border-strong udc:bg-surface udc:px-1.5 udc:text-[13px] udc:outline-none udc:focus:ring-2 udc:focus:ring-ring/60"
     />
   );
 }
@@ -306,10 +308,11 @@ function ReplyBox({
   onSend: (text: string) => Promise<void>;
   onCancel: () => void;
 }) {
+  const { Spinner } = useUiKit();
   const { t } = useI18n();
   const [busy, setBusy] = useState(false);
   return (
-    <div className="py-1 pr-3" style={{ paddingLeft: 12 + depth * INDENT + 26 }}>
+    <div className="udc:py-1 udc:pr-3" style={{ paddingLeft: 12 + depth * INDENT + 26 }}>
       <textarea
         // biome-ignore lint/a11y/noAutofocus: opened on purpose from the menu
         autoFocus
@@ -326,10 +329,10 @@ function ReplyBox({
           setBusy(true);
           onSend(text).catch(() => setBusy(false));
         }}
-        className="w-full resize-y rounded-md border border-border-strong bg-surface px-2 py-1.5 text-[13px] outline-none focus:ring-2 focus:ring-ring/60"
+        className="udc:w-full udc:resize-y udc:rounded-md udc:border udc:border-border-strong udc:bg-surface udc:px-2 udc:py-1.5 udc:text-[13px] udc:outline-none udc:focus:ring-2 udc:focus:ring-ring/60"
       />
-      <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-        {busy ? <Spinner className="size-3" /> : null}
+      <div className="udc:flex udc:items-center udc:gap-2 udc:text-[11px] udc:text-muted-foreground">
+        {busy ? <Spinner className="udc:size-3" /> : null}
         {t("APP", "TREE_REPLY_HINT")}
       </div>
     </div>

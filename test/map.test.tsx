@@ -1,6 +1,7 @@
 import { MapOptionsSchema, type RowColorConfig } from "@jsudc/core";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import { RENDERERS } from "../src/all";
 import { UdcI18nProvider } from "../src/i18n/i18n";
 import { MapRenderer, MapToolbar } from "../src/map/MapRenderer";
 import {
@@ -33,20 +34,18 @@ const companies = opts({
 
 describe("the registry", () => {
   it("resolves the map tab, with no paging and no edit mode", () => {
-    expect(rendererEntry("map")).toMatchObject({
+    expect(rendererEntry(RENDERERS, "map")).toMatchObject({
       component: MapRenderer,
       labelKey: "TAB_MAP",
       paging: false,
       editMode: false,
     });
-    expect(rendererTabs(["table", "cards", "map"]).map((t) => t.entry !== undefined)).toEqual([
-      true,
-      true,
-      true,
-    ]);
-    expect(resolveTab("map", ["table", "cards", "map"], "table")).toBe("map");
+    expect(
+      rendererTabs(RENDERERS, ["table", "cards", "map"]).map((t) => t.entry !== undefined),
+    ).toEqual([true, true, true]);
+    expect(resolveTab(RENDERERS, "map", ["table", "cards", "map"], "table")).toBe("map");
     // A collection without the tab falls back, a bookmarked ?tab=map notwithstanding.
-    expect(resolveTab("map", ["table", "cards"], "table")).toBe("table");
+    expect(resolveTab(RENDERERS, "map", ["table", "cards"], "table")).toBe("table");
   });
 });
 

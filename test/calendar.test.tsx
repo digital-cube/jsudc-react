@@ -11,6 +11,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
+import { RENDERERS } from "../src/all";
 import { CalendarRenderer, prefillFromFilter } from "../src/calendar/CalendarRenderer";
 import {
   canCreate,
@@ -32,6 +33,7 @@ import {
 import { Toaster } from "../src/components/ui/toast";
 import { TooltipProvider } from "../src/components/ui/tooltip";
 import { UdcI18nProvider } from "../src/i18n/i18n";
+import { UdcReactRouterUrlState } from "../src/react-router";
 import { rendererEntry } from "../src/renderers/registry";
 import type { RendererProps } from "../src/renderers/types";
 import { CellValue } from "../src/table/cells";
@@ -403,12 +405,14 @@ describe("CalendarRenderer", () => {
     render(
       <UdcI18nProvider>
         <TimezoneProvider>
-          <UdcProvider client={client}>
+          <UdcProvider client={client} renderers={RENDERERS}>
             <QueryClientProvider client={createUdcQueryClient()}>
               <TooltipProvider>
                 <Toaster>
                   <MemoryRouter initialEntries={["/udc/appointments?date=2026-10-27"]}>
-                    <CalendarRenderer {...props} />
+                    <UdcReactRouterUrlState>
+                      <CalendarRenderer {...props} />
+                    </UdcReactRouterUrlState>
                   </MemoryRouter>
                 </Toaster>
               </TooltipProvider>
@@ -421,12 +425,13 @@ describe("CalendarRenderer", () => {
   }
 
   it("is registered without paging", () => {
-    expect(rendererEntry("calendar")).toMatchObject({ paging: false, editMode: false });
+    expect(rendererEntry(RENDERERS, "calendar")).toMatchObject({ paging: false, editMode: false });
   });
 
   it("asks for the work week of ?date= in the zone and draws the event there", async () => {
     const { mock, props } = renderCalendar(true, TOKYO);
     const event = await screen.findByTestId("cal-event");
+    expect(event).toHaveClass("udc-calendar-event");
     expect(event).toHaveAttribute("data-start", "2026-10-27T16:00:00+09:00");
     const list = mock.calls.find((c) => c.action === "list");
     expect(list?.body.filter).toEqual({

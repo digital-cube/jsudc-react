@@ -2,33 +2,21 @@ import {
   type CalendarOptions,
   type CalendarPreset,
   type FilterNode,
-  isCalendarPreset,
   isCondition,
   isVersionConflict,
   type SchemaDoc,
 } from "@jsudc/core";
 import { ChevronLeft, ChevronRight, Globe } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router";
-import { Button } from "../components/ui/button";
-import { Segmented } from "../components/ui/segmented";
-import { useToast } from "../components/ui/toast";
 import { useI18n } from "../i18n/i18n";
 import { useKanbanBoard } from "../kanban/useKanbanBoard";
 import { AllRowsStatus } from "../renderers/AllRowsStatus";
 import type { RendererProps } from "../renderers/types";
 import { EmptyState, ErrorState } from "../table/states";
 import { useTimezone } from "../time/timezone";
-import {
-  type CivilDay,
-  dayKey,
-  dayOf,
-  offsetLabel,
-  offsetMinutes,
-  parseDayKey,
-  zoneCity,
-} from "../time/zoned";
+import { dayKey, dayOf, offsetLabel, offsetMinutes, zoneCity } from "../time/zoned";
 import { useUdcAllRows, useUdcMutate } from "../udc/hooks";
+import { useUiKit } from "../ui-kit/context";
 import { EventDetail } from "./EventDetail";
 import { MonthGrid } from "./MonthGrid";
 import {
@@ -38,45 +26,13 @@ import {
   movePatch,
   moveToDay,
   newEventRow,
-  stepAnchor,
   toEvents,
   windowBetween,
   windowFilter,
   windowLabel,
 } from "./model";
 import { TimeGrid } from "./TimeGrid";
-
-export const PRESET_PARAM = "preset";
-export const DATE_PARAM = "date";
-
-/** `?preset=&date=`: what the calendar shows. The zone is a preference, not URL state. */
-function useCalendarUrl(opts: CalendarOptions, today: CivilDay) {
-  const [params, setParams] = useSearchParams();
-  const presetOf = (p: URLSearchParams): CalendarPreset => {
-    const raw = p.get(PRESET_PARAM);
-    return isCalendarPreset(raw) && opts.available_presets.includes(raw)
-      ? raw
-      : opts.default_preset;
-  };
-  const anchorOf = (p: URLSearchParams) => parseDayKey(p.get(DATE_PARAM)) ?? today;
-  // Every change starts from the address bar as it is now, not as the last render saw it:
-  // navigations render in a transition, so two quick clicks would both step from the same day.
-  const update = (edit: (p: URLSearchParams) => Record<string, string>) => {
-    const now = new URLSearchParams(window.location.search);
-    const next = new URLSearchParams(now);
-    for (const [k, v] of Object.entries(edit(now))) next.set(k, v);
-    setParams(next, { replace: true });
-  };
-  return {
-    preset: presetOf(params),
-    anchor: anchorOf(params),
-    setPreset: (p: CalendarPreset) => update(() => ({ [PRESET_PARAM]: p })),
-    setAnchor: (d: CivilDay) => update(() => ({ [DATE_PARAM]: dayKey(d) })),
-    step: (dir: 1 | -1) =>
-      update((p) => ({ [DATE_PARAM]: dayKey(stepAnchor(presetOf(p), anchorOf(p), dir)) })),
-    openDay: (d: CivilDay) => update(() => ({ [PRESET_PARAM]: "day", [DATE_PARAM]: dayKey(d) })),
-  };
-}
+import { useCalendarUrl } from "./useCalendarUrl";
 
 /** The clock, a tick a minute: the now line and "today". */
 function useNow(everyMs = 60_000): number {
@@ -119,7 +75,10 @@ export function CalendarRenderer(props: RendererProps) {
   const { t } = useI18n();
   if (!opts) {
     return (
-      <div className="p-8 text-center text-sm text-muted-foreground" data-testid="calendar-missing">
+      <div
+        className="udc:p-8 udc:text-center udc:text-sm udc:text-muted-foreground"
+        data-testid="calendar-missing"
+      >
         {t("APP", "CAL_NO_OPTIONS")}
       </div>
     );
@@ -136,6 +95,7 @@ function Calendar({
   onCount,
   opts,
 }: RendererProps & { opts: CalendarOptions }) {
+  const { Button, Segmented, useToast } = useUiKit();
   const { t, intlLocale } = useI18n();
   const { toast } = useToast();
   const { timeZone, setPickerOpen } = useTimezone();
@@ -286,7 +246,7 @@ function Calendar({
 
   return (
     <div
-      className="flex min-h-0 flex-1 flex-col"
+      className="udc-calendar udc:flex udc:min-h-0 udc:flex-1 udc:flex-col"
       data-testid="calendar"
       data-preset={preset}
       data-date={dayKey(anchor)}
@@ -296,12 +256,12 @@ function Calendar({
     >
       <div
         data-testid="cal-toolbar"
-        className="flex flex-wrap items-center gap-2 border-b border-border px-3 py-2"
+        className="udc:flex udc:flex-wrap udc:items-center udc:gap-2 udc:border-b udc:border-border udc:px-3 udc:py-2"
       >
         <Button size="sm" data-testid="cal-today" onClick={() => url.setAnchor(today)}>
           {t("APP", "CAL_TODAY")}
         </Button>
-        <div className="flex items-center">
+        <div className="udc:flex udc:items-center">
           <Button
             size="icon-sm"
             variant="ghost"
@@ -321,7 +281,10 @@ function Calendar({
             <ChevronRight />
           </Button>
         </div>
-        <h2 className="text-sm font-semibold tracking-tight tabular-nums" data-testid="cal-label">
+        <h2
+          className="udc:text-sm udc:font-semibold udc:tracking-tight udc:tabular-nums"
+          data-testid="cal-label"
+        >
           {windowLabel(win, intlLocale)}
         </h2>
         <button
@@ -329,13 +292,13 @@ function Calendar({
           data-testid="cal-zone"
           title={t("APP", "CAL_ZONE_HINT", { zone: timeZone })}
           onClick={() => setPickerOpen(true)}
-          className="inline-flex h-6 items-center gap-1 rounded-full bg-muted px-2 text-[11px] font-medium text-muted-foreground hover:bg-selected hover:text-foreground"
+          className="udc:inline-flex udc:h-6 udc:items-center udc:gap-1 udc:rounded-full udc:bg-muted udc:px-2 udc:text-[11px] udc:font-medium udc:text-muted-foreground udc:hover:bg-selected udc:hover:text-foreground"
         >
-          <Globe className="size-3" />
+          <Globe className="udc:size-3" />
           {zoneCity(timeZone) === zoneOffset ? zoneOffset : `${zoneCity(timeZone)} · ${zoneOffset}`}
         </button>
         <Segmented<CalendarPreset>
-          className="ml-auto"
+          className="udc:ml-auto"
           aria-label={t("APP", "CAL_PRESETS")}
           data-testid="cal-presets"
           value={preset}
@@ -349,7 +312,7 @@ function Calendar({
       </div>
       <AllRowsStatus result={q} />
       {filtered && !q.isFetching && events.length === 0 ? (
-        <div className="border-b border-border">
+        <div className="udc:border-b udc:border-border">
           <EmptyState filtered onClear={onClearFilters} />
         </div>
       ) : null}

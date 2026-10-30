@@ -1,9 +1,9 @@
 import type { SourceInfo } from "@jsudc/core";
 import { CloudOff, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Tip } from "../components/ui/tooltip";
 import { useI18n } from "../i18n/i18n";
 import { cn } from "../lib/utils";
+import { useUiKit } from "../ui-kit/context";
 
 /** "12 s ago", "3 min ago", "pre 12 s": the age of a fetched copy. */
 export function ageText(fetchedAt: string, now: number, intlLocale: string): string {
@@ -43,6 +43,7 @@ export function Freshness({
   stale: boolean;
   source?: SourceInfo | undefined;
 }) {
+  const { Tip } = useUiKit();
   const { t, intlLocale } = useI18n();
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -53,21 +54,21 @@ export function Freshness({
   }, [fetchedAt]);
   if (!fetchedAt) return null;
   return (
-    <span className="flex items-center gap-1.5">
+    <span className="udc:flex udc:items-center udc:gap-1.5">
       {stale ? (
         <Tip label={t("APP", "STALE_HINT")}>
           <span
             data-testid="stale-pill"
-            className="inline-flex h-5 items-center gap-1 rounded-full bg-sem-warning-bg px-2 text-[11px] font-medium text-sem-warning"
+            className="udc:inline-flex udc:h-5 udc:items-center udc:gap-1 udc:rounded-full udc:bg-sem-warning-bg udc:px-2 udc:text-[11px] udc:font-medium udc:text-sem-warning"
           >
-            <CloudOff className="size-3" />
+            <CloudOff className="udc:size-3" />
             {t("APP", "STALE")}
           </span>
         </Tip>
       ) : null}
       <Tip
         label={
-          <span className="flex flex-col gap-0.5" data-testid="freshness-tip">
+          <span className="udc:flex udc:flex-col udc:gap-0.5" data-testid="freshness-tip">
             <span>
               {t("APP", "FRESH_FETCHED", {
                 when: new Date(fetchedAt).toLocaleString(intlLocale),
@@ -98,10 +99,10 @@ export function Freshness({
           // biome-ignore lint/a11y/noNoninteractiveTabindex: the tooltip opens on focus too
           tabIndex={0}
           className={cn(
-            "inline-flex items-center gap-1 rounded text-xs whitespace-nowrap text-muted-foreground tabular-nums outline-none focus-visible:ring-2 focus-visible:ring-ring",
+            "udc:inline-flex udc:items-center udc:gap-1 udc:rounded udc:text-xs udc:whitespace-nowrap udc:text-muted-foreground udc:tabular-nums udc:outline-none udc:focus-visible:ring-2 udc:focus-visible:ring-ring",
           )}
         >
-          <RefreshCw className="size-3" />
+          <RefreshCw className="udc:size-3" />
           {t("APP", "UPDATED_AGO", { age: ageText(fetchedAt, now, intlLocale) })}
         </span>
       </Tip>

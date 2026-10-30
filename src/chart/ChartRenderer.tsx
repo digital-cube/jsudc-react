@@ -26,7 +26,6 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Skeleton } from "../components/ui/misc";
 import { tableSection, useI18n } from "../i18n/i18n";
 import { cn, humanize } from "../lib/utils";
 import { AllRowsStatus } from "../renderers/AllRowsStatus";
@@ -35,6 +34,7 @@ import { CellValue } from "../table/cells";
 import { EmptyState, ErrorState } from "../table/states";
 import { isoInZone } from "../time/zoned";
 import { useUdcAllRows, useUdcCollection } from "../udc/hooks";
+import { useUiKit } from "../ui-kit/context";
 import {
   axisFrames,
   barSize,
@@ -56,7 +56,10 @@ export function ChartRenderer(props: RendererProps) {
   const { t } = useI18n();
   if (!opts) {
     return (
-      <div className="p-8 text-center text-sm text-muted-foreground" data-testid="chart-missing">
+      <div
+        className="udc:p-8 udc:text-center udc:text-sm udc:text-muted-foreground"
+        data-testid="chart-missing"
+      >
         {t("APP", "CHART_NO_OPTIONS")}
       </div>
     );
@@ -75,6 +78,7 @@ function ChartTab({
   onCount,
   opts,
 }: RendererProps & { opts: ChartOptions }) {
+  const { Skeleton } = useUiKit();
   const { schema, capabilities, view } = describe;
   const xKind = chartXKind(opts, schema);
   // Pages in x order, so a cut by max_rows keeps the start of the window; a pie keeps its biggest.
@@ -125,12 +129,15 @@ function ChartTab({
   const firstLoad = q.isLoading && q.rows.length === 0;
   const empty = !firstLoad && !q.isFetching && q.rows.length === 0;
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-auto" data-testid="chart-tab">
+    <div
+      className="udc-chart udc:flex udc:min-h-0 udc:flex-1 udc:flex-col udc:overflow-auto"
+      data-testid="chart-tab"
+    >
       <AllRowsStatus result={q} />
       {firstLoad ? (
-        <div className="p-6">
+        <div className="udc:p-6">
           <Skeleton
-            className="w-full"
+            className="udc:w-full"
             style={{ height: opts.height_px }}
             data-testid="chart-loading"
           />
@@ -304,7 +311,7 @@ function CartesianView({ collection, describe, rows, opts, range, timeZone }: Ch
   return (
     <div
       ref={ref}
-      className="px-4 pt-4 pb-2"
+      className="udc:px-4 udc:pt-4 udc:pb-2"
       data-testid="chart"
       data-type={opts.type}
       data-x-kind={xKind}
@@ -376,7 +383,7 @@ function CartesianView({ collection, describe, rows, opts, range, timeZone }: Ch
       {/* One series needs no legend: the tab and the axis name it. */}
       {opts.legend && opts.series.length > 1 ? (
         <ul
-          className="mt-1 flex flex-wrap items-center justify-center gap-x-4 gap-y-1"
+          className="udc:mt-1 udc:flex udc:flex-wrap udc:items-center udc:justify-center udc:gap-x-4 udc:gap-y-1"
           data-testid="chart-legend"
         >
           {opts.series.map((s, i) => {
@@ -392,21 +399,23 @@ function CartesianView({ collection, describe, rows, opts, range, timeZone }: Ch
                   aria-pressed={!off}
                   onClick={() => toggle(s.field)}
                   className={cn(
-                    "inline-flex items-center gap-1.5 rounded px-1.5 py-0.5 text-xs text-foreground hover:bg-hover",
-                    off && "text-muted-foreground line-through",
+                    "udc:inline-flex udc:items-center udc:gap-1.5 udc:rounded udc:px-1.5 udc:py-0.5 udc:text-xs udc:text-foreground udc:hover:bg-hover",
+                    off && "udc:text-muted-foreground udc:line-through",
                   )}
                 >
                   <span
                     className={cn(
-                      "inline-block h-0.5 w-3.5 rounded-full",
-                      opts.type !== "line" && "h-2.5 w-2.5 rounded-sm",
-                      off && "opacity-30",
+                      "udc:inline-block udc:h-0.5 udc:w-3.5 udc:rounded-full",
+                      opts.type !== "line" && "udc:h-2.5 udc:w-2.5 udc:rounded-sm",
+                      off && "udc:opacity-30",
                     )}
                     style={{ background: seriesColor(s, i) }}
                   />
                   {fieldLabel(s.field, s.label)}
                   {sides.length > 1 ? (
-                    <span className="text-muted-foreground">{s.axis === "left" ? "◂" : "▸"}</span>
+                    <span className="udc:text-muted-foreground">
+                      {s.axis === "left" ? "◂" : "▸"}
+                    </span>
                   ) : null}
                 </button>
               </li>
@@ -422,7 +431,7 @@ function TooltipBox({ children, testId }: { children: ReactNode; testId: string 
   return (
     <div
       data-testid={testId}
-      className="min-w-40 rounded-md border border-border bg-surface-raised px-3 py-2 text-xs text-foreground shadow-md"
+      className="udc:min-w-40 udc:rounded-md udc:border udc:border-border udc:bg-surface-raised udc:px-3 udc:py-2 udc:text-xs udc:text-foreground udc:shadow-md"
     >
       {children}
     </div>
@@ -454,7 +463,10 @@ function SeriesTooltip({
   const count = Number(point[COUNT_KEY] ?? 1);
   return (
     <TooltipBox testId="chart-tooltip">
-      <div className="mb-1.5 font-medium text-muted-foreground" data-testid="chart-tooltip-x">
+      <div
+        className="udc:mb-1.5 udc:font-medium udc:text-muted-foreground"
+        data-testid="chart-tooltip-x"
+      >
         <CellValue
           value={typeof xValue === "number" ? new Date(xValue).toISOString() : xValue}
           column={columnOf(describe, x)}
@@ -463,22 +475,22 @@ function SeriesTooltip({
           intlLocale={intlLocale}
         />
       </div>
-      <table className="w-full">
+      <table className="udc:w-full">
         <tbody>
           {opts.series.map((s, i) =>
             hidden.has(s.field) ? null : (
               <tr key={s.field} data-testid="chart-tooltip-row" data-field={s.field}>
-                <td className="pr-3">
-                  <span className="inline-flex items-center gap-1.5">
+                <td className="udc:pr-3">
+                  <span className="udc:inline-flex udc:items-center udc:gap-1.5">
                     <span
-                      className="inline-block size-2 rounded-full"
+                      className="udc:inline-block udc:size-2 udc:rounded-full"
                       style={{ background: seriesColor(s, i) }}
                     />
                     {fieldLabel(s.field, s.label)}
                   </span>
                 </td>
                 <td
-                  className="text-right font-medium tabular-nums"
+                  className="udc:text-right udc:font-medium udc:tabular-nums"
                   data-testid="chart-tooltip-value"
                 >
                   <CellValue
@@ -495,7 +507,7 @@ function SeriesTooltip({
         </tbody>
       </table>
       {count > 1 ? (
-        <div className="mt-1.5 text-[11px] text-muted-foreground">
+        <div className="udc:mt-1.5 udc:text-[11px] udc:text-muted-foreground">
           {t("APP", bucket > 1 ? "CHART_BUCKET_ROWS" : "CHART_MERGED_ROWS", { count })}
         </div>
       ) : null}
@@ -532,7 +544,7 @@ function PieView({ collection, describe, rows, opts }: ChartViewProps) {
   return (
     <div
       ref={ref}
-      className="flex flex-wrap items-center justify-center gap-6 px-4 pt-4 pb-2"
+      className="udc:flex udc:flex-wrap udc:items-center udc:justify-center udc:gap-6 udc:px-4 udc:pt-4 udc:pb-2"
       data-testid="chart"
       data-type="pie"
       data-slices={slices.length}
@@ -581,10 +593,13 @@ function PieView({ collection, describe, rows, opts }: ChartViewProps) {
             if (!p.active || !s) return null;
             return (
               <TooltipBox testId="chart-tooltip">
-                <div className="mb-1 font-medium">{s.name}</div>
-                <div className="flex justify-between gap-4">
-                  <span className="text-muted-foreground">{fieldLabel(value)}</span>
-                  <span className="font-medium tabular-nums" data-testid="chart-tooltip-value">
+                <div className="udc:mb-1 udc:font-medium">{s.name}</div>
+                <div className="udc:flex udc:justify-between udc:gap-4">
+                  <span className="udc:text-muted-foreground">{fieldLabel(value)}</span>
+                  <span
+                    className="udc:font-medium udc:tabular-nums"
+                    data-testid="chart-tooltip-value"
+                  >
                     <CellValue
                       value={s.value}
                       column={columnOf(describe, value)}
@@ -596,7 +611,7 @@ function PieView({ collection, describe, rows, opts }: ChartViewProps) {
                   </span>
                 </div>
                 {s.other ? (
-                  <div className="mt-1 text-[11px] text-muted-foreground">
+                  <div className="udc:mt-1 udc:text-[11px] udc:text-muted-foreground">
                     {t("APP", "CHART_OTHER_COUNT", { count: s.count })}
                   </div>
                 ) : null}
@@ -606,16 +621,19 @@ function PieView({ collection, describe, rows, opts }: ChartViewProps) {
         />
       </PieChart>
       {opts.legend ? (
-        <ul className="grid gap-1 text-xs" data-testid="chart-legend">
+        <ul className="udc:grid udc:gap-1 udc:text-xs" data-testid="chart-legend">
           {data.map((s) => (
             <li
               key={s.other ? "__other" : s.category}
-              className="flex items-center gap-2"
+              className="udc:flex udc:items-center udc:gap-2"
               data-testid="chart-legend-item"
             >
-              <span className="inline-block size-2.5 rounded-sm" style={{ background: s.fill }} />
-              <span className="min-w-0 truncate">{s.name}</span>
-              <span className="ml-auto pl-3 text-muted-foreground tabular-nums">
+              <span
+                className="udc:inline-block udc:size-2.5 udc:rounded-sm"
+                style={{ background: s.fill }}
+              />
+              <span className="udc:min-w-0 udc:truncate">{s.name}</span>
+              <span className="udc:ml-auto udc:pl-3 udc:text-muted-foreground udc:tabular-nums">
                 {pct(s.value)}
               </span>
             </li>

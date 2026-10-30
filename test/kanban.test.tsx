@@ -10,6 +10,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
+import { RENDERERS } from "../src/all";
 import { Toaster } from "../src/components/ui/toast";
 import { TooltipProvider } from "../src/components/ui/tooltip";
 import { UdcI18nProvider } from "../src/i18n/i18n";
@@ -26,6 +27,7 @@ import {
   quickAddRow,
 } from "../src/kanban/model";
 import { persistOrder } from "../src/kanban/persist";
+import { UdcReactRouterUrlState } from "../src/react-router";
 import { rendererEntry, rendererTabs, resolveTab } from "../src/renderers/registry";
 import type { RendererProps } from "../src/renderers/types";
 import type { UdcCollectionResult } from "../src/udc/hooks";
@@ -55,19 +57,19 @@ const schema = SchemaDocSchema.parse({
 
 describe("renderer registry", () => {
   it("knows table, cards, kanban, calendar, tree, map and chart; other names have no component", () => {
-    expect(rendererEntry("kanban")?.paging).toBe(false);
-    expect(rendererEntry("table")).toMatchObject({ paging: true, editMode: true });
-    expect(rendererEntry("cards")).toMatchObject({ paging: true, editMode: false });
-    expect(rendererEntry("calendar")?.paging).toBe(false);
-    expect(rendererEntry("tree")).toMatchObject({ paging: false, editMode: false });
-    expect(rendererEntry("map")).toMatchObject({ paging: false, editMode: false });
-    expect(rendererEntry("chart")).toMatchObject({ paging: false, editMode: false });
-    expect(rendererEntry("gantt")).toBeUndefined();
-    expect(rendererEntry("toString")).toBeUndefined();
+    expect(rendererEntry(RENDERERS, "kanban")?.paging).toBe(false);
+    expect(rendererEntry(RENDERERS, "table")).toMatchObject({ paging: true, editMode: true });
+    expect(rendererEntry(RENDERERS, "cards")).toMatchObject({ paging: true, editMode: false });
+    expect(rendererEntry(RENDERERS, "calendar")?.paging).toBe(false);
+    expect(rendererEntry(RENDERERS, "tree")).toMatchObject({ paging: false, editMode: false });
+    expect(rendererEntry(RENDERERS, "map")).toMatchObject({ paging: false, editMode: false });
+    expect(rendererEntry(RENDERERS, "chart")).toMatchObject({ paging: false, editMode: false });
+    expect(rendererEntry(RENDERERS, "gantt")).toBeUndefined();
+    expect(rendererEntry(RENDERERS, "toString")).toBeUndefined();
   });
 
   it("builds a tab per available name, disabled when it has no component", () => {
-    const tabs = rendererTabs(["kanban", "gantt", "table"]);
+    const tabs = rendererTabs(RENDERERS, ["kanban", "gantt", "table"]);
     expect(tabs.map((t) => [t.name, t.entry !== undefined])).toEqual([
       ["kanban", true],
       ["gantt", false],
@@ -82,7 +84,7 @@ describe("renderer registry", () => {
     ["table", ["kanban"], "kanban", "kanban"],
     ["", ["gantt"], "gantt", "table"],
   ] as const)("asked %s of %j (default %s) → %s", (requested, available, fallback, expected) => {
-    expect(resolveTab(requested, available, fallback)).toBe(expected);
+    expect(resolveTab(RENDERERS, requested, available, fallback)).toBe(expected);
   });
 });
 
@@ -380,12 +382,14 @@ describe("KanbanRenderer read-only gating", () => {
     };
     render(
       <UdcI18nProvider>
-        <UdcProvider client={client}>
+        <UdcProvider client={client} renderers={RENDERERS}>
           <QueryClientProvider client={createUdcQueryClient()}>
             <TooltipProvider>
               <Toaster>
                 <MemoryRouter>
-                  <KanbanRenderer {...props} />
+                  <UdcReactRouterUrlState>
+                    <KanbanRenderer {...props} />
+                  </UdcReactRouterUrlState>
                 </MemoryRouter>
               </Toaster>
             </TooltipProvider>
