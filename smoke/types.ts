@@ -5,7 +5,7 @@
 import { createRendererRegistry, UdcDataView, UdcProvider } from "@jsudc/react";
 import { RENDERERS } from "@jsudc/react/all";
 import { cardsRenderer } from "@jsudc/react/cards";
-import { useDataViewState } from "@jsudc/react/headless";
+import type { useDataViewState } from "@jsudc/react/headless";
 import { UdcReactRouterUrlState } from "@jsudc/react/react-router";
 import { tableRenderer } from "@jsudc/react/table";
 import { defaultUiKit, Toaster } from "@jsudc/react/ui";
@@ -17,7 +17,7 @@ export const notRegistry: typeof registry = 42;
 // @ts-expect-error a number is not a renderer definition
 createRendererRegistry(7);
 // @ts-expect-error useDataViewState takes arguments of its own type, not a symbol
-useDataViewState(Symbol());
+export const notArgs: Parameters<typeof useDataViewState> = [Symbol()];
 
 export const used = [
   RENDERERS,
