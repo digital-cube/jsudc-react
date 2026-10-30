@@ -1,41 +1,12 @@
-// @jsudc/react: the public surface. Everything a host needs to render one
-// collection is here; the stylesheet is `@jsudc/react/styles.css` (or
-// `@jsudc/react/tokens.css` for a host that runs Tailwind itself).
+// @jsudc/react: the public surface. The data view, the providers and the renderer registry;
+// the stylesheet is `@jsudc/react/styles.css` (its variables alone: `@jsudc/react/tokens.css`).
+// The renderers are subpaths (`@jsudc/react/table`, `/cards`, `/kanban`, `/calendar`, `/tree`,
+// `/map`, `/chart`; all of them: `@jsudc/react/all`), so this entry imports none of them and
+// none of their peers. Hooks and models without markup: `@jsudc/react/headless`. The UI
+// primitives (Radix + Tailwind) and the default kit: `@jsudc/react/ui`.
 
-// UI primitives (Radix + Tailwind), with the toast and tooltip providers the data view needs.
-export { Button, type ButtonProps } from "./components/ui/button";
-export { Checkbox } from "./components/ui/checkbox";
-export {
-  Dialog,
-  DialogBody,
-  DialogClose,
-  DialogContent,
-  DialogFooter,
-  DialogTrigger,
-} from "./components/ui/dialog";
-export {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "./components/ui/dropdown-menu";
-export { Input, inputClass, NativeSelect } from "./components/ui/input";
-export { Kbd, Skeleton, Spinner } from "./components/ui/misc";
-export {
-  Popover,
-  PopoverAnchor,
-  PopoverClose,
-  PopoverContent,
-  PopoverTrigger,
-} from "./components/ui/popover";
-export { Segmented, type SegmentedOption } from "./components/ui/segmented";
-export { Select, type SelectOption } from "./components/ui/select";
-export { Toaster, type ToastInput, type ToastVariant, useToast } from "./components/ui/toast";
-export { Tip, TooltipProvider } from "./components/ui/tooltip";
-// One collection: the tabs its view declares, each drawn by a renderer from RENDERERS.
-export { UdcDataView } from "./data-view/UdcDataView";
+// One collection: the tabs its view declares, each drawn by a registered renderer.
+export { UdcDataView, type UdcDataViewProps } from "./data-view/UdcDataView";
 // Strings: the provider, the library dictionary and the helpers over it.
 export {
   INTL_LOCALE,
@@ -69,7 +40,12 @@ export { FALLBACK_ICON, resolveIcon } from "./icons/resolve";
 export { THEME_STORAGE_KEY, type Theme, ThemeProvider, useTheme } from "./lib/theme";
 export { cn, humanize, storage } from "./lib/utils";
 export {
-  RENDERERS,
+  UdcRenderersProvider,
+  type UdcRenderersProviderProps,
+  useRendererRegistry,
+} from "./renderers/context";
+export {
+  createRendererRegistry,
   type RendererTab,
   rendererEntry,
   rendererTabs,
@@ -79,10 +55,12 @@ export {
   type FolderNav,
   isFolderRow,
   type RendererCount,
+  type RendererDefinition,
   type RendererEntry,
   type RendererProps,
+  type RendererRegistry,
 } from "./renderers/types";
-export { EmptyState, ErrorState } from "./table/states";
+export { EmptyState, ErrorState, NoRendererState } from "./table/states";
 export {
   BROWSER_TZ,
   COMMON_ZONES,
@@ -124,3 +102,49 @@ export {
 } from "./udc/hooks";
 export { type ListKeyParams, type PagingMode, udcKeys } from "./udc/keys";
 export { createUdcQueryClient, shouldRetry, UdcProvider, useUdcClient } from "./udc/provider";
+// The UI kit: the primitives every renderer draws with, from context. The default kit and the
+// primitives themselves are `@jsudc/react/ui`; a host brings its own through the provider.
+export {
+  type ButtonSize,
+  type ButtonVariant,
+  type PreventableEvent,
+  type SegmentedOption,
+  type SelectOption,
+  type ToastInput,
+  type ToastVariant,
+  UdcUiProvider,
+  type UdcUiProviderProps,
+  type UiBlockProps,
+  type UiButtonProps,
+  type UiCheckboxProps,
+  type UiDialogContentProps,
+  type UiDialogProps,
+  type UiDropdownMenuContentProps,
+  type UiDropdownMenuItemProps,
+  type UiDropdownMenuProps,
+  type UiInputProps,
+  type UiKbdProps,
+  type UiKit,
+  type UiNativeSelectProps,
+  type UiPopoverAnchorProps,
+  type UiPopoverContentProps,
+  type UiPopoverProps,
+  type UiSegmentedProps,
+  type UiSelectProps,
+  type UiSkeletonProps,
+  type UiSpinnerProps,
+  type UiTipProps,
+  type UiTriggerProps,
+  useUiKit,
+} from "./ui-kit";
+// URL state: where the data view keeps filters, sort and page. `window.location` by default;
+// a router's adapter through the provider (the package ships one on a subpath, see README).
+export {
+  type SetUrlSearchParams,
+  UdcUrlStateProvider,
+  type UdcUrlStateProviderProps,
+  type UrlStateAdapter,
+  useUrlSearchParams,
+  useUrlStateAdapter,
+  windowLocationAdapter,
+} from "./url-state";

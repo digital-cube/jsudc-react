@@ -9,6 +9,7 @@ import {
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, useLocation } from "react-router";
 import { describe, expect, it } from "vitest";
+import { RENDERERS } from "../src/all";
 import { ChartView } from "../src/chart/ChartRenderer";
 import {
   axisFrames,
@@ -32,6 +33,7 @@ import {
   writeWindow,
 } from "../src/chart/window";
 import { UdcI18nProvider } from "../src/i18n/i18n";
+import { UdcReactRouterUrlState } from "../src/react-router";
 import { rendererEntry } from "../src/renderers/registry";
 import { TimezoneProvider, useTimezone } from "../src/time/timezone";
 import { row } from "./fetchMock";
@@ -50,7 +52,7 @@ const win = (block: Record<string, unknown> = {}) =>
 
 describe("the registry", () => {
   it("has the chart tab: no paging, no edit mode", () => {
-    expect(rendererEntry("chart")).toMatchObject({
+    expect(rendererEntry(RENDERERS, "chart")).toMatchObject({
       labelKey: "TAB_CHART",
       paging: false,
       editMode: false,
@@ -179,12 +181,14 @@ describe("the window in the URL", () => {
     render(
       <TimezoneProvider>
         <MemoryRouter initialEntries={["/udc/metrics?tab=chart"]}>
-          <Probe
-            onState={(w, set) => {
-              state = w;
-              setZone = set;
-            }}
-          />
+          <UdcReactRouterUrlState>
+            <Probe
+              onState={(w, set) => {
+                state = w;
+                setZone = set;
+              }}
+            />
+          </UdcReactRouterUrlState>
         </MemoryRouter>
       </TimezoneProvider>,
     );

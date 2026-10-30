@@ -4,20 +4,20 @@ import { cn } from "../../lib/utils";
 
 const VARIANTS = {
   primary:
-    "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 disabled:bg-primary/50",
+    "udc:bg-primary udc:text-primary-foreground udc:shadow-sm udc:hover:bg-primary/90 udc:disabled:bg-primary/50",
   outline:
-    "border border-border-strong/80 bg-surface text-foreground shadow-xs hover:bg-hover hover:border-border-strong",
-  ghost: "text-muted-foreground hover:bg-hover hover:text-foreground",
-  subtle: "bg-muted text-foreground hover:bg-selected",
+    "udc:border udc:border-border-strong/80 udc:bg-surface udc:text-foreground udc:shadow-xs udc:hover:bg-hover udc:hover:border-border-strong",
+  ghost: "udc:text-muted-foreground udc:hover:bg-hover udc:hover:text-foreground",
+  subtle: "udc:bg-muted udc:text-foreground udc:hover:bg-selected",
   danger:
-    "bg-sem-danger text-white shadow-sm hover:bg-sem-danger/90 disabled:bg-sem-danger/50 dark:text-background",
+    "udc:bg-sem-danger udc:text-white udc:shadow-sm udc:hover:bg-sem-danger/90 udc:disabled:bg-sem-danger/50 udc:dark:text-background",
 } as const;
 
 const SIZES = {
-  sm: "h-7 gap-1.5 rounded-md px-2.5 text-xs",
-  md: "h-8 gap-2 rounded-md px-3 text-[13px]",
-  icon: "size-8 rounded-md",
-  "icon-sm": "size-7 rounded-md",
+  sm: "udc:h-7 udc:gap-1.5 udc:rounded-md udc:px-2.5 udc:text-xs",
+  md: "udc:h-8 udc:gap-2 udc:rounded-md udc:px-3 udc:text-[13px]",
+  icon: "udc:size-8 udc:rounded-md",
+  "icon-sm": "udc:size-7 udc:rounded-md",
 } as const;
 
 export type ButtonProps = ComponentProps<"button"> & {
@@ -36,9 +36,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       ref={ref}
       type={asChild ? undefined : (type ?? "button")}
       className={cn(
-        "inline-flex shrink-0 select-none items-center justify-center whitespace-nowrap font-medium transition-colors",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
-        "disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0",
+        "udc:inline-flex udc:shrink-0 udc:select-none udc:items-center udc:justify-center udc:whitespace-nowrap udc:font-medium udc:transition-colors",
+        "udc:focus-visible:outline-none udc:focus-visible:ring-2 udc:focus-visible:ring-ring udc:focus-visible:ring-offset-1 udc:focus-visible:ring-offset-background",
+        "udc:disabled:pointer-events-none udc:disabled:opacity-50 udc:[&_svg]:size-4 udc:[&_svg]:shrink-0",
         VARIANTS[variant],
         SIZES[size],
         className,

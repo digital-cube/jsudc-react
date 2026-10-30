@@ -1,12 +1,9 @@
 import type { FilterChipConfig } from "@jsudc/core";
 import { Check, ChevronDown, PlusCircle, X } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
-import { Button } from "../components/ui/button";
-import { Checkbox } from "../components/ui/checkbox";
-import { Input } from "../components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover";
 import { useI18n } from "../i18n/i18n";
 import { cn, humanize } from "../lib/utils";
+import { useUiKit } from "../ui-kit/context";
 import { type ChipState, type ChipValue, isEmptyChip } from "./urlState";
 
 type Label = (cfg: FilterChipConfig) => string;
@@ -31,7 +28,7 @@ export function FilterChips({
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5" data-testid="filter-chips">
+    <div className="udc:flex udc:flex-wrap udc:items-center udc:gap-1.5" data-testid="filter-chips">
       {configs.map((cfg) => {
         const v = state[cfg.field];
         const value = v && v.kind === cfg.kind ? v : undefined;
@@ -80,15 +77,17 @@ function ChipTrigger({
   summary: string | null;
   onClear: () => void;
 }) {
+  const { PopoverTrigger } = useUiKit();
   const { t } = useI18n();
   const active = summary !== null;
   return (
     <div
       className={cn(
-        "inline-flex h-7 items-center rounded-full border text-xs font-medium transition-colors",
+        "udc-filter-chip",
+        "udc:inline-flex udc:h-7 udc:items-center udc:rounded-full udc:border udc:text-xs udc:font-medium udc:transition-colors",
         active
-          ? "border-primary/40 bg-primary/8 text-foreground"
-          : "border-dashed border-border-strong text-muted-foreground hover:border-solid hover:bg-hover hover:text-foreground",
+          ? "udc:border-primary/40 udc:bg-primary/8 udc:text-foreground"
+          : "udc:border-dashed udc:border-border-strong udc:text-muted-foreground udc:hover:border-solid udc:hover:bg-hover udc:hover:text-foreground",
       )}
     >
       <PopoverTrigger asChild>
@@ -97,19 +96,19 @@ function ChipTrigger({
           data-testid={`chip-${field}`}
           data-active={active || undefined}
           className={cn(
-            "inline-flex h-full items-center gap-1.5 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring",
-            active ? "pr-1 pl-2.5" : "px-2.5",
+            "udc:inline-flex udc:h-full udc:items-center udc:gap-1.5 udc:rounded-full udc:outline-none udc:focus-visible:ring-2 udc:focus-visible:ring-ring",
+            active ? "udc:pr-1 udc:pl-2.5" : "udc:px-2.5",
           )}
         >
-          {active ? null : <PlusCircle className="size-3.5" />}
+          {active ? null : <PlusCircle className="udc:size-3.5" />}
           <span>{label}</span>
           {active ? (
             <>
-              <span className="h-3.5 w-px bg-primary/30" />
-              <span className="max-w-40 truncate text-primary">{summary}</span>
+              <span className="udc:h-3.5 udc:w-px udc:bg-primary/30" />
+              <span className="udc:max-w-40 udc:truncate udc:text-primary">{summary}</span>
             </>
           ) : (
-            <ChevronDown className="size-3 opacity-60" />
+            <ChevronDown className="udc:size-3 udc:opacity-60" />
           )}
         </button>
       </PopoverTrigger>
@@ -119,9 +118,9 @@ function ChipTrigger({
           onClick={onClear}
           aria-label={`${t("APP", "CLEAR")} ${label}`}
           data-testid={`chip-clear-${field}`}
-          className="mr-1 grid size-5 place-items-center rounded-full text-muted-foreground hover:bg-primary/15 hover:text-foreground"
+          className="udc:mr-1 udc:grid udc:size-5 udc:place-items-center udc:rounded-full udc:text-muted-foreground udc:hover:bg-primary/15 udc:hover:text-foreground"
         >
-          <X className="size-3" />
+          <X className="udc:size-3" />
         </button>
       ) : null}
     </div>
@@ -131,7 +130,7 @@ function ChipTrigger({
 function ChipPanel({ title, children }: { title: string; children: ReactNode }) {
   return (
     <>
-      <div className="mb-2 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
+      <div className="udc:mb-2 udc:text-[11px] udc:font-semibold udc:tracking-wide udc:text-muted-foreground udc:uppercase">
         {title}
       </div>
       {children}
@@ -152,6 +151,7 @@ function SelectChip({
   onChange: (values: string[]) => void;
   onClear: () => void;
 }) {
+  const { Button, Checkbox, Input, Popover, PopoverContent } = useUiKit();
   const { t } = useI18n();
   const [needle, setNeedle] = useState("");
   const selected = value?.values ?? [];
@@ -172,31 +172,31 @@ function SelectChip({
   return (
     <Popover onOpenChange={(open) => !open && setNeedle("")}>
       <ChipTrigger field={cfg.field} label={label} summary={summary} onClear={onClear} />
-      <PopoverContent className="w-60 p-2" data-testid={`chip-panel-${cfg.field}`}>
+      <PopoverContent className="udc:w-60 udc:p-2" data-testid={`chip-panel-${cfg.field}`}>
         {options.length > 8 ? (
           <Input
             autoFocus
             value={needle}
             onChange={(e) => setNeedle(e.target.value)}
             placeholder={t("APP", "OPTIONS_FILTER")}
-            className="mb-2 h-7 text-xs"
+            className="udc:mb-2 udc:h-7 udc:text-xs"
           />
         ) : null}
-        <div className="scroll-thin -mx-1 max-h-64 overflow-y-auto px-1">
+        <div className="udc-scroll-thin udc:-mx-1 udc:max-h-64 udc:overflow-y-auto udc:px-1">
           {shown.map((o) => (
             // biome-ignore lint/a11y/noLabelWithoutControl: the Radix checkbox inside is the control
             <label
               key={o}
               data-testid={`chip-option-${o}`}
-              className="flex h-7 cursor-pointer items-center gap-2 rounded-md px-1.5 text-[13px] hover:bg-hover"
+              className="udc:flex udc:h-7 udc:cursor-pointer udc:items-center udc:gap-2 udc:rounded-md udc:px-1.5 udc:text-[13px] udc:hover:bg-hover"
             >
               <Checkbox checked={selected.includes(o)} onCheckedChange={() => toggle(o)} />
-              <span className="truncate">{o}</span>
+              <span className="udc:truncate">{o}</span>
             </label>
           ))}
         </div>
         {selected.length ? (
-          <div className="mt-2 flex items-center justify-between border-t border-border pt-2 text-xs text-muted-foreground">
+          <div className="udc:mt-2 udc:flex udc:items-center udc:justify-between udc:border-t udc:border-border udc:pt-2 udc:text-xs udc:text-muted-foreground">
             <span>{t("APP", "SELECTED_N", { n: selected.length })}</span>
             <Button size="sm" variant="ghost" onClick={onClear}>
               {t("APP", "CLEAR")}
@@ -221,6 +221,7 @@ function RangeChip({
   onChange: (min: number | null, max: number | null) => void;
   onClear: () => void;
 }) {
+  const { Button, Input, Popover, PopoverContent } = useUiKit();
   const { t, intlLocale } = useI18n();
   const [open, setOpen] = useState(false);
   const [lo, setLo] = useState("");
@@ -251,7 +252,7 @@ function RangeChip({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <ChipTrigger field={cfg.field} label={label} summary={summary} onClear={onClear} />
-      <PopoverContent className="w-64" data-testid={`chip-panel-${cfg.field}`}>
+      <PopoverContent className="udc:w-64" data-testid={`chip-panel-${cfg.field}`}>
         <ChipPanel title={label}>
           <form
             onSubmit={(e) => {
@@ -259,7 +260,7 @@ function RangeChip({
               apply();
             }}
           >
-            <div className="flex items-center gap-2">
+            <div className="udc:flex udc:items-center udc:gap-2">
               <Input
                 type="number"
                 autoFocus
@@ -272,7 +273,7 @@ function RangeChip({
                 value={lo}
                 onChange={(e) => setLo(e.target.value)}
               />
-              <span className="text-muted-foreground">–</span>
+              <span className="udc:text-muted-foreground">–</span>
               <Input
                 type="number"
                 aria-label={t("APP", "MAX")}
@@ -285,7 +286,7 @@ function RangeChip({
                 onChange={(e) => setHi(e.target.value)}
               />
             </div>
-            <div className="mt-3 flex justify-end gap-2">
+            <div className="udc:mt-3 udc:flex udc:justify-end udc:gap-2">
               <Button
                 size="sm"
                 variant="ghost"
@@ -320,6 +321,7 @@ function BoolChip({
   onChange: (v: boolean | null) => void;
   onClear: () => void;
 }) {
+  const { Popover, PopoverContent } = useUiKit();
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const current = value === undefined ? null : value.value;
@@ -333,7 +335,7 @@ function BoolChip({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <ChipTrigger field={cfg.field} label={label} summary={summary} onClear={onClear} />
-      <PopoverContent className="w-44 p-1" data-testid={`chip-panel-${cfg.field}`}>
+      <PopoverContent className="udc:w-44 udc:p-1" data-testid={`chip-panel-${cfg.field}`}>
         <div>
           {choices.map((c) => (
             <button
@@ -345,10 +347,10 @@ function BoolChip({
                 onChange(c.v);
                 setOpen(false);
               }}
-              className="flex h-7 w-full items-center gap-2 rounded-md px-2 text-left text-[13px] outline-none hover:bg-hover focus-visible:bg-hover"
+              className="udc:flex udc:h-7 udc:w-full udc:items-center udc:gap-2 udc:rounded-md udc:px-2 udc:text-left udc:text-[13px] udc:outline-none udc:hover:bg-hover udc:focus-visible:bg-hover"
             >
-              <span className="grid size-4 place-items-center">
-                {current === c.v ? <Check className="size-3.5 text-primary" /> : null}
+              <span className="udc:grid udc:size-4 udc:place-items-center">
+                {current === c.v ? <Check className="udc:size-3.5 udc:text-primary" /> : null}
               </span>
               {c.label}
             </button>

@@ -1,7 +1,7 @@
 import type { ChartWindow, FilterNode, ViewConfig } from "@jsudc/core";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router";
 import { useTimezone } from "../time/timezone";
+import { useUrlSearchParams } from "../url-state/UrlState";
 import { readWindow, type WindowSel, windowCondition, windowRange, writeWindow } from "./window";
 
 export interface ChartWindowState {
@@ -42,7 +42,7 @@ function useWindowNow(key: string, everyMs: number | undefined): number {
 /** The chart window of a view with `chart_options.window`, from the URL and the header's zone. */
 export function useChartWindow(view: ViewConfig | undefined): ChartWindowState | null {
   const cfg = view?.chart_options?.window;
-  const [params, setParams] = useSearchParams();
+  const [params, setParams] = useUrlSearchParams();
   const { timeZone } = useTimezone();
   const read = cfg ? readWindow(params, cfg) : null;
   const selKey = JSON.stringify(read?.sel ?? null);

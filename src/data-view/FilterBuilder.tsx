@@ -1,12 +1,9 @@
 import type { Condition, FilterableField, FilterNode, FilterOp } from "@jsudc/core";
 import { ListFilter, Plus, Trash2, X } from "lucide-react";
 import { type ReactNode, useState } from "react";
-import { Button } from "../components/ui/button";
-import { Input, NativeSelect } from "../components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover";
-import { Select } from "../components/ui/select";
 import { useI18n } from "../i18n/i18n";
 import { cn } from "../lib/utils";
+import { useUiKit } from "../ui-kit/context";
 import { conditionsToTree, treeToConditions } from "./compose";
 
 /** Ops that take no value: the builder hides the value input for them. */
@@ -86,6 +83,7 @@ export function FilterBuilder({
   onChange: (tree: FilterNode | null) => void;
   fieldLabel: (field: string) => string;
 }) {
+  const { Button, Popover, PopoverContent, PopoverTrigger, Select } = useUiKit();
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<DraftRow[]>([]);
@@ -114,20 +112,28 @@ export function FilterBuilder({
   return (
     <Popover open={open} onOpenChange={openWith}>
       <PopoverTrigger asChild>
-        <Button size="sm" variant="outline" data-testid="fb-open" className="h-7 rounded-full">
-          <ListFilter className="size-3.5!" />
+        <Button
+          size="sm"
+          variant="outline"
+          data-testid="fb-open"
+          className="udc:h-7 udc:rounded-full"
+        >
+          <ListFilter className="udc:size-3.5!" />
           {t("APP", "FILTER")}
           {count ? (
-            <span className="grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground">
+            <span className="udc:grid udc:h-4 udc:min-w-4 udc:place-items-center udc:rounded-full udc:bg-primary udc:px-1 udc:text-[10px] udc:font-semibold udc:text-primary-foreground">
               {count}
             </span>
           ) : null}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[560px] max-w-[calc(100vw-2rem)] p-0" data-testid="fb-panel">
-        <div className="border-b border-border px-4 py-3">
-          <div className="text-sm font-semibold">{t("APP", "FILTER_TITLE")}</div>
-          <div className="text-xs text-muted-foreground">{t("APP", "FILTER_HINT")}</div>
+      <PopoverContent
+        className="udc:w-[560px] udc:max-w-[calc(100vw-2rem)] udc:p-0"
+        data-testid="fb-panel"
+      >
+        <div className="udc:border-b udc:border-border udc:px-4 udc:py-3">
+          <div className="udc:text-sm udc:font-semibold">{t("APP", "FILTER_TITLE")}</div>
+          <div className="udc:text-xs udc:text-muted-foreground">{t("APP", "FILTER_HINT")}</div>
         </div>
         <form
           onSubmit={(e) => {
@@ -135,9 +141,9 @@ export function FilterBuilder({
             apply();
           }}
         >
-          <div className="flex flex-col gap-2 px-4 py-3">
+          <div className="udc:flex udc:flex-col udc:gap-2 udc:px-4 udc:py-3">
             {draft.length === 0 ? (
-              <div className="py-2 text-center text-xs text-muted-foreground">
+              <div className="udc:py-2 udc:text-center udc:text-xs udc:text-muted-foreground">
                 {t("APP", "FILTER_EMPTY")}
               </div>
             ) : null}
@@ -148,9 +154,9 @@ export function FilterBuilder({
                   // biome-ignore lint/suspicious/noArrayIndexKey: rows have no identity besides position
                   key={i}
                   data-testid={`fb-row-${i}`}
-                  className="grid grid-cols-[2.5rem_1fr_1fr_1.3fr_auto] items-center gap-2"
+                  className="udc:grid udc:grid-cols-[2.5rem_1fr_1fr_1.3fr_auto] udc:items-center udc:gap-2"
                 >
-                  <span className="text-right text-xs text-muted-foreground">
+                  <span className="udc:text-right udc:text-xs udc:text-muted-foreground">
                     {i === 0 ? "" : t("APP", "AND")}
                   </span>
                   <Select
@@ -185,23 +191,23 @@ export function FilterBuilder({
                     aria-label={t("APP", "REMOVE")}
                     onClick={() => setDraft((rows) => rows.filter((_, j) => j !== i))}
                   >
-                    <Trash2 className="size-3.5!" />
+                    <Trash2 className="udc:size-3.5!" />
                   </Button>
                 </div>
               );
             })}
           </div>
-          <div className="flex items-center justify-between border-t border-border bg-muted/50 px-4 py-2.5">
+          <div className="udc:flex udc:items-center udc:justify-between udc:border-t udc:border-border udc:bg-muted/50 udc:px-4 udc:py-2.5">
             <Button
               size="sm"
               variant="ghost"
               data-testid="fb-add"
               onClick={() => setDraft((rows) => [...rows, emptyRow(fields)])}
             >
-              <Plus className="size-3.5!" />
+              <Plus className="udc:size-3.5!" />
               {t("APP", "FILTER_ADD")}
             </Button>
-            <div className="flex gap-2">
+            <div className="udc:flex udc:gap-2">
               <Button size="sm" variant="ghost" onClick={() => setDraft([])}>
                 {t("APP", "CLEAR")}
               </Button>
@@ -251,7 +257,7 @@ export function FilterPills({
       <Pill
         index={0}
         onRemove={() => onChange(null)}
-        label={<span className="italic">{t("APP", "FILTER_CUSTOM")}</span>}
+        label={<span className="udc:italic">{t("APP", "FILTER_CUSTOM")}</span>}
       />
     );
   }
@@ -265,10 +271,10 @@ export function FilterPills({
           onRemove={() => onChange(conditionsToTree(conditions.filter((_, j) => j !== i)))}
           label={
             <>
-              <span className="font-medium">{fieldLabel(c.field)}</span>
-              <span className="text-muted-foreground">{t("APP", `OP_${c.op}`)}</span>
+              <span className="udc:font-medium">{fieldLabel(c.field)}</span>
+              <span className="udc:text-muted-foreground">{t("APP", `OP_${c.op}`)}</span>
               {NULLARY_OPS.includes(c.op) ? null : (
-                <span className="font-medium text-primary">{formatValue(c)}</span>
+                <span className="udc:font-medium udc:text-primary">{formatValue(c)}</span>
               )}
             </>
           }
@@ -291,7 +297,7 @@ function Pill({
   return (
     <span
       data-testid={`fb-pill-${index}`}
-      className="inline-flex h-7 items-center gap-1.5 rounded-full border border-primary/30 bg-primary/8 pr-1 pl-2.5 text-xs"
+      className="udc:inline-flex udc:h-7 udc:items-center udc:gap-1.5 udc:rounded-full udc:border udc:border-primary/30 udc:bg-primary/8 udc:pr-1 udc:pl-2.5 udc:text-xs"
     >
       {label}
       <button
@@ -299,9 +305,9 @@ function Pill({
         onClick={onRemove}
         aria-label={t("APP", "FILTER_REMOVE")}
         data-testid={`fb-pill-remove-${index}`}
-        className="grid size-5 place-items-center rounded-full text-muted-foreground hover:bg-primary/15 hover:text-foreground"
+        className="udc:grid udc:size-5 udc:place-items-center udc:rounded-full udc:text-muted-foreground udc:hover:bg-primary/15 udc:hover:text-foreground"
       >
-        <X className="size-3" />
+        <X className="udc:size-3" />
       </button>
     </span>
   );
@@ -318,12 +324,13 @@ function ValueInput({
   field: FilterableField | undefined;
   onChange: (p: Partial<DraftRow>) => void;
 }) {
+  const { Input, NativeSelect } = useUiKit();
   const { t } = useI18n();
   if (NULLARY_OPS.includes(row.op)) return <span />;
   const widget = field?.widget ?? "text";
   const list = LIST_OPS.includes(row.op);
   const type = list ? "text" : widget === "number" ? "number" : widget === "date" ? "date" : "text";
-  const common = "h-8";
+  const common = "udc:h-8";
 
   if (widget === "bool") {
     return (
@@ -343,13 +350,13 @@ function ValueInput({
   }
   if (row.op === "between") {
     return (
-      <div className="flex items-center gap-1">
+      <div className="udc:flex udc:items-center udc:gap-1">
         <Input
           type={type}
           aria-label={t("APP", "MIN")}
           data-testid={`fb-value-${index}`}
           placeholder={t("APP", "MIN")}
-          className={cn(common, "px-2")}
+          className={cn(common, "udc:px-2")}
           value={row.value}
           onChange={(e) => onChange({ value: e.target.value })}
         />
@@ -358,7 +365,7 @@ function ValueInput({
           aria-label={t("APP", "MAX")}
           data-testid={`fb-value2-${index}`}
           placeholder={t("APP", "MAX")}
-          className={cn(common, "px-2")}
+          className={cn(common, "udc:px-2")}
           value={row.value2}
           onChange={(e) => onChange({ value2: e.target.value })}
         />

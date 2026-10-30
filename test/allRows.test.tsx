@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it } from "vitest";
+import { RENDERERS } from "../src/all";
 import { fetchAllRows, useUdcAllRows } from "../src/udc/hooks";
 import { udcKeys } from "../src/udc/keys";
 import { createUdcQueryClient, UdcProvider } from "../src/udc/provider";
@@ -112,7 +113,7 @@ describe("useUdcAllRows", () => {
     const client = clientOf(mock);
     const qc = createUdcQueryClient();
     const wrapper = ({ children }: { children: ReactNode }) => (
-      <UdcProvider client={client}>
+      <UdcProvider client={client} renderers={RENDERERS}>
         <QueryClientProvider client={qc}>{children}</QueryClientProvider>
       </UdcProvider>
     );

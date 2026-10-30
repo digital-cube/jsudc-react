@@ -7,7 +7,6 @@ import {
   useRef,
   useState,
 } from "react";
-import { Input } from "../components/ui/input";
 import { useI18n } from "../i18n/i18n";
 import { cn } from "../lib/utils";
 import {
@@ -22,6 +21,7 @@ import {
   startOfDay,
   zonedFormat,
 } from "../time/zoned";
+import { useUiKit } from "../ui-kit/context";
 import { EventBlock } from "./EventBlock";
 import {
   type CalendarEvent,
@@ -37,7 +37,7 @@ import {
 
 /** Pixels the pointer travels before a press becomes a drag (below it, a click). */
 const DRAG_THRESHOLD = 4;
-const GUTTER = "w-16";
+const GUTTER = "udc:w-16";
 
 interface Drag {
   id: string;
@@ -192,11 +192,11 @@ export function TimeGrid(props: TimeGridProps) {
   const cols = { gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))` };
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col" data-testid="cal-timegrid">
+    <div className="udc:flex udc:min-h-0 udc:flex-1 udc:flex-col" data-testid="cal-timegrid">
       {/* Day headers */}
-      <div className="flex border-b border-border bg-surface">
-        <div className={cn(GUTTER, "shrink-0")} />
-        <div className="grid flex-1" style={cols}>
+      <div className="udc:flex udc:border-b udc:border-border udc:bg-surface">
+        <div className={cn(GUTTER, "udc:shrink-0")} />
+        <div className="udc:grid udc:flex-1" style={cols}>
           {win.days.map((day) => {
             const isToday = sameDay(day, today);
             return (
@@ -206,15 +206,15 @@ export function TimeGrid(props: TimeGridProps) {
                 data-testid="cal-day-header"
                 data-day={dayKey(day)}
                 onClick={() => props.onDay(day)}
-                className="flex items-baseline justify-center gap-1.5 border-l border-border py-2 text-xs text-muted-foreground hover:bg-hover"
+                className="udc:flex udc:items-baseline udc:justify-center udc:gap-1.5 udc:border-l udc:border-border udc:py-2 udc:text-xs udc:text-muted-foreground udc:hover:bg-hover"
               >
-                <span className="font-medium uppercase">
+                <span className="udc:font-medium udc:uppercase">
                   {formatDay(day, intlLocale, { weekday: "short" })}
                 </span>
                 <span
                   className={cn(
-                    "grid h-6 min-w-6 place-items-center rounded-full px-1 text-[13px] font-semibold text-foreground tabular-nums",
-                    isToday && "bg-primary text-primary-foreground",
+                    "udc:grid udc:h-6 udc:min-w-6 udc:place-items-center udc:rounded-full udc:px-1 udc:text-[13px] udc:font-semibold udc:text-foreground udc:tabular-nums",
+                    isToday && "udc:bg-primary udc:text-primary-foreground",
                   )}
                 >
                   {day.d}
@@ -235,14 +235,17 @@ export function TimeGrid(props: TimeGridProps) {
         />
       ) : null}
 
-      <div ref={scrollRef} className="scroll-thin relative min-h-0 flex-1 overflow-y-auto">
-        <div className="flex" style={{ height: 24 * hh }}>
-          <div className={cn(GUTTER, "relative shrink-0")}>
+      <div
+        ref={scrollRef}
+        className="udc-scroll-thin udc:relative udc:min-h-0 udc:flex-1 udc:overflow-y-auto"
+      >
+        <div className="udc:flex" style={{ height: 24 * hh }}>
+          <div className={cn(GUTTER, "udc:relative udc:shrink-0")}>
             {hours.map((h) =>
               h === 0 ? null : (
                 <div
                   key={h}
-                  className="absolute right-2 -translate-y-1/2 text-[10.5px] whitespace-nowrap text-muted-foreground tabular-nums"
+                  className="udc:absolute udc:right-2 udc:-translate-y-1/2 udc:text-[10.5px] udc:whitespace-nowrap udc:text-muted-foreground udc:tabular-nums"
                   style={{ top: h * hh }}
                   data-testid="cal-hour-label"
                 >
@@ -251,7 +254,7 @@ export function TimeGrid(props: TimeGridProps) {
               ),
             )}
           </div>
-          <div ref={colsRef} className="relative grid flex-1" style={cols}>
+          <div ref={colsRef} className="udc:relative udc:grid udc:flex-1" style={cols}>
             {win.days.map((day) => {
               const dayEvents = eventsOnDay(timed, day, timeZone);
               const lanes = layoutLanes(dayEvents);
@@ -267,8 +270,8 @@ export function TimeGrid(props: TimeGridProps) {
                   data-day={dayKey(day)}
                   onClick={(e) => onEmptyClick(e, day)}
                   className={cn(
-                    "relative border-l border-border",
-                    creatable && !readOnly && "cursor-cell",
+                    "udc:relative udc:border-l udc:border-border",
+                    creatable && !readOnly && "udc:cursor-cell",
                   )}
                   style={{
                     backgroundImage: `repeating-linear-gradient(to bottom, transparent 0, transparent ${hh - 1}px, var(--border) ${hh - 1}px, var(--border) ${hh}px)`,
@@ -276,11 +279,11 @@ export function TimeGrid(props: TimeGridProps) {
                 >
                   {/* Outside business hours: shaded. */}
                   <div
-                    className="pointer-events-none absolute inset-x-0 top-0 bg-muted/55"
+                    className="udc:pointer-events-none udc:absolute udc:inset-x-0 udc:top-0 udc:bg-muted/55"
                     style={{ height: bizFrom * hh }}
                   />
                   <div
-                    className="pointer-events-none absolute inset-x-0 bottom-0 bg-muted/55"
+                    className="udc:pointer-events-none udc:absolute udc:inset-x-0 udc:bottom-0 udc:bg-muted/55"
                     style={{ height: (24 - bizTo) * hh }}
                   />
                   {dayEvents.map((ev) => {
@@ -309,10 +312,10 @@ export function TimeGrid(props: TimeGridProps) {
                   {nowHere ? (
                     <div
                       data-testid="cal-now-line"
-                      className="pointer-events-none absolute inset-x-0 z-20 h-0.5 bg-sem-danger"
+                      className="udc:pointer-events-none udc:absolute udc:inset-x-0 udc:z-20 udc:h-0.5 udc:bg-sem-danger"
                       style={{ top: (minuteOfDay(now, timeZone) / 60) * hh }}
                     >
-                      <div className="absolute -top-[3px] -left-1 size-2 rounded-full bg-sem-danger" />
+                      <div className="udc:absolute udc:-top-[3px] udc:-left-1 udc:size-2 udc:rounded-full udc:bg-sem-danger" />
                     </div>
                   ) : null}
                   {draft && sameDay(draft.day, day) ? (
@@ -354,18 +357,19 @@ function CreateForm({
   onSubmit: (title: string) => void;
   onCancel: () => void;
 }) {
+  const { Input } = useUiKit();
   const [title, setTitle] = useState("");
   return (
     <form
       data-testid="cal-create"
-      className="absolute inset-x-1 z-30 rounded-md border border-primary/50 bg-surface-raised p-1.5 shadow-lg"
+      className="udc:absolute udc:inset-x-1 udc:z-30 udc:rounded-md udc:border udc:border-primary/50 udc:bg-surface-raised udc:p-1.5 udc:shadow-lg"
       style={{ top }}
       onSubmit={(e) => {
         e.preventDefault();
         if (title.trim()) onSubmit(title.trim());
       }}
     >
-      <div className="mb-1 px-0.5 text-[10.5px] font-medium text-muted-foreground tabular-nums">
+      <div className="udc:mb-1 udc:px-0.5 udc:text-[10.5px] udc:font-medium udc:text-muted-foreground udc:tabular-nums">
         {label}
       </div>
       <Input
@@ -376,7 +380,7 @@ function CreateForm({
         onChange={(e) => setTitle(e.target.value)}
         onKeyDown={(e) => e.key === "Escape" && onCancel()}
         onBlur={() => !title.trim() && onCancel()}
-        className="h-7 text-xs"
+        className="udc:h-7 udc:text-xs"
       />
     </form>
   );
@@ -412,17 +416,20 @@ function AllDayRow({
     return { ev, a, b, r };
   });
   return (
-    <div className="flex border-b border-border bg-surface" data-testid="cal-all-day">
+    <div
+      className="udc:flex udc:border-b udc:border-border udc:bg-surface"
+      data-testid="cal-all-day"
+    >
       <div
         className={cn(
           GUTTER,
-          "shrink-0 px-1 py-1.5 text-right text-[10px] leading-tight text-muted-foreground",
+          "udc:shrink-0 udc:px-1 udc:py-1.5 udc:text-right udc:text-[10px] udc:leading-tight udc:text-muted-foreground",
         )}
       >
         {label}
       </div>
       <div
-        className="grid flex-1 gap-y-0.5 py-1"
+        className="udc:grid udc:flex-1 udc:gap-y-0.5 udc:py-1"
         style={{ gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))` }}
       >
         {placed.map(({ ev, a, b, r }) => (
@@ -432,7 +439,7 @@ function AllDayRow({
             data-testid="cal-all-day-event"
             data-event-id={ev.id}
             onClick={(e) => onOpen(ev, e.currentTarget)}
-            className="mx-0.5 truncate rounded px-1.5 py-0.5 text-left text-[11px] font-medium text-foreground"
+            className="udc:mx-0.5 udc:truncate udc:rounded udc:px-1.5 udc:py-0.5 udc:text-left udc:text-[11px] udc:font-medium udc:text-foreground"
             style={{
               gridColumn: `${a + 1} / ${b + 2}`,
               gridRow: r + 1,

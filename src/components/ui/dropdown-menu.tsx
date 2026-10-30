@@ -14,8 +14,8 @@ export const DropdownMenuContent = forwardRef<HTMLDivElement, ComponentProps<typ
           align={align}
           sideOffset={sideOffset}
           className={cn(
-            "z-50 min-w-48 rounded-lg border border-border bg-surface-raised p-1 text-foreground shadow-lg shadow-black/5 outline-none",
-            "data-[state=open]:animate-in dark:shadow-black/40",
+            "udc:z-50 udc:min-w-48 udc:rounded-lg udc:border udc:border-border udc:bg-surface-raised udc:p-1 udc:text-foreground udc:shadow-lg udc:shadow-black/5 udc:outline-none",
+            "udc:data-[state=open]:animate-in udc:dark:shadow-black/40",
             className,
           )}
           {...props}
@@ -33,11 +33,11 @@ export const DropdownMenuItem = forwardRef<
     <M.Item
       ref={ref}
       className={cn(
-        "flex h-8 cursor-default select-none items-center gap-2 rounded-md px-2 text-[13px] outline-none [&_svg]:size-4 [&_svg]:shrink-0",
+        "udc:flex udc:h-8 udc:cursor-default udc:select-none udc:items-center udc:gap-2 udc:rounded-md udc:px-2 udc:text-[13px] udc:outline-none udc:[&_svg]:size-4 udc:[&_svg]:shrink-0",
         tone === "danger"
-          ? "text-sem-danger data-[highlighted]:bg-sem-danger-bg"
-          : "data-[highlighted]:bg-hover [&_svg]:text-muted-foreground",
-        "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+          ? "udc:text-sem-danger udc:data-[highlighted]:bg-sem-danger-bg"
+          : "udc:data-[highlighted]:bg-hover udc:[&_svg]:text-muted-foreground",
+        "udc:data-[disabled]:pointer-events-none udc:data-[disabled]:opacity-50",
         className,
       )}
       {...props}
@@ -46,13 +46,16 @@ export const DropdownMenuItem = forwardRef<
 });
 
 export function DropdownMenuSeparator({ className }: { className?: string }) {
-  return <M.Separator className={cn("my-1 h-px bg-border", className)} />;
+  return <M.Separator className={cn("udc:my-1 udc:h-px udc:bg-border", className)} />;
 }
 
 export function DropdownMenuLabel({ className, ...props }: ComponentProps<typeof M.Label>) {
   return (
     <M.Label
-      className={cn("px-2 pt-1.5 pb-1 text-[11px] font-medium text-muted-foreground", className)}
+      className={cn(
+        "udc:px-2 udc:pt-1.5 udc:pb-1 udc:text-[11px] udc:font-medium udc:text-muted-foreground",
+        className,
+      )}
       {...props}
     />
   );

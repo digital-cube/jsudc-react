@@ -1,8 +1,7 @@
 import type { SchemaDoc } from "@jsudc/core";
 import { type ReactNode, useCallback, useState } from "react";
-import { Dialog } from "../components/ui/dialog";
-import { useToast } from "../components/ui/toast";
 import { useI18n } from "../i18n/i18n";
+import { useUiKit } from "../ui-kit/context";
 import { DeleteFieldDialog } from "./DeleteFieldDialog";
 import { FieldFormDialog } from "./FieldFormDialog";
 import type { SchemaAction } from "./fieldForm";
@@ -31,6 +30,7 @@ export function useSchemaEditor({
   schema: SchemaDoc | undefined;
   fieldLabel: (field: string) => string;
 }): { open: (a: SchemaAction) => void; dialogs: ReactNode } {
+  const { Dialog, useToast } = useUiKit();
   const { t } = useI18n();
   const { toast } = useToast();
   const [action, setAction] = useState<SchemaAction | null>(null);

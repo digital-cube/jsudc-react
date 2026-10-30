@@ -85,3 +85,12 @@ export interface RendererEntry {
   /** Extra controls in the toolbar while this tab is open. */
   toolbar?: ComponentType<{ collection: string; describe: DescribeResponse }>;
 }
+
+/** One renderer as its subpath exports it (`tableRenderer` from `@jsudc/react/table`). */
+export interface RendererDefinition extends RendererEntry {
+  /** The name a view lists in `available_renderers`. */
+  name: string;
+}
+
+/** Renderer name → entry: what `UdcDataView` draws its tabs with. `createRendererRegistry` builds one. */
+export type RendererRegistry = Readonly<Record<string, RendererEntry>>;

@@ -4,15 +4,13 @@ import L from "leaflet";
 import { Maximize } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Button } from "../components/ui/button";
-import { Skeleton } from "../components/ui/misc";
-import { Segmented } from "../components/ui/segmented";
 import { tableSection, useI18n } from "../i18n/i18n";
 import { AllRowsStatus } from "../renderers/AllRowsStatus";
 import type { RendererProps } from "../renderers/types";
 import { CellValue } from "../table/cells";
 import { EmptyState, ErrorState } from "../table/states";
 import { useUdcAllRows } from "../udc/hooks";
+import { useUiKit } from "../ui-kit/context";
 import {
   airplaneHtml,
   boundsOf,
@@ -74,7 +72,10 @@ export function MapRenderer(props: RendererProps) {
   const { t } = useI18n();
   if (!opts) {
     return (
-      <div className="p-8 text-center text-sm text-muted-foreground" data-testid="map-missing">
+      <div
+        className="udc:p-8 udc:text-center udc:text-sm udc:text-muted-foreground"
+        data-testid="map-missing"
+      >
         {t("APP", "MAP_NO_OPTIONS")}
       </div>
     );
@@ -98,6 +99,7 @@ function MapView({
   onCount,
   opts,
 }: RendererProps & { opts: MapOptions }) {
+  const { Skeleton } = useUiKit();
   const { t } = useI18n();
   const q = useUdcAllRows({
     collection,
@@ -311,7 +313,7 @@ function MapView({
 
   return (
     <div
-      className="flex min-h-0 flex-1 flex-col"
+      className="udc:flex udc:min-h-0 udc:flex-1 udc:flex-col"
       data-testid="map"
       data-zoom={view.zoom}
       data-center={view.center.join(",")}
@@ -325,20 +327,20 @@ function MapView({
         onFitAll={() => fitMarkers(mapRef.current, markers, true)}
         canFit={markers.length > 0}
       />
-      <div className="relative min-h-0 flex-1">
+      <div className="udc:relative udc:min-h-0 udc:flex-1">
         <section
           ref={containerRef}
-          className="udc-map absolute inset-0"
+          className="udc-map udc:absolute udc:inset-0"
           aria-label={t("APP", "TAB_MAP")}
         />
         {firstLoad ? (
-          <div className="absolute inset-0 z-[1000] p-3" data-testid="map-skeleton">
-            <Skeleton className="size-full rounded-lg" />
+          <div className="udc:absolute udc:inset-0 udc:z-[1000] udc:p-3" data-testid="map-skeleton">
+            <Skeleton className="udc:size-full udc:rounded-lg" />
           </div>
         ) : null}
         {error || empty ? (
-          <div className="absolute inset-0 z-[1000] grid place-items-center bg-background/70 backdrop-blur-[1px]">
-            <div className="rounded-xl border border-border bg-surface shadow-lg">
+          <div className="udc:absolute udc:inset-0 udc:z-[1000] udc:grid udc:place-items-center udc:bg-background/70 udc:backdrop-blur-[1px]">
+            <div className="udc:rounded-xl udc:border udc:border-border udc:bg-surface udc:shadow-lg">
               {error ? (
                 <ErrorState error={error} onRetry={() => void q.refetch()} />
               ) : (
@@ -377,11 +379,12 @@ export function MapToolbar({
   onFitAll: () => void;
   canFit: boolean;
 }) {
+  const { Button, Segmented } = useUiKit();
   const { t } = useI18n();
   const regions = opts.regions ?? [];
   return (
     <div
-      className="flex flex-wrap items-center gap-2 border-b border-border bg-muted/30 px-3 py-1.5"
+      className="udc:flex udc:flex-wrap udc:items-center udc:gap-2 udc:border-b udc:border-border udc:bg-muted/30 udc:px-3 udc:py-1.5"
       data-testid="map-toolbar"
     >
       {regions.length > 0 ? (
@@ -432,10 +435,14 @@ function MapPopup({
   const column = (field: string) => view.columns.find((c) => c.field === field) ?? { field };
   const [head, ...rest] = fields;
   return (
-    <div data-testid="map-popup" data-id={row.__meta.id} className="flex flex-col gap-1.5">
+    <div
+      data-testid="map-popup"
+      data-id={row.__meta.id}
+      className="udc:flex udc:flex-col udc:gap-1.5"
+    >
       {head ? (
         <div
-          className="text-sm leading-snug font-semibold text-foreground"
+          className="udc:text-sm udc:leading-snug udc:font-semibold udc:text-foreground"
           data-testid={`map-popup-${head}`}
         >
           <CellValue
@@ -448,15 +455,17 @@ function MapPopup({
         </div>
       ) : null}
       {rest.length > 0 ? (
-        <dl className="flex flex-col">
+        <dl className="udc:flex udc:flex-col">
           {rest.map((field) => (
             <div
               key={field}
               data-testid={`map-popup-${field}`}
-              className="flex min-h-6 items-center justify-between gap-4 border-t border-dashed border-border/80 py-0.5"
+              className="udc:flex udc:min-h-6 udc:items-center udc:justify-between udc:gap-4 udc:border-t udc:border-dashed udc:border-border/80 udc:py-0.5"
             >
-              <dt className="shrink-0 text-xs text-muted-foreground">{t(section, field)}</dt>
-              <dd className="flex min-w-0 items-center justify-end text-right text-[13px] font-medium text-foreground">
+              <dt className="udc:shrink-0 udc:text-xs udc:text-muted-foreground">
+                {t(section, field)}
+              </dt>
+              <dd className="udc:flex udc:min-w-0 udc:items-center udc:justify-end udc:text-right udc:text-[13px] udc:font-medium udc:text-foreground">
                 <CellValue
                   value={row[field]}
                   column={column(field)}

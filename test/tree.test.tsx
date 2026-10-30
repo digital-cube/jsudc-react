@@ -10,9 +10,11 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { act, fireEvent, render, renderHook, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { RENDERERS } from "../src/all";
 import { Toaster } from "../src/components/ui/toast";
 import { TooltipProvider } from "../src/components/ui/tooltip";
 import { UdcI18nProvider } from "../src/i18n/i18n";
+import { UdcReactRouterUrlState } from "../src/react-router";
 import type { RendererProps } from "../src/renderers/types";
 import {
   expandStorageKey,
@@ -422,12 +424,14 @@ describe("<TreeRenderer>", () => {
     };
     render(
       <UdcI18nProvider>
-        <UdcProvider client={client}>
+        <UdcProvider client={client} renderers={RENDERERS}>
           <QueryClientProvider client={createUdcQueryClient()}>
             <TooltipProvider>
               <Toaster>
                 <MemoryRouter>
-                  <TreeRenderer {...props} />
+                  <UdcReactRouterUrlState>
+                    <TreeRenderer {...props} />
+                  </UdcReactRouterUrlState>
                 </MemoryRouter>
               </Toaster>
             </TooltipProvider>
