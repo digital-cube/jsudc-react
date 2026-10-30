@@ -41,7 +41,7 @@ export function Segmented<V extends string>({
             data-testid={o.testId}
             disabled={o.disabled}
             className={cn(
-              "udc:inline-flex udc:h-7 udc:items-center udc:gap-1.5 udc:rounded-[5px] udc:px-2.5 udc:text-xs udc:font-medium udc:text-muted-foreground udc:transition-colors",
+              "udc:inline-flex udc:h-7 udc:items-center udc:gap-1.5 udc:rounded-[calc(var(--radius)*0.625)] udc:px-2.5 udc:text-xs udc:font-medium udc:text-muted-foreground udc:transition-colors",
               "udc:hover:text-foreground udc:focus-visible:outline-none udc:focus-visible:ring-2 udc:focus-visible:ring-ring",
               "udc:data-[state=on]:bg-surface udc:data-[state=on]:text-foreground udc:data-[state=on]:shadow-sm",
               "udc:disabled:pointer-events-none udc:disabled:opacity-45",

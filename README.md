@@ -399,13 +399,15 @@ unlayered CSS of the host wins over them.
 
 ### Theming
 
-Every colour comes from a CSS variable on `:root` and `.dark`. Restyling is
-redefining them after the stylesheet, no code:
+Every colour, radius and font comes from a CSS variable on `:root` and
+`.dark`. Restyling is redefining them after the stylesheet, no code:
 
 ```css
 :root {
   --primary: oklch(0.55 0.2 150);
   --primary-foreground: white;
+  --radius: 0;
+  --font-sans: Georgia, serif;
 }
 .dark {
   --background: oklch(0.12 0.01 150);
@@ -426,10 +428,17 @@ The variables (`dist/tokens.css`, both themes):
 | `--sem-accent`, `--sem-success`, `--sem-warning`, `--sem-danger`, `--sem-info`, `--sem-muted`                   | the semantic tones (badges, row colours, kanban columns, map markers) |
 | `--sem-accent-bg`, `--sem-success-bg`, `--sem-warning-bg`, `--sem-danger-bg`, `--sem-info-bg`, `--sem-muted-bg` | their background pairs                                                |
 | `--chart-1` … `--chart-8`                                                                                       | the chart's series                                                    |
+| `--radius`                                                                                                      | the base corner radius; every `rounded-*` step is a multiple of it    |
+| `--font-sans`, `--font-mono`                                                                                    | the UI font, the font of code and ids                                 |
 
-Dark mode is the `dark` class on any ancestor, usually `<html>`. The font is
-`Inter Variable` when the host loads it (`@fontsource-variable/inter`), else
-the system UI font.
+Dark mode is the `dark` class on any ancestor, usually `<html>`. The default
+`--font-sans` is `Inter Variable` when the host loads it
+(`@fontsource-variable/inter`), else the system UI font. `--radius` defaults
+to `0.5rem`: the steps are `sm` ½, `md` ¾, `lg` 1×, `xl` 1½× of it, so
+`--radius: 0` squares every corner and `--radius: 1rem` doubles them. The
+compiled utilities read these variables themselves (`var(--radius)`,
+`var(--font-sans)`), so the stylesheet's internal `--udc-*` names are not
+part of the theme.
 
 ### Stable classes
 

@@ -56,7 +56,7 @@ export function Toaster({ children }: { children: ReactNode }) {
             </div>
             <T.Close
               aria-label="Close"
-              className="udc:rounded udc:p-1 udc:text-muted-foreground udc:hover:bg-hover udc:hover:text-foreground"
+              className="udc:rounded-sm udc:p-1 udc:text-muted-foreground udc:hover:bg-hover udc:hover:text-foreground"
             >
               <X className="udc:size-3.5" />
             </T.Close>

@@ -69,7 +69,7 @@ export function SearchBox({
           type="button"
           onClick={clear}
           aria-label={t("APP", "SEARCH_CLEAR")}
-          className="udc:absolute udc:top-1/2 udc:right-1.5 udc:grid udc:size-5 udc:-translate-y-1/2 udc:place-items-center udc:rounded udc:text-muted-foreground udc:hover:bg-hover udc:hover:text-foreground"
+          className="udc:absolute udc:top-1/2 udc:right-1.5 udc:grid udc:size-5 udc:-translate-y-1/2 udc:place-items-center udc:rounded-sm udc:text-muted-foreground udc:hover:bg-hover udc:hover:text-foreground"
         >
           <X className="udc:size-3.5" />
         </button>

@@ -7,6 +7,22 @@ All notable changes to `@jsudc/react` are recorded here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- `--radius`, `--font-sans` and `--font-mono` are runtime theme tokens on
+  `:root`, next to the colours (README "Theming"). The compiled stylesheet
+  reads them as `var(--radius)` / `var(--font-sans)` / `var(--font-mono)`, so a
+  host that sets `--radius: 0` and `--font-sans: serif` gets square corners and
+  a serif font. Every `rounded-*` step is a multiple of `--radius` (default
+  `0.5rem`, which renders exactly as 0.2.0).
+
+### Changed
+
+- The last literal radii and fonts are token-derived: the bare `rounded`
+  utility, the checkbox and the Segmented items, and the Doc tab's code
+  blocks. The undocumented `--udc-radius-*` variables are no longer emitted;
+  a host that set them sets `--radius` instead.
+
 ## [0.2.0] - 2026-10-30
 
 Released in lockstep with `@jsudc/core` 0.2.0 and `@jsudc/server` 0.2.0

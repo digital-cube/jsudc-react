@@ -56,7 +56,7 @@ export function TagInput({
             type="button"
             aria-label={`Remove ${v}`}
             onClick={() => onChange(value.filter((x) => x !== v))}
-            className="udc:grid udc:size-5 udc:place-items-center udc:rounded udc:text-muted-foreground udc:hover:bg-hover udc:hover:text-foreground"
+            className="udc:grid udc:size-5 udc:place-items-center udc:rounded-sm udc:text-muted-foreground udc:hover:bg-hover udc:hover:text-foreground"
           >
             <X className="udc:size-3" />
           </button>

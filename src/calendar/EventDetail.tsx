@@ -146,7 +146,7 @@ export function EventDetail({
                       type="button"
                       data-testid={`cal-detail-edit-${field}`}
                       onClick={() => setEditing(field)}
-                      className="udc:group/edit udc:flex udc:min-h-7 udc:w-full udc:min-w-0 udc:items-center udc:gap-1.5 udc:rounded udc:px-1 udc:-mx-1 udc:text-left udc:hover:bg-hover"
+                      className="udc:group/edit udc:flex udc:min-h-7 udc:w-full udc:min-w-0 udc:items-center udc:gap-1.5 udc:rounded-sm udc:px-1 udc:-mx-1 udc:text-left udc:hover:bg-hover"
                     >
                       <span className="udc:min-w-0 udc:flex-1">
                         <CellValue

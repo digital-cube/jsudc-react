@@ -176,7 +176,7 @@ export function TreeNode({ row, depth }: { row: Row; depth: number }) {
               aria-label={t("APP", open ? "TREE_COLLAPSE" : "TREE_EXPAND")}
               onPointerDown={(e) => e.stopPropagation()}
               onClick={() => ctx.setOpen(id, !open)}
-              className="udc:mt-0.5 udc:grid udc:size-5 udc:shrink-0 udc:place-items-center udc:rounded udc:text-muted-foreground udc:hover:bg-selected udc:hover:text-foreground"
+              className="udc:mt-0.5 udc:grid udc:size-5 udc:shrink-0 udc:place-items-center udc:rounded-sm udc:text-muted-foreground udc:hover:bg-selected udc:hover:text-foreground"
             >
               <ChevronRight
                 className={cn("udc:size-3.5 udc:transition-transform", open && "udc:rotate-90")}
@@ -237,7 +237,7 @@ export function TreeNode({ row, depth }: { row: Row; depth: number }) {
                 data-testid="tree-menu"
                 aria-label={t("APP", "TREE_MENU")}
                 onPointerDown={(e) => e.stopPropagation()}
-                className="udc:grid udc:size-6 udc:shrink-0 udc:place-items-center udc:rounded udc:text-muted-foreground udc:opacity-0 udc:group-hover:opacity-100 udc:group-focus-visible:opacity-100 udc:hover:bg-selected udc:hover:text-foreground udc:data-[state=open]:opacity-100"
+                className="udc:grid udc:size-6 udc:shrink-0 udc:place-items-center udc:rounded-sm udc:text-muted-foreground udc:opacity-0 udc:group-hover:opacity-100 udc:group-focus-visible:opacity-100 udc:hover:bg-selected udc:hover:text-foreground udc:data-[state=open]:opacity-100"
               >
                 <MoreVertical className="udc:size-3.5" />
               </button>
@@ -294,7 +294,7 @@ function RenameInput({ initial, onDone }: { initial: string; onDone: (v: string 
         if (e.key === "Escape") finish(null);
       }}
       onBlur={(e) => finish(e.currentTarget.value.trim() || null)}
-      className="udc:h-6 udc:w-full udc:rounded udc:border udc:border-border-strong udc:bg-surface udc:px-1.5 udc:text-[13px] udc:outline-none udc:focus:ring-2 udc:focus:ring-ring/60"
+      className="udc:h-6 udc:w-full udc:rounded-sm udc:border udc:border-border-strong udc:bg-surface udc:px-1.5 udc:text-[13px] udc:outline-none udc:focus:ring-2 udc:focus:ring-ring/60"
     />
   );
 }
