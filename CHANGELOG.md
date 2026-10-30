@@ -7,6 +7,11 @@ All notable changes to `@jsudc/react` are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-10-30
+
+Released in lockstep with `@jsudc/server` 0.2.1; `@jsudc/core` stays 0.2.0 and
+the peer range `^0.2.0` is unchanged.
+
 ### Added
 
 - `--radius`, `--font-sans` and `--font-mono` are runtime theme tokens on
@@ -20,8 +25,9 @@ All notable changes to `@jsudc/react` are recorded here. The format follows
 
 - The last literal radii and fonts are token-derived: the bare `rounded`
   utility, the checkbox and the Segmented items, and the Doc tab's code
-  blocks. The undocumented `--udc-radius-*` variables are no longer emitted;
-  a host that set them sets `--radius` instead.
+  blocks. The `--udc-radius-*` variables are no longer emitted: they were
+  never public names, only the stylesheet's internals; a host that set them
+  sets `--radius` instead.
 
 ## [0.2.0] - 2026-10-30
 
@@ -228,7 +234,8 @@ First tagged version, installed from the GitHub tag.
   Serbian), theme and time-zone providers, the UI primitives.
 - `styles.css`, compiled at build time, and `tokens.css`, its raw source.
 
-[Unreleased]: https://github.com/digital-cube/jsudc-react/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/digital-cube/jsudc-react/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/digital-cube/jsudc-react/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/digital-cube/jsudc-react/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/digital-cube/jsudc-react/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/digital-cube/jsudc-react/releases/tag/v0.1.0

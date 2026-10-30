@@ -1,6 +1,6 @@
 {
   "name": "@jsudc/react",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": false,
   "type": "module",
   "description": "React components for UDC collections: the data view, its table, cards, kanban, calendar, tree, map and chart renderers (one subpath each), the schema editor, headless hooks and models, i18n, theme and a compiled, udc:-prefixed stylesheet.",

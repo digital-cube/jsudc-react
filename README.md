@@ -40,7 +40,7 @@ npm install @jsudc/react @jsudc/core \
 # then the peers of the renderers you register (see Renderers), all of them:
 npm install @tanstack/react-table leaflet recharts @dnd-kit/core @dnd-kit/sortable @dnd-kit/utilities
 # or straight from a GitHub tag:
-npm install github:digital-cube/jsudc-core#v0.2.0 github:digital-cube/jsudc-react#v0.2.0
+npm install github:digital-cube/jsudc-core#v0.2.0 github:digital-cube/jsudc-react#v0.2.1
 ```
 
 ## Quick start
