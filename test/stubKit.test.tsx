@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { RENDERERS } from "../src/all";
 import { UdcDataView } from "../src/data-view/UdcDataView";
 import { UdcI18nProvider } from "../src/i18n/i18n";
 import { createUdcQueryClient, UdcProvider } from "../src/udc/provider";
@@ -84,7 +85,7 @@ function mountView(
   const client = new UdcClient({ httpUrl: "http://api", fetch: mock.fetch });
   render(
     <UdcI18nProvider>
-      <UdcProvider client={client} kit={stubKit}>
+      <UdcProvider client={client} kit={stubKit} renderers={RENDERERS}>
         <QueryClientProvider client={createUdcQueryClient()}>
           <stubKit.TooltipProvider>
             <stubKit.Toaster>
@@ -104,6 +105,11 @@ function expectStubOnly() {
   expect(
     document.querySelector("[data-radix-collection-item], [data-radix-popper-content-wrapper]"),
   ).toBeNull();
+}
+
+/** The stable `udc-*` classes a host's plain CSS targets are on the page. */
+function expectStable(...classes: string[]) {
+  for (const c of classes) expect(document.querySelector(`.${c}`), c).not.toBeNull();
 }
 
 afterEach(() => window.history.replaceState(null, "", "/"));
@@ -157,6 +163,15 @@ describe("the stub kit: every renderer family draws without the default kit", ()
     expect(screen.getAllByTestId("row")).toHaveLength(2);
     expect(screen.getByTestId("search-input")).toHaveAttribute("data-stub", "Input");
     expect(screen.getByTestId("tab-switch")).toHaveAttribute("data-stub", "Segmented");
+    expectStable(
+      "udc-data-view",
+      "udc-toolbar",
+      "udc-search",
+      "udc-filter-chip",
+      "udc-table",
+      "udc-row",
+      "udc-cell",
+    );
 
     // A chip's popover, with the stub checkbox inside.
     await user.click(screen.getByTestId("chip-city"));
@@ -174,6 +189,7 @@ describe("the stub kit: every renderer family draws without the default kit", ()
     await user.click(screen.getByTestId("col-menu-edit"));
     const form = await screen.findByTestId("field-form");
     expect(form).toHaveAttribute("data-stub", "DialogContent");
+    expect(form).toHaveClass("udc-schema-editor");
     await user.click(within(form).getByRole("button", { name: "Close" }));
     await waitFor(() => expect(screen.queryByTestId("field-form")).toBeNull());
     expectStubOnly();
@@ -187,6 +203,19 @@ describe("the stub kit: every renderer family draws without the default kit", ()
       { companies: companyRows },
     );
     expect(await screen.findAllByTestId("card")).toHaveLength(2);
+    expectStable("udc-card");
+    expectStubOnly();
+  });
+
+  it("the pager of the paged mode carries udc-pager", async () => {
+    mountView(
+      "companies",
+      "table&mode=pages",
+      companies({ available_renderers: ["table"], columns: [{ field: "name" }] }),
+      { companies: companyRows },
+    );
+    expect(await screen.findByText("Acme")).toBeInTheDocument();
+    expectStable("udc-pager");
     expectStubOnly();
   });
 
@@ -222,6 +251,7 @@ describe("the stub kit: every renderer family draws without the default kit", ()
       },
     );
     expect(await screen.findByText("Ship it")).toBeInTheDocument();
+    expectStable("udc-kanban", "udc-kanban-column", "udc-kanban-card");
     expect(screen.getByTestId("kanban-column-menu")).toHaveAttribute(
       "data-stub",
       "DropdownMenuTrigger",
@@ -246,6 +276,7 @@ describe("the stub kit: every renderer family draws without the default kit", ()
       { appointments: [] },
     );
     expect(await screen.findByTestId("calendar")).toBeInTheDocument();
+    expectStable("udc-calendar");
     expect(screen.getByTestId("cal-today")).toHaveAttribute("data-stub", "Button");
     expect(screen.getByTestId("cal-presets")).toHaveAttribute("data-stub", "Segmented");
     expectStubOnly();
@@ -274,6 +305,7 @@ describe("the stub kit: every renderer family draws without the default kit", ()
     );
     expect(await screen.findByText("child")).toBeInTheDocument();
     expect(screen.getAllByTestId("tree-node")).toHaveLength(2);
+    expectStable("udc-tree", "udc-tree-node");
     expectStubOnly();
   });
 
@@ -295,6 +327,7 @@ describe("the stub kit: every renderer family draws without the default kit", ()
       { companies: companyRows },
     );
     expect(await screen.findByTestId("map")).toBeInTheDocument();
+    expectStable("udc-map");
     expect(screen.getByTestId("map-regions")).toHaveAttribute("data-stub", "Segmented");
     expectStubOnly();
   });
@@ -321,6 +354,7 @@ describe("the stub kit: every renderer family draws without the default kit", ()
       },
     );
     expect(await screen.findByTestId("chart-tab")).toBeInTheDocument();
+    expectStable("udc-chart");
     expect(await screen.findByTestId("chart-presets")).toHaveAttribute("data-stub", "Segmented");
     expectStubOnly();
   });

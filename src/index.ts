@@ -1,10 +1,12 @@
-// @jsudc/react: the public surface. Everything a host needs to render one
-// collection is here; the stylesheet is `@jsudc/react/styles.css` (or
-// `@jsudc/react/tokens.css` for a host that runs Tailwind itself). The UI
-// primitives (Radix + Tailwind) and the default kit are `@jsudc/react/ui`.
+// @jsudc/react: the public surface. The data view, the providers and the renderer registry;
+// the stylesheet is `@jsudc/react/styles.css` (its variables alone: `@jsudc/react/tokens.css`).
+// The renderers are subpaths (`@jsudc/react/table`, `/cards`, `/kanban`, `/calendar`, `/tree`,
+// `/map`, `/chart`; all of them: `@jsudc/react/all`), so this entry imports none of them and
+// none of their peers. Hooks and models without markup: `@jsudc/react/headless`. The UI
+// primitives (Radix + Tailwind) and the default kit: `@jsudc/react/ui`.
 
-// One collection: the tabs its view declares, each drawn by a renderer from RENDERERS.
-export { UdcDataView } from "./data-view/UdcDataView";
+// One collection: the tabs its view declares, each drawn by a registered renderer.
+export { UdcDataView, type UdcDataViewProps } from "./data-view/UdcDataView";
 // Strings: the provider, the library dictionary and the helpers over it.
 export {
   INTL_LOCALE,
@@ -38,7 +40,12 @@ export { FALLBACK_ICON, resolveIcon } from "./icons/resolve";
 export { THEME_STORAGE_KEY, type Theme, ThemeProvider, useTheme } from "./lib/theme";
 export { cn, humanize, storage } from "./lib/utils";
 export {
-  RENDERERS,
+  UdcRenderersProvider,
+  type UdcRenderersProviderProps,
+  useRendererRegistry,
+} from "./renderers/context";
+export {
+  createRendererRegistry,
   type RendererTab,
   rendererEntry,
   rendererTabs,
@@ -48,10 +55,12 @@ export {
   type FolderNav,
   isFolderRow,
   type RendererCount,
+  type RendererDefinition,
   type RendererEntry,
   type RendererProps,
+  type RendererRegistry,
 } from "./renderers/types";
-export { EmptyState, ErrorState } from "./table/states";
+export { EmptyState, ErrorState, NoRendererState } from "./table/states";
 export {
   BROWSER_TZ,
   COMMON_ZONES,

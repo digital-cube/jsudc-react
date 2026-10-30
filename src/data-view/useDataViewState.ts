@@ -1,7 +1,9 @@
 import type { FilterNode, SortKey, ViewConfig } from "@jsudc/core";
 import { useCallback, useMemo } from "react";
-import { storage } from "../lib/utils";
+import { storage } from "../lib/storage";
+import { useRendererRegistry } from "../renderers/context";
 import { resolveTab } from "../renderers/registry";
+import type { RendererRegistry } from "../renderers/types";
 import type { PagingMode } from "../udc/keys";
 import { useUrlSearchParams } from "../url-state/UrlState";
 import {
@@ -61,9 +63,16 @@ export const SOURCE_TAB = "source";
 export function useDataViewState(
   collection: string,
   view: ViewConfig | undefined,
-  opts: { doc?: boolean; source?: boolean } = {},
+  opts: {
+    doc?: boolean;
+    source?: boolean;
+    /** The renderers a tab may resolve to; the provider's registry when absent. */
+    renderers?: RendererRegistry;
+  } = {},
 ): DataViewState {
   const [params, setParams] = useUrlSearchParams();
+  const provided = useRendererRegistry();
+  const registry = opts.renderers ?? provided;
 
   const update = useCallback(
     (edit: (p: URLSearchParams) => void, resetPage = false) =>
@@ -103,7 +112,7 @@ export function useDataViewState(
       ? DOC_TAB
       : opts.source && raw.tab === SOURCE_TAB
         ? SOURCE_TAB
-        : resolveTab(raw.tab ?? "", renderers, view?.default_renderer ?? "table");
+        : resolveTab(registry, raw.tab ?? "", renderers, view?.default_renderer ?? "table");
   const mode = resolvePagingMode(
     decodeModeParam(raw.mode),
     storage.get(pagingStorageKey(collection)),

@@ -6,39 +6,39 @@ import type { CSSProperties, KeyboardEvent } from "react";
 import { avatarTone, initials } from "../cards/cardModel";
 import { useI18n } from "../i18n/i18n";
 import { cn } from "../lib/utils";
-import { formatDate } from "../table/cells";
+import { formatDate } from "../table/format";
 import { useUiKit } from "../ui-kit/context";
 import { isOverdue, priorityTone } from "./model";
 
 /** Literal classes, so Tailwind sees them. */
 export const TONE_BORDER: Record<ColumnColor, string> = {
-  default: "border-l-border-strong",
-  accent: "border-l-sem-accent",
-  success: "border-l-sem-success",
-  warning: "border-l-sem-warning",
-  danger: "border-l-sem-danger",
-  info: "border-l-sem-info",
-  muted: "border-l-sem-muted/60",
+  default: "udc:border-l-border-strong",
+  accent: "udc:border-l-sem-accent",
+  success: "udc:border-l-sem-success",
+  warning: "udc:border-l-sem-warning",
+  danger: "udc:border-l-sem-danger",
+  info: "udc:border-l-sem-info",
+  muted: "udc:border-l-sem-muted/60",
 };
 
 export const TONE_DOT: Record<ColumnColor, string> = {
-  default: "bg-border-strong",
-  accent: "bg-sem-accent",
-  success: "bg-sem-success",
-  warning: "bg-sem-warning",
-  danger: "bg-sem-danger",
-  info: "bg-sem-info",
-  muted: "bg-sem-muted",
+  default: "udc:bg-border-strong",
+  accent: "udc:bg-sem-accent",
+  success: "udc:bg-sem-success",
+  warning: "udc:bg-sem-warning",
+  danger: "udc:bg-sem-danger",
+  info: "udc:bg-sem-info",
+  muted: "udc:bg-sem-muted",
 };
 
 const AVATAR: Record<ColumnColor, string> = {
-  default: "bg-muted text-muted-foreground",
-  accent: "bg-sem-accent-bg text-sem-accent",
-  success: "bg-sem-success-bg text-sem-success",
-  warning: "bg-sem-warning-bg text-sem-warning",
-  danger: "bg-sem-danger-bg text-sem-danger",
-  info: "bg-sem-info-bg text-sem-info",
-  muted: "bg-sem-muted-bg text-sem-muted",
+  default: "udc:bg-muted udc:text-muted-foreground",
+  accent: "udc:bg-sem-accent-bg udc:text-sem-accent",
+  success: "udc:bg-sem-success-bg udc:text-sem-success",
+  warning: "udc:bg-sem-warning-bg udc:text-sem-warning",
+  danger: "udc:bg-sem-danger-bg udc:text-sem-danger",
+  info: "udc:bg-sem-info-bg udc:text-sem-info",
+  muted: "udc:bg-sem-muted-bg udc:text-sem-muted",
 };
 
 const MAX_AVATARS = 3;
@@ -80,54 +80,62 @@ export function KanbanCardBody({ row, opts, schema }: KanbanCardBodyProps) {
   const compact = cards.density === "compact";
 
   return (
-    <div className={cn("flex flex-col", compact ? "gap-1.5 px-2.5 py-2" : "gap-2 px-3 py-2.5")}>
-      <div className="flex items-start gap-2">
+    <div
+      className={cn(
+        "udc:flex udc:flex-col",
+        compact ? "udc:gap-1.5 udc:px-2.5 udc:py-2" : "udc:gap-2 udc:px-3 udc:py-2.5",
+      )}
+    >
+      <div className="udc:flex udc:items-start udc:gap-2">
         {tone ? (
           <span
             aria-hidden
             data-testid="kanban-priority-dot"
-            className={cn("mt-1.5 size-2 shrink-0 rounded-full", TONE_DOT[tone])}
+            className={cn("udc:mt-1.5 udc:size-2 udc:shrink-0 udc:rounded-full", TONE_DOT[tone])}
           />
         ) : null}
         <h4
           data-testid="kanban-card-title"
-          className="min-w-0 flex-1 text-[13px] leading-5 font-medium break-words"
+          className="udc:min-w-0 udc:flex-1 udc:text-[13px] udc:leading-5 udc:font-medium udc:break-words"
           style={clamp(cards.title_lines)}
           title={title}
         >
-          {title || <span className="text-muted-foreground/60">—</span>}
+          {title || <span className="udc:text-muted-foreground/60">—</span>}
         </h4>
       </div>
       {typeof body === "string" && body && cards.body_lines > 0 ? (
         <p
           data-testid="kanban-card-body"
-          className="text-xs leading-[1.35rem] text-muted-foreground"
+          className="udc:text-xs udc:leading-[1.35rem] udc:text-muted-foreground"
           style={clamp(cards.body_lines)}
         >
           {body}
         </p>
       ) : null}
       {shownTags.length ? (
-        <div className="flex flex-wrap gap-1" data-testid="kanban-card-tags">
+        <div className="udc:flex udc:flex-wrap udc:gap-1" data-testid="kanban-card-tags">
           {shownTags.map((tag) => (
             <span
               key={tag}
-              className="inline-flex h-5 items-center rounded-full border border-border bg-muted/60 px-2 text-[11px] text-muted-foreground"
+              className="udc:inline-flex udc:h-5 udc:items-center udc:rounded-full udc:border udc:border-border udc:bg-muted/60 udc:px-2 udc:text-[11px] udc:text-muted-foreground"
             >
               {tag}
             </span>
           ))}
           {tags.length > shownTags.length ? (
-            <span className="inline-flex h-5 items-center px-1 text-[11px] text-muted-foreground">
+            <span className="udc:inline-flex udc:h-5 udc:items-center udc:px-1 udc:text-[11px] udc:text-muted-foreground">
               +{tags.length - shownTags.length}
             </span>
           ) : null}
         </div>
       ) : null}
       {due || people.length || footer.length ? (
-        <div className="flex min-h-6 items-center gap-2 text-[11px] text-muted-foreground">
+        <div className="udc:flex udc:min-h-6 udc:items-center udc:gap-2 udc:text-[11px] udc:text-muted-foreground">
           {footer.length ? (
-            <span className="truncate font-mono tabular-nums" data-testid="kanban-card-footer">
+            <span
+              className="udc:truncate udc:font-mono udc:tabular-nums"
+              data-testid="kanban-card-footer"
+            >
               {footer.map(String).join(" · ")}
             </span>
           ) : null}
@@ -137,22 +145,25 @@ export function KanbanCardBody({ row, opts, schema }: KanbanCardBodyProps) {
               data-overdue={overdue || undefined}
               title={overdue ? t("APP", "KANBAN_OVERDUE") : undefined}
               className={cn(
-                "inline-flex items-center gap-1 tabular-nums",
-                overdue && "font-medium text-sem-danger",
+                "udc:inline-flex udc:items-center udc:gap-1 udc:tabular-nums",
+                overdue && "udc:font-medium udc:text-sem-danger",
               )}
             >
-              <CalendarDays className="size-3" />
+              <CalendarDays className="udc:size-3" />
               {formatDate(due, intlLocale)}
             </span>
           ) : null}
           {people.length ? (
-            <span className="ml-auto flex -space-x-1" data-testid="kanban-card-assignees">
+            <span
+              className="udc:ml-auto udc:flex udc:-space-x-1"
+              data-testid="kanban-card-assignees"
+            >
               {people.slice(0, MAX_AVATARS).map((name) => (
                 <span
                   key={name}
                   title={name}
                   className={cn(
-                    "grid size-6 place-items-center rounded-full text-[10px] font-semibold ring-2 ring-surface",
+                    "udc:grid udc:size-6 udc:place-items-center udc:rounded-full udc:text-[10px] udc:font-semibold udc:ring-2 udc:ring-surface",
                     AVATAR[avatarTone(name)],
                   )}
                 >
@@ -162,7 +173,7 @@ export function KanbanCardBody({ row, opts, schema }: KanbanCardBodyProps) {
               {people.length > MAX_AVATARS ? (
                 <span
                   title={people.slice(MAX_AVATARS).join(", ")}
-                  className="grid size-6 place-items-center rounded-full bg-muted text-[10px] font-semibold text-muted-foreground ring-2 ring-surface"
+                  className="udc:grid udc:size-6 udc:place-items-center udc:rounded-full udc:bg-muted udc:text-[10px] udc:font-semibold udc:text-muted-foreground udc:ring-2 udc:ring-surface"
                 >
                   +{people.length - MAX_AVATARS}
                 </span>
@@ -177,8 +188,8 @@ export function KanbanCardBody({ row, opts, schema }: KanbanCardBodyProps) {
 
 export function cardShellClass(tone: ColumnColor | null, opts: KanbanOptions): string {
   return cn(
-    "block w-full rounded-lg border border-border bg-surface text-left shadow-xs shadow-black/[0.04]",
-    opts.cards.show_priority_left_border && tone && cn("border-l-[3px]", TONE_BORDER[tone]),
+    "udc:block udc:w-full udc:rounded-lg udc:border udc:border-border udc:bg-surface udc:text-left udc:shadow-xs udc:shadow-black/[0.04]",
+    opts.cards.show_priority_left_border && tone && cn("udc:border-l-[3px]", TONE_BORDER[tone]),
   );
 }
 
@@ -222,10 +233,13 @@ export function KanbanCard({
       tabIndex={0}
       onClick={() => onOpen(row)}
       className={cn(
+        "udc-kanban-card",
         cardShellClass(tone, opts),
-        "outline-none transition-[box-shadow,border-color] hover:border-border-strong hover:shadow-sm focus-visible:ring-2 focus-visible:ring-ring",
-        readOnly ? "cursor-pointer" : "cursor-grab touch-manipulation active:cursor-grabbing",
-        isDragging && "opacity-40",
+        "udc:outline-none udc:transition-[box-shadow,border-color] udc:hover:border-border-strong udc:hover:shadow-sm udc:focus-visible:ring-2 udc:focus-visible:ring-ring",
+        readOnly
+          ? "udc:cursor-pointer"
+          : "udc:cursor-grab udc:touch-manipulation udc:active:cursor-grabbing",
+        isDragging && "udc:opacity-40",
       )}
     >
       <KanbanCardBody row={row} opts={opts} schema={schema} />
@@ -239,10 +253,10 @@ export function PendingCard({ title }: { title: string }) {
   return (
     <div
       data-testid="kanban-pending-card"
-      className="flex items-center gap-2 rounded-lg border border-dashed border-border-strong bg-surface/60 px-3 py-2.5 text-[13px] text-muted-foreground"
+      className="udc-kanban-card udc:flex udc:items-center udc:gap-2 udc:rounded-lg udc:border udc:border-dashed udc:border-border-strong udc:bg-surface/60 udc:px-3 udc:py-2.5 udc:text-[13px] udc:text-muted-foreground"
     >
-      <Spinner className="size-3" />
-      <span className="truncate">{title}</span>
+      <Spinner className="udc:size-3" />
+      <span className="udc:truncate">{title}</span>
     </div>
   );
 }

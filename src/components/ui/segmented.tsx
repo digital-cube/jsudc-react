@@ -28,7 +28,10 @@ export function Segmented<V extends string>({
       onValueChange={(v) => v && onChange(v as V)}
       aria-label={ariaLabel}
       data-testid={testId}
-      className={cn("inline-flex h-8 items-center gap-0.5 rounded-md bg-muted p-0.5", className)}
+      className={cn(
+        "udc:inline-flex udc:h-8 udc:items-center udc:gap-0.5 udc:rounded-md udc:bg-muted udc:p-0.5",
+        className,
+      )}
     >
       {options.map((o) => {
         const item = (
@@ -38,11 +41,11 @@ export function Segmented<V extends string>({
             data-testid={o.testId}
             disabled={o.disabled}
             className={cn(
-              "inline-flex h-7 items-center gap-1.5 rounded-[5px] px-2.5 text-xs font-medium text-muted-foreground transition-colors",
-              "hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              "data-[state=on]:bg-surface data-[state=on]:text-foreground data-[state=on]:shadow-sm",
-              "disabled:pointer-events-none disabled:opacity-45",
-              "[&_svg]:size-3.5",
+              "udc:inline-flex udc:h-7 udc:items-center udc:gap-1.5 udc:rounded-[5px] udc:px-2.5 udc:text-xs udc:font-medium udc:text-muted-foreground udc:transition-colors",
+              "udc:hover:text-foreground udc:focus-visible:outline-none udc:focus-visible:ring-2 udc:focus-visible:ring-ring",
+              "udc:data-[state=on]:bg-surface udc:data-[state=on]:text-foreground udc:data-[state=on]:shadow-sm",
+              "udc:disabled:pointer-events-none udc:disabled:opacity-45",
+              "udc:[&_svg]:size-3.5",
             )}
           >
             {o.label}
@@ -51,7 +54,7 @@ export function Segmented<V extends string>({
         // A disabled button gets no pointer events: the tooltip hangs on a wrapper.
         return o.tooltip ? (
           <Tip key={o.value} label={o.tooltip}>
-            <span className="inline-flex">{item}</span>
+            <span className="udc:inline-flex">{item}</span>
           </Tip>
         ) : (
           item

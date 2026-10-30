@@ -3,7 +3,7 @@
   "version": "0.1.1",
   "private": false,
   "type": "module",
-  "description": "React components for UDC collections: the data view with its table, cards, kanban, calendar, tree, map and chart renderers, the schema editor, the hooks over @jsudc/core's client, i18n, theme and a compiled stylesheet.",
+  "description": "React components for UDC collections: the data view, its table, cards, kanban, calendar, tree, map and chart renderers (one subpath each), the schema editor, headless hooks and models, i18n, theme and a compiled, udc:-prefixed stylesheet.",
   "keywords": [
     "udc",
     "jsudc",
@@ -40,12 +40,52 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./headless": {
+      "types": "./dist/headless.d.ts",
+      "default": "./dist/headless.js"
+    },
+    "./all": {
+      "types": "./dist/all.d.ts",
+      "default": "./dist/all.js"
+    },
+    "./table": {
+      "types": "./dist/table.d.ts",
+      "default": "./dist/table.js"
+    },
+    "./cards": {
+      "types": "./dist/cards.d.ts",
+      "default": "./dist/cards.js"
+    },
+    "./kanban": {
+      "types": "./dist/kanban.d.ts",
+      "default": "./dist/kanban.js"
+    },
+    "./calendar": {
+      "types": "./dist/calendar.d.ts",
+      "default": "./dist/calendar.js"
+    },
+    "./tree": {
+      "types": "./dist/tree.d.ts",
+      "default": "./dist/tree.js"
+    },
+    "./map": {
+      "types": "./dist/map.d.ts",
+      "default": "./dist/map.js"
+    },
+    "./chart": {
+      "types": "./dist/chart.d.ts",
+      "default": "./dist/chart.js"
+    },
+    "./schema-editor": {
+      "types": "./dist/schema-editor.d.ts",
+      "default": "./dist/schema-editor.js"
+    },
     "./ui": {
-      "types": "./dist/ui-kit/ui.d.ts",
+      "types": "./dist/ui.d.ts",
       "default": "./dist/ui.js"
     },
     "./react-router": {
-      "types": "./dist/react-router/index.d.ts",
+      "types": "./dist/react-router.d.ts",
       "default": "./dist/react-router.js"
     },
     "./styles.css": "./dist/styles.css",
@@ -62,7 +102,7 @@
   },
   "scripts": {
     "build": "vite build && tsc -p tsconfig.build.json && npm run build:css",
-    "build:css": "tailwindcss -i src/styles.css -o dist/styles.css --minify && node -e \"require('node:fs').copyFileSync('src/tokens.css', 'dist/tokens.css')\"",
+    "build:css": "tailwindcss -i src/styles.css -o dist/styles.css --minify && node -e \"require('node:fs').copyFileSync('src/tokens.css', 'dist/tokens.css')\" && node scripts/check-css.mjs",
     "prepare": "npm run build",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "biome check .",
@@ -90,7 +130,25 @@
     "recharts": "^3.10.1"
   },
   "peerDependenciesMeta": {
+    "@dnd-kit/core": {
+      "optional": true
+    },
+    "@dnd-kit/sortable": {
+      "optional": true
+    },
+    "@dnd-kit/utilities": {
+      "optional": true
+    },
+    "@tanstack/react-table": {
+      "optional": true
+    },
+    "leaflet": {
+      "optional": true
+    },
     "react-router": {
+      "optional": true
+    },
+    "recharts": {
       "optional": true
     }
   },

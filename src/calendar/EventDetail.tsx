@@ -93,38 +93,41 @@ export function EventDetail({
         side="right"
         align="start"
         collisionPadding={12}
-        className="w-80 p-0"
+        className="udc:w-80 udc:p-0"
         data-testid="cal-detail"
         data-event-id={ev.id}
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
         <div
-          className="rounded-t-lg border-b border-l-4 border-border px-3 py-2.5"
+          className="udc:rounded-t-lg udc:border-b udc:border-l-4 udc:border-border udc:px-3 udc:py-2.5"
           style={eventTint(ev.color, 12)}
         >
-          <div className="text-sm leading-snug font-semibold" data-testid="cal-detail-title">
+          <div
+            className="udc:text-sm udc:leading-snug udc:font-semibold"
+            data-testid="cal-detail-title"
+          >
             {ev.title}
           </div>
           <div
-            className="mt-0.5 text-xs text-muted-foreground tabular-nums"
+            className="udc:mt-0.5 udc:text-xs udc:text-muted-foreground udc:tabular-nums"
             data-testid="cal-detail-when"
           >
             {when}
           </div>
         </div>
-        <dl className="grid grid-cols-[minmax(5.5rem,auto)_1fr] gap-x-3 px-3 py-1">
+        <dl className="udc:grid udc:grid-cols-[minmax(5.5rem,auto)_1fr] udc:gap-x-3 udc:px-3 udc:py-1">
           {fields.map(({ field, editable }) => {
             const def = schema.fields[field];
             const canEdit = editable === true && !readOnly;
             const column = view.columns.find((c) => c.field === field) ?? { field };
             return (
-              <div key={field} className="contents" data-testid={`cal-detail-${field}`}>
-                <dt className="border-b border-dashed border-border/80 py-2 text-xs text-muted-foreground">
+              <div key={field} className="udc:contents" data-testid={`cal-detail-${field}`}>
+                <dt className="udc:border-b udc:border-dashed udc:border-border/80 udc:py-2 udc:text-xs udc:text-muted-foreground">
                   {t(section, field)}
                 </dt>
-                <dd className="relative min-w-0 border-b border-dashed border-border/80 py-1.5 text-[13px]">
+                <dd className="udc:relative udc:min-w-0 udc:border-b udc:border-dashed udc:border-border/80 udc:py-1.5 udc:text-[13px]">
                   {editing === field ? (
-                    <div className="relative h-7">
+                    <div className="udc:relative udc:h-7">
                       <CellEditor
                         def={def}
                         initial={ev.row[field]}
@@ -143,9 +146,9 @@ export function EventDetail({
                       type="button"
                       data-testid={`cal-detail-edit-${field}`}
                       onClick={() => setEditing(field)}
-                      className="group/edit flex min-h-7 w-full min-w-0 items-center gap-1.5 rounded px-1 -mx-1 text-left hover:bg-hover"
+                      className="udc:group/edit udc:flex udc:min-h-7 udc:w-full udc:min-w-0 udc:items-center udc:gap-1.5 udc:rounded udc:px-1 udc:-mx-1 udc:text-left udc:hover:bg-hover"
                     >
-                      <span className="min-w-0 flex-1">
+                      <span className="udc:min-w-0 udc:flex-1">
                         <CellValue
                           value={ev.row[field]}
                           column={column}
@@ -154,10 +157,10 @@ export function EventDetail({
                           intlLocale={intlLocale}
                         />
                       </span>
-                      <Pencil className="size-3 shrink-0 text-muted-foreground opacity-0 group-hover/edit:opacity-100" />
+                      <Pencil className="udc:size-3 udc:shrink-0 udc:text-muted-foreground udc:opacity-0 udc:group-hover/edit:opacity-100" />
                     </button>
                   ) : (
-                    <div className="flex min-h-7 items-center">
+                    <div className="udc:flex udc:min-h-7 udc:items-center">
                       <CellValue
                         value={ev.row[field]}
                         column={column}
@@ -173,10 +176,10 @@ export function EventDetail({
           })}
         </dl>
         {opts.detail?.delete && !readOnly ? (
-          <div className="flex items-center justify-end gap-2 px-3 py-2.5">
+          <div className="udc:flex udc:items-center udc:justify-end udc:gap-2 udc:px-3 udc:py-2.5">
             {confirming ? (
               <>
-                <span className="mr-auto text-xs text-muted-foreground">
+                <span className="udc:mr-auto udc:text-xs udc:text-muted-foreground">
                   {t("APP", "CAL_DELETE_CONFIRM")}
                 </span>
                 <Button size="sm" variant="ghost" onClick={() => setConfirming(false)}>
@@ -196,7 +199,7 @@ export function EventDetail({
                 size="sm"
                 variant="ghost"
                 data-testid="cal-delete"
-                className="text-sem-danger hover:text-sem-danger"
+                className="udc:text-sem-danger udc:hover:text-sem-danger"
                 onClick={() => setConfirming(true)}
               >
                 <Trash2 />

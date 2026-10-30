@@ -9,7 +9,7 @@ import {
   toChartNumber,
   yAxisFrame,
 } from "@jsudc/core";
-import { formatBytes } from "../table/cells";
+import { formatBytes } from "../table/format";
 import {
   addDays,
   DAY,

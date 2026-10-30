@@ -55,20 +55,20 @@ export function Pager({
     <nav
       aria-label={t("APP", "PAGING")}
       data-testid="pager"
-      className="flex h-11 shrink-0 items-center justify-between gap-4 border-t border-border bg-surface px-3 text-xs text-muted-foreground"
+      className="udc-pager udc:flex udc:h-11 udc:shrink-0 udc:items-center udc:justify-between udc:gap-4 udc:border-t udc:border-border udc:bg-surface udc:px-3 udc:text-xs udc:text-muted-foreground"
     >
-      <div className="tabular-nums">
+      <div className="udc:tabular-nums">
         {t("APP", "SHOWING_RANGE", { from: fmt(from), to: fmt(to), total: fmt(total) })}
-        <span className="mx-2 text-border-strong">·</span>
+        <span className="udc:mx-2 udc:text-border-strong">·</span>
         {t("APP", "PER_PAGE", { n: limit })}
       </div>
-      <div className="flex items-center gap-0.5">
+      <div className="udc:flex udc:items-center udc:gap-0.5">
         {nav(t("APP", "PAGE_FIRST"), 1, page <= 1, <ChevronsLeft />, "first")}
         {nav(t("APP", "PAGE_PREV"), page - 1, page <= 1, <ChevronLeft />, "prev")}
         {pageWindow(page, pages).map((p, i) =>
           p === null ? (
             // biome-ignore lint/suspicious/noArrayIndexKey: gaps have no identity
-            <span key={`gap-${i}`} className="w-7 text-center">
+            <span key={`gap-${i}`} className="udc:w-7 udc:text-center">
               …
             </span>
           ) : (
@@ -79,11 +79,11 @@ export function Pager({
               aria-current={p === page ? "page" : undefined}
               onClick={() => onPage(p)}
               className={cn(
-                "h-7 min-w-7 rounded-md px-1.5 text-xs font-medium tabular-nums transition-colors",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                "udc:h-7 udc:min-w-7 udc:rounded-md udc:px-1.5 udc:text-xs udc:font-medium udc:tabular-nums udc:transition-colors",
+                "udc:focus-visible:outline-none udc:focus-visible:ring-2 udc:focus-visible:ring-ring",
                 p === page
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-foreground hover:bg-hover",
+                  ? "udc:bg-primary udc:text-primary-foreground udc:shadow-sm"
+                  : "udc:text-foreground udc:hover:bg-hover",
               )}
             >
               {p}
@@ -93,7 +93,7 @@ export function Pager({
         {nav(t("APP", "PAGE_NEXT"), page + 1, page >= pages, <ChevronRight />, "next")}
         {nav(t("APP", "PAGE_LAST"), pages, page >= pages, <ChevronsRight />, "last")}
       </div>
-      <div className="tabular-nums" data-testid="pager-status">
+      <div className="udc:tabular-nums" data-testid="pager-status">
         {t("APP", "PAGE_OF", { page, pages })}
       </div>
     </nav>
