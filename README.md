@@ -1,5 +1,7 @@
 # @jsudc/react
 
+[![npm](https://img.shields.io/npm/v/@jsudc/react)](https://www.npmjs.com/package/@jsudc/react)
+
 React components for UDC (Universal Data Collection) collections. Give it a
 collection name and `<UdcDataView>` asks a UDC server what the collection is
 (`describe`) and draws it: search, filter chips and a filter builder, paging,
@@ -38,7 +40,7 @@ npm install @jsudc/react @jsudc/core \
 # then the peers of the renderers you register (see Renderers), all of them:
 npm install @tanstack/react-table leaflet recharts @dnd-kit/core @dnd-kit/sortable @dnd-kit/utilities
 # or straight from a GitHub tag:
-npm install github:digital-cube/jsudc-core#v0.1.1 github:digital-cube/jsudc-react#v0.1.1
+npm install github:digital-cube/jsudc-core#v0.2.0 github:digital-cube/jsudc-react#v0.2.0
 ```
 
 ## Quick start
@@ -352,7 +354,7 @@ peer while the default kit is the fallback.
 Everything the components import that a host is likely to have too is a peer,
 so there is one copy of it in the bundle:
 
-- `@jsudc/core` ^0.1.1 — one copy of the protocol, shared with the host's
+- `@jsudc/core` ^0.2.0 — one copy of the protocol, shared with the host's
   own `UdcClient`;
 - `react`, `react-dom` ^19 — one React, or hooks break;
 - `@tanstack/react-query` ^5 — one `QueryClient` context, shared with the

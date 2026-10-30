@@ -7,11 +7,54 @@ All notable changes to `@jsudc/react` are recorded here. The format follows
 
 ## [Unreleased]
 
-### Changed
+## [0.2.0] - 2026-10-30
 
-- Development installs `@jsudc/core` from npm (`^0.1.1`) instead of
-  `github:digital-cube/jsudc-core#v0.1.0`; `package-lock.json` no longer pins
-  it over SSH, and CI and the publish workflow drop the deploy-key step.
+Released in lockstep with `@jsudc/core` 0.2.0 and `@jsudc/server` 0.2.0
+(which carry no changes). Three breaking changes, each one a step of the
+migration below:
+
+1. **react-router adapter**: `react-router` is no longer a required peer; the
+   URL state goes through a `UrlStateAdapter`, and a host on react-router
+   mounts `UdcReactRouterUrlState`.
+2. **UiKit provider**: the renderers take their primitives from a `UiKit` in
+   context, and the primitives moved from the root to `@jsudc/react/ui`.
+3. **Explicit renderer registry and the `udc:` prefix**: the root registers no
+   renderer, each renderer is a subpath with optional peers, and the stylesheet
+   is compiled with every Tailwind utility `udc:`-prefixed.
+
+### Migrating from 0.1
+
+In this order; a host that does all five renders as before.
+
+1. **Versions and peers.** Install `@jsudc/core@^0.2.0` and
+   `@jsudc/react@^0.2.0` (and `@jsudc/server@^0.2.0` on the server). The
+   renderer peers are optional now: keep only those of the renderers you
+   register — `@tanstack/react-table` (table), `@dnd-kit/core` (kanban, tree),
+   `@dnd-kit/sortable` and `@dnd-kit/utilities` (kanban), `leaflet` (map),
+   `recharts` (chart). `react-router` is needed only for step 3.
+2. **Register the renderers.** `<UdcProvider client={client}>` becomes
+   `<UdcProvider client={client} renderers={RENDERERS}>` with
+   `import { RENDERERS } from "@jsudc/react/all"` to keep every tab, or a
+   `createRendererRegistry(tableRenderer, …)` of the subpaths you use. Calls to
+   `rendererEntry`, `rendererTabs` and `resolveTab` take the registry as their
+   first argument; `RENDERERS` is no longer exported from the root.
+3. **Mount the router adapter.** A host on react-router wraps its app, inside
+   the router, in `<UdcReactRouterUrlState>` from `@jsudc/react/react-router`
+   (with a data router: in the root route's element). Without a router there is
+   nothing to do; another router gets a `UdcUrlStateProvider` (README, "URL
+   state").
+4. **Import the primitives from `@jsudc/react/ui`.** `Toaster`,
+   `TooltipProvider`, `Button`, `Dialog*`, `useToast`, … are no longer on the
+   root; the names and the components are the same.
+5. **Import the compiled stylesheet.** Replace `@import
+   "@jsudc/react/tokens.css"` plus `@source …/@jsudc/react/dist` in your
+   Tailwind entry with `import "@jsudc/react/styles.css"`. CSS of your own
+   that targets `scroll-thin`, `select-chevron` or `skeleton` targets
+   `udc-scroll-thin`, `udc-select-chevron` and `udc-skeleton`; CSS that reads
+   the library's `--color-*` theme variables reads the raw tokens
+   (`--border`, …) instead. The stable `udc-*` classes (Added) are the
+   supported hooks for overrides.
+
 ### Changed (breaking)
 
 - **`react-router` is no longer a required peer.** The URL state of the data
@@ -107,6 +150,13 @@ All notable changes to `@jsudc/react` are recorded here. The format follows
   "Styling" (the prefix, the token table, the stable classes with an override
   example).
 
+### Changed
+
+- The `@jsudc/core` peer range is `^0.2.0`.
+- Development installs `@jsudc/core` from npm (`^0.1.1`) instead of
+  `github:digital-cube/jsudc-core#v0.1.0`; `package-lock.json` no longer pins
+  it over SSH, and CI and the publish workflow drop the deploy-key step.
+
 ### Follow-up
 
 - `radix-ui` is still a required peer: the default kit is the fallback when no
@@ -151,6 +201,7 @@ First tagged version, installed from the GitHub tag.
   Serbian), theme and time-zone providers, the UI primitives.
 - `styles.css`, compiled at build time, and `tokens.css`, its raw source.
 
-[Unreleased]: https://github.com/digital-cube/jsudc-react/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/digital-cube/jsudc-react/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/digital-cube/jsudc-react/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/digital-cube/jsudc-react/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/digital-cube/jsudc-react/releases/tag/v0.1.0
