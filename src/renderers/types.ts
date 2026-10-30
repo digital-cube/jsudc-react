@@ -1,10 +1,10 @@
 import type { DescribeResponse, FilterNode, FolderOptions, Row, SortKey } from "@jsudc/core";
 import type { LucideIcon } from "lucide-react";
 import type { ComponentType } from "react";
-import type { ChartWindowState } from "../chart/useChartWindow";
-import type { SchemaAction } from "../schema-editor/fieldForm";
-import type { UdcCollectionResult } from "../udc/hooks";
-import type { PagingMode } from "../udc/keys";
+import type { ChartWindowState } from "../chart/useChartWindow.js";
+import type { SchemaAction } from "../schema-editor/fieldForm.js";
+import type { UdcCollectionResult } from "../udc/hooks.js";
+import type { PagingMode } from "../udc/keys.js";
 
 /** The row count a renderer that loads its own rows reports to the toolbar. */
 export interface RendererCount {

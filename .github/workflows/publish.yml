@@ -29,4 +29,5 @@ jobs:
       # `npm ci` also runs `prepare`, which builds dist.
       - run: npm ci
       - run: npm test
+      - run: npm run check:types
       - run: npm publish --provenance --access public

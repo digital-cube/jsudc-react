@@ -2,12 +2,12 @@ import { useDraggable, useDroppable } from "@dnd-kit/core";
 import type { Row } from "@jsudc/core";
 import { ChevronRight, CornerLeftUp, MoreVertical } from "lucide-react";
 import { type KeyboardEvent, useEffect, useRef, useState } from "react";
-import { useI18n } from "../i18n/i18n";
-import { resolveIcon } from "../icons/resolve";
-import { cn } from "../lib/utils";
-import { useUiKit } from "../ui-kit/context";
-import { canDrop, dropId, highlightParts, i18nKey, idOf, numberOf } from "./model";
-import { LazyChildren, NodeList, useTree } from "./TreeRenderer";
+import { useI18n } from "../i18n/i18n.js";
+import { resolveIcon } from "../icons/resolve.js";
+import { cn } from "../lib/utils.js";
+import { useUiKit } from "../ui-kit/context.js";
+import { canDrop, dropId, highlightParts, i18nKey, idOf, numberOf } from "./model.js";
+import { LazyChildren, NodeList, useTree } from "./TreeRenderer.js";
 
 const INDENT = 20;
 

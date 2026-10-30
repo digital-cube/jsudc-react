@@ -1,7 +1,7 @@
 import { Check, ChevronDown } from "lucide-react";
 import { Select as S } from "radix-ui";
-import { cn } from "../../lib/utils";
-import type { SelectOption } from "../../ui-kit/types";
+import { cn } from "../../lib/utils.js";
+import type { SelectOption } from "../../ui-kit/types.js";
 
 export type { SelectOption };
 

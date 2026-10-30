@@ -21,5 +21,7 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run build
+      # The published .d.ts as a host sees them, under moduleResolution NodeNext and Bundler.
+      - run: npm run check:types
       # The tarball holds dist (JS, .d.ts, styles.css, tokens.css), README and LICENSE only.
       - run: npm pack --dry-run

@@ -1,5 +1,5 @@
 import type { ColumnColor, LatLng, MapOptions, MapRegion, Row, RowColorConfig } from "@jsudc/core";
-import { resolveRowColor } from "../table/style";
+import { resolveRowColor } from "../table/style.js";
 
 /** One row on the map. */
 export interface MapMarker {

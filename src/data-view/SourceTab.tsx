@@ -1,10 +1,10 @@
 import { FileCode2, TriangleAlert } from "lucide-react";
-import { useI18n } from "../i18n/i18n";
-import { formatDateTime } from "../table/format";
-import { ErrorState } from "../table/states";
-import { useTimezone } from "../time/timezone";
-import { useUdcSource } from "../udc/hooks";
-import { useUiKit } from "../ui-kit/context";
+import { useI18n } from "../i18n/i18n.js";
+import { formatDateTime } from "../table/format.js";
+import { ErrorState } from "../table/states.js";
+import { useTimezone } from "../time/timezone.js";
+import { useUdcSource } from "../udc/hooks.js";
+import { useUiKit } from "../ui-kit/context.js";
 
 /**
  * The file a `source_yaml` collection is read from, as written: its path

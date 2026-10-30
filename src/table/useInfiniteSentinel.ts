@@ -1,5 +1,5 @@
 import { type RefObject, useEffect } from "react";
-import type { UdcCollectionResult } from "../udc/hooks";
+import type { UdcCollectionResult } from "../udc/hooks.js";
 
 /**
  * Infinite mode: when `sentinel` (an element under the last row or card)

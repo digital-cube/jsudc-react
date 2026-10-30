@@ -1,10 +1,10 @@
 import type { SchemaDoc } from "@jsudc/core";
 import { type ReactNode, useCallback, useState } from "react";
-import { useI18n } from "../i18n/i18n";
-import { useUiKit } from "../ui-kit/context";
-import { DeleteFieldDialog } from "./DeleteFieldDialog";
-import { FieldFormDialog } from "./FieldFormDialog";
-import type { SchemaAction } from "./fieldForm";
+import { useI18n } from "../i18n/i18n.js";
+import { useUiKit } from "../ui-kit/context.js";
+import { DeleteFieldDialog } from "./DeleteFieldDialog.js";
+import { FieldFormDialog } from "./FieldFormDialog.js";
+import type { SchemaAction } from "./fieldForm.js";
 
 /** Bring a header into view once its column exists (it appears after `describe` refetched). */
 function revealColumn(field: string) {

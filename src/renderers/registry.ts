@@ -1,4 +1,4 @@
-import type { RendererDefinition, RendererEntry, RendererRegistry } from "./types";
+import type { RendererDefinition, RendererEntry, RendererRegistry } from "./types.js";
 
 /**
  * Renderer name → its component and tab, from the renderers a host imports:

@@ -1,7 +1,7 @@
 import { Check, Minus } from "lucide-react";
 import { Checkbox as C } from "radix-ui";
 import { type ComponentProps, forwardRef } from "react";
-import { cn } from "../../lib/utils";
+import { cn } from "../../lib/utils.js";
 
 export const Checkbox = forwardRef<HTMLButtonElement, ComponentProps<typeof C.Root>>(
   function Checkbox({ className, ...props }, ref) {

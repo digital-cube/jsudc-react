@@ -1,6 +1,6 @@
 import { X } from "lucide-react";
 import { type KeyboardEvent, useState } from "react";
-import { cn } from "../lib/utils";
+import { cn } from "../lib/utils.js";
 
 /** A list of short strings: Enter or comma adds the typed one, Backspace on empty drops the last. */
 export function TagInput({

@@ -3,12 +3,12 @@ import { CSS } from "@dnd-kit/utilities";
 import type { ColumnColor, KanbanOptions, Row, SchemaDoc } from "@jsudc/core";
 import { CalendarDays } from "lucide-react";
 import type { CSSProperties, KeyboardEvent } from "react";
-import { avatarTone, initials } from "../cards/cardModel";
-import { useI18n } from "../i18n/i18n";
-import { cn } from "../lib/utils";
-import { formatDate } from "../table/format";
-import { useUiKit } from "../ui-kit/context";
-import { isOverdue, priorityTone } from "./model";
+import { avatarTone, initials } from "../cards/cardModel.js";
+import { useI18n } from "../i18n/i18n.js";
+import { cn } from "../lib/utils.js";
+import { formatDate } from "../table/format.js";
+import { useUiKit } from "../ui-kit/context.js";
+import { isOverdue, priorityTone } from "./model.js";
 
 /** Literal classes, so Tailwind sees them. */
 export const TONE_BORDER: Record<ColumnColor, string> = {

@@ -7,7 +7,7 @@ import {
   startOfDay,
   type WallTime,
   zonedToInstant,
-} from "../time/zoned";
+} from "../time/zoned.js";
 
 export const WIN_PARAM = "win";
 export const FROM_PARAM = "from";

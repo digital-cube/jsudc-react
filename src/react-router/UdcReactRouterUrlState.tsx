@@ -1,7 +1,7 @@
 import { type ReactNode, useMemo, useRef } from "react";
 import { useSearchParams } from "react-router";
-import type { UrlStateAdapter } from "../url-state/adapter";
-import { UdcUrlStateProvider } from "../url-state/UrlState";
+import type { UrlStateAdapter } from "../url-state/adapter.js";
+import { UdcUrlStateProvider } from "../url-state/UrlState.js";
 
 const noSubscription = () => () => {};
 

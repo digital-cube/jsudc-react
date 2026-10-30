@@ -1,10 +1,10 @@
 import { parseWindowPreset } from "@jsudc/core";
 import { X } from "lucide-react";
 import { useId } from "react";
-import { useI18n } from "../i18n/i18n";
-import { useUiKit } from "../ui-kit/context";
-import type { ChartWindowState } from "./useChartWindow";
-import { wallOf } from "./window";
+import { useI18n } from "../i18n/i18n.js";
+import { useUiKit } from "../ui-kit/context.js";
+import type { ChartWindowState } from "./useChartWindow.js";
+import { wallOf } from "./window.js";
 
 const CUSTOM = "custom";
 

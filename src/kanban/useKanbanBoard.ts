@@ -1,8 +1,8 @@
 import type { DescribeResponse, KanbanOptions } from "@jsudc/core";
 import { useCallback, useMemo } from "react";
-import { useUdcCollection, useUdcDescribe } from "../udc/hooks";
-import { useUrlSearchParams } from "../url-state/UrlState";
-import { boardSource } from "./model";
+import { useUdcCollection, useUdcDescribe } from "../udc/hooks.js";
+import { useUrlSearchParams } from "../url-state/UrlState.js";
+import { boardSource } from "./model.js";
 
 export const BOARD_PARAM = "board";
 const MAX_BOARDS = 200;

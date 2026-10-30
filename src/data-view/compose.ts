@@ -5,7 +5,7 @@ import {
   isCondition,
   type SearchConfig,
 } from "@jsudc/core";
-import { type ChipState, type ChipValue, isEmptyChip } from "./urlState";
+import { type ChipState, type ChipValue, isEmptyChip } from "./urlState.js";
 
 /** The search box as a filter: `contains` over every `search.fields`, or-ed. */
 export function searchFilter(

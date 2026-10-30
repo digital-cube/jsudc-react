@@ -1,8 +1,8 @@
 import { AlertTriangle, CheckCircle2, Info, X } from "lucide-react";
 import { Toast as T } from "radix-ui";
 import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from "react";
-import { cn } from "../../lib/utils";
-import type { ToastInput, ToastVariant } from "../../ui-kit/types";
+import { cn } from "../../lib/utils.js";
+import type { ToastInput, ToastVariant } from "../../ui-kit/types.js";
 
 export type { ToastInput, ToastVariant };
 

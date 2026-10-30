@@ -30,23 +30,23 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { KanbanSquare } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useI18n } from "../i18n/i18n";
-import { AllRowsStatus } from "../renderers/AllRowsStatus";
-import type { RendererProps } from "../renderers/types";
-import { EmptyState, ErrorState } from "../table/states";
-import { useUdcAllRows, useUdcCollection, useUdcMutate } from "../udc/hooks";
-import { udcKeys } from "../udc/keys";
-import { useUdcClient } from "../udc/provider";
-import { useUiKit } from "../ui-kit/context";
-import { CardDetailDialog } from "./CardDetailDialog";
-import { cardShellClass, KanbanCardBody } from "./KanbanCard";
+import { useI18n } from "../i18n/i18n.js";
+import { AllRowsStatus } from "../renderers/AllRowsStatus.js";
+import type { RendererProps } from "../renderers/types.js";
+import { EmptyState, ErrorState } from "../table/states.js";
+import { useUdcAllRows, useUdcCollection, useUdcMutate } from "../udc/hooks.js";
+import { udcKeys } from "../udc/keys.js";
+import { useUdcClient } from "../udc/provider.js";
+import { useUiKit } from "../ui-kit/context.js";
+import { CardDetailDialog } from "./CardDetailDialog.js";
+import { cardShellClass, KanbanCardBody } from "./KanbanCard.js";
 import {
   AddBucketSlot,
   bucketDndId,
   cardsContainerId,
   KanbanColumn,
   type PendingAdd,
-} from "./KanbanColumn";
+} from "./KanbanColumn.js";
 import {
   type AddWhere,
   boardFilter,
@@ -61,9 +61,9 @@ import {
   planDrop,
   priorityTone,
   quickAddRow,
-} from "./model";
-import { persistOrder } from "./persist";
-import { useKanbanBoard } from "./useKanbanBoard";
+} from "./model.js";
+import { persistOrder } from "./persist.js";
+import { useKanbanBoard } from "./useKanbanBoard.js";
 
 const MAX_BUCKETS = 500;
 /** Stable keys for the loading placeholders. */

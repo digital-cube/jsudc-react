@@ -1,11 +1,11 @@
 import type { FilterNode, SortKey, ViewConfig } from "@jsudc/core";
 import { useCallback, useMemo } from "react";
-import { storage } from "../lib/storage";
-import { useRendererRegistry } from "../renderers/context";
-import { resolveTab } from "../renderers/registry";
-import type { RendererRegistry } from "../renderers/types";
-import type { PagingMode } from "../udc/keys";
-import { useUrlSearchParams } from "../url-state/UrlState";
+import { storage } from "../lib/storage.js";
+import { useRendererRegistry } from "../renderers/context.js";
+import { resolveTab } from "../renderers/registry.js";
+import type { RendererRegistry } from "../renderers/types.js";
+import type { PagingMode } from "../udc/keys.js";
+import { useUrlSearchParams } from "../url-state/UrlState.js";
 import {
   type ChipState,
   decodeChipParam,
@@ -17,7 +17,7 @@ import {
   encodeFilterParam,
   encodeSortParam,
   PARAM,
-} from "./urlState";
+} from "./urlState.js";
 
 export const pagingStorageKey = (collection: string) => `udc:paging:${collection}`;
 

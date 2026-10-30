@@ -1,5 +1,5 @@
 import { type FilterNode, FilterNodeSchema, type SortKey } from "@jsudc/core";
-import type { PagingMode } from "../udc/keys";
+import type { PagingMode } from "../udc/keys.js";
 
 /*
  * The data view's address-bar state. Every codec is total: a hand-edited or

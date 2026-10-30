@@ -1,5 +1,5 @@
 import type { ComponentProps } from "react";
-import { cn } from "../../lib/utils";
+import { cn } from "../../lib/utils.js";
 
 export function Skeleton({ className, ...props }: ComponentProps<"div">) {
   return <div className={cn("udc-skeleton udc:rounded", className)} {...props} />;

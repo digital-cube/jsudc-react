@@ -7,8 +7,8 @@ import {
   useMemo,
   useState,
 } from "react";
-import { storage } from "../lib/storage";
-import { browserZone, isValidZone } from "./zoned";
+import { storage } from "../lib/storage.js";
+import { browserZone, isValidZone } from "./zoned.js";
 
 /** The zone this browser shows instants in: a preference, not URL state. */
 export const TZ_STORAGE_KEY = "udc-tz";

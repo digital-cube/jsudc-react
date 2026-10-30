@@ -1,13 +1,13 @@
 import type { CalendarOptions, DescribeResponse } from "@jsudc/core";
 import { Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { tableSection, useI18n } from "../i18n/i18n";
-import { CellEditor, editorKind, fromEditorValue, sameValue } from "../table/CellEditor";
-import { CellValue } from "../table/cells";
-import { formatDay, formatTime, zonedParts } from "../time/zoned";
-import { useUiKit } from "../ui-kit/context";
-import { eventTint } from "./EventBlock";
-import type { CalendarEvent } from "./model";
+import { tableSection, useI18n } from "../i18n/i18n.js";
+import { CellEditor, editorKind, fromEditorValue, sameValue } from "../table/CellEditor.js";
+import { CellValue } from "../table/cells.js";
+import { formatDay, formatTime, zonedParts } from "../time/zoned.js";
+import { useUiKit } from "../ui-kit/context.js";
+import { eventTint } from "./EventBlock.js";
+import type { CalendarEvent } from "./model.js";
 
 /**
  * The popover a clicked event opens: its time in the display zone, then

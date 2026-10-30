@@ -4,7 +4,7 @@
  * left to right. Every step is total: input of the wrong shape passes through
  * untouched, and an unknown name is skipped.
  */
-import { zonedParts } from "../time/zoned";
+import { zonedParts } from "../time/zoned.js";
 
 export type TransformSpec = string | readonly string[] | undefined;
 

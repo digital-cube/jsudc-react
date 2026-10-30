@@ -2,6 +2,10 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "types": [],
+    // NodeNext, so that every relative import carries its .js extension: the .d.ts keep
+    // the specifiers as written, and a host on moduleResolution NodeNext resolves them.
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "rootDir": "src",
     "outDir": "dist",
     "noEmit": false,

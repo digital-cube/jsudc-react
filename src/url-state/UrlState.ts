@@ -7,7 +7,7 @@ import {
   useMemo,
   useSyncExternalStore,
 } from "react";
-import { type UrlStateAdapter, windowLocationAdapter } from "./adapter";
+import { type UrlStateAdapter, windowLocationAdapter } from "./adapter.js";
 
 const UrlStateContext = createContext<UrlStateAdapter>(windowLocationAdapter);
 

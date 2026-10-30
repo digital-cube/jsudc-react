@@ -7,8 +7,8 @@ import {
   useRef,
   useState,
 } from "react";
-import { useI18n } from "../i18n/i18n";
-import { cn } from "../lib/utils";
+import { useI18n } from "../i18n/i18n.js";
+import { cn } from "../lib/utils.js";
 import {
   addDays,
   type CivilDay,
@@ -20,9 +20,9 @@ import {
   sameDay,
   startOfDay,
   zonedFormat,
-} from "../time/zoned";
-import { useUiKit } from "../ui-kit/context";
-import { EventBlock } from "./EventBlock";
+} from "../time/zoned.js";
+import { useUiKit } from "../ui-kit/context.js";
+import { EventBlock } from "./EventBlock.js";
 import {
   type CalendarEvent,
   type CalendarWindow,
@@ -33,7 +33,7 @@ import {
   isAllDay,
   layoutLanes,
   verticalSpan,
-} from "./model";
+} from "./model.js";
 
 /** Pixels the pointer travels before a press becomes a drag (below it, a click). */
 const DRAG_THRESHOLD = 4;

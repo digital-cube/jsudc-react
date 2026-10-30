@@ -45,7 +45,7 @@ function entryTypes(): Plugin {
     closeBundle() {
       for (const [entry, mod] of Object.entries(ENTRIES)) {
         if (entry === mod) continue;
-        writeFileSync(`dist/${entry}.d.ts`, `export * from "./${mod}";\n`);
+        writeFileSync(`dist/${entry}.d.ts`, `export * from "./${mod}.js";\n`);
       }
     },
   };

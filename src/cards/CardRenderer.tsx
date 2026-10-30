@@ -1,20 +1,20 @@
 import type { ColumnColor, DescribeResponse, Row } from "@jsudc/core";
 import { useEffect, useMemo, useRef } from "react";
-import { FolderEntry } from "../data-view/FolderEntry";
-import { tableSection, useI18n } from "../i18n/i18n";
-import { cn } from "../lib/utils";
-import type { FolderNav } from "../renderers/types";
-import { CellValue } from "../table/cells";
-import { displayText, isBlank, renderKind } from "../table/format";
-import { Pager } from "../table/Pager";
-import { Sparkline } from "../table/sparkline";
-import { EmptyState, ErrorState } from "../table/states";
-import { resolveRowColor } from "../table/style";
-import { useInfiniteSentinel } from "../table/useInfiniteSentinel";
-import { useTimezone } from "../time/timezone";
-import type { UdcCollectionResult } from "../udc/hooks";
-import type { PagingMode } from "../udc/keys";
-import { useUiKit } from "../ui-kit/context";
+import { FolderEntry } from "../data-view/FolderEntry.js";
+import { tableSection, useI18n } from "../i18n/i18n.js";
+import { cn } from "../lib/utils.js";
+import type { FolderNav } from "../renderers/types.js";
+import { CellValue } from "../table/cells.js";
+import { displayText, isBlank, renderKind } from "../table/format.js";
+import { Pager } from "../table/Pager.js";
+import { Sparkline } from "../table/sparkline.js";
+import { EmptyState, ErrorState } from "../table/states.js";
+import { resolveRowColor } from "../table/style.js";
+import { useInfiniteSentinel } from "../table/useInfiniteSentinel.js";
+import { useTimezone } from "../time/timezone.js";
+import type { UdcCollectionResult } from "../udc/hooks.js";
+import type { PagingMode } from "../udc/keys.js";
+import { useUiKit } from "../ui-kit/context.js";
 import {
   avatarTone,
   CARD_MIN_WIDTH,
@@ -22,7 +22,7 @@ import {
   cardSlots,
   initials,
   metricText,
-} from "./cardModel";
+} from "./cardModel.js";
 
 /** The `row_color` accent bar on the left edge. Literal classes so Tailwind sees them. */
 const ACCENT_BAR: Record<ColumnColor, string> = {

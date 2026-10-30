@@ -1,7 +1,7 @@
 import type { DescribeResponse } from "@jsudc/core";
-import { useI18n } from "../i18n/i18n";
-import { useUiKit } from "../ui-kit/context";
-import { useKanbanBoard } from "./useKanbanBoard";
+import { useI18n } from "../i18n/i18n.js";
+import { useUiKit } from "../ui-kit/context.js";
+import { useKanbanBoard } from "./useKanbanBoard.js";
 
 /** The board select in the toolbar; writes `?board=`. */
 export function KanbanBoardSwitcher({

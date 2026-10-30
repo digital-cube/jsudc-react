@@ -1,7 +1,7 @@
 import type { FieldDef } from "@jsudc/core";
 import { type KeyboardEvent, useEffect, useRef, useState } from "react";
-import { cn } from "../lib/utils";
-import { useUiKit } from "../ui-kit/context";
+import { cn } from "../lib/utils.js";
+import { useUiKit } from "../ui-kit/context.js";
 
 export type CommitReason = "enter" | "tab" | "shift-tab" | "blur";
 

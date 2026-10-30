@@ -1,6 +1,6 @@
 import { DropdownMenu as M } from "radix-ui";
 import { type ComponentProps, forwardRef } from "react";
-import { cn } from "../../lib/utils";
+import { cn } from "../../lib/utils.js";
 
 export const DropdownMenu = M.Root;
 export const DropdownMenuTrigger = M.Trigger;

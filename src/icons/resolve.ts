@@ -1,5 +1,5 @@
 import { Building2, Circle, type LucideIcon, User, Users } from "lucide-react";
-import { LUCIDE_ICONS } from "./lucide.generated";
+import { LUCIDE_ICONS } from "./lucide.generated.js";
 
 /** What an unknown name draws: a row never breaks over its icon. */
 export const FALLBACK_ICON: LucideIcon = Circle;

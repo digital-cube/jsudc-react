@@ -8,17 +8,17 @@ import {
 } from "@jsudc/core";
 import { ChevronLeft, ChevronRight, Globe } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useI18n } from "../i18n/i18n";
-import { useKanbanBoard } from "../kanban/useKanbanBoard";
-import { AllRowsStatus } from "../renderers/AllRowsStatus";
-import type { RendererProps } from "../renderers/types";
-import { EmptyState, ErrorState } from "../table/states";
-import { useTimezone } from "../time/timezone";
-import { dayKey, dayOf, offsetLabel, offsetMinutes, zoneCity } from "../time/zoned";
-import { useUdcAllRows, useUdcMutate } from "../udc/hooks";
-import { useUiKit } from "../ui-kit/context";
-import { EventDetail } from "./EventDetail";
-import { MonthGrid } from "./MonthGrid";
+import { useI18n } from "../i18n/i18n.js";
+import { useKanbanBoard } from "../kanban/useKanbanBoard.js";
+import { AllRowsStatus } from "../renderers/AllRowsStatus.js";
+import type { RendererProps } from "../renderers/types.js";
+import { EmptyState, ErrorState } from "../table/states.js";
+import { useTimezone } from "../time/timezone.js";
+import { dayKey, dayOf, offsetLabel, offsetMinutes, zoneCity } from "../time/zoned.js";
+import { useUdcAllRows, useUdcMutate } from "../udc/hooks.js";
+import { useUiKit } from "../ui-kit/context.js";
+import { EventDetail } from "./EventDetail.js";
+import { MonthGrid } from "./MonthGrid.js";
 import {
   type CalendarEvent,
   canCreate,
@@ -30,9 +30,9 @@ import {
   windowBetween,
   windowFilter,
   windowLabel,
-} from "./model";
-import { TimeGrid } from "./TimeGrid";
-import { useCalendarUrl } from "./useCalendarUrl";
+} from "./model.js";
+import { TimeGrid } from "./TimeGrid.js";
+import { useCalendarUrl } from "./useCalendarUrl.js";
 
 /** The clock, a tick a minute: the now line and "today". */
 function useNow(everyMs = 60_000): number {

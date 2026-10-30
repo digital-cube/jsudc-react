@@ -1,6 +1,6 @@
 import { ChevronRight, FolderOpen } from "lucide-react";
-import { useI18n } from "../i18n/i18n";
-import { folderCrumbs } from "./folder";
+import { useI18n } from "../i18n/i18n.js";
+import { folderCrumbs } from "./folder.js";
 
 /** Where the folder listing is: the root, then each folder down to the open one; each opens on click. */
 export function FolderBar({

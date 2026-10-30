@@ -1,5 +1,5 @@
-import { useI18n } from "../i18n/i18n";
-import type { UdcAllRowsResult } from "../udc/hooks";
+import { useI18n } from "../i18n/i18n.js";
+import type { UdcAllRowsResult } from "../udc/hooks.js";
 
 /**
  * What a renderer over `useUdcAllRows` shows above its content: a thin bar

@@ -10,7 +10,8 @@ const packageOf = (spec: string) =>
   spec.startsWith("@") ? spec.split("/").slice(0, 2).join("/") : (spec.split("/")[0] ?? spec);
 
 function resolveLocal(from: string, spec: string): string {
-  const base = resolve(dirname(from), spec);
+  // Specifiers carry the `.js` of the emitted file (NodeNext); the source is `.ts` / `.tsx`.
+  const base = resolve(dirname(from), spec.replace(/\.js$/, ""));
   for (const c of [base, `${base}.ts`, `${base}.tsx`, `${base}/index.ts`, `${base}/index.tsx`]) {
     if (existsSync(c) && !c.endsWith("/")) {
       if (c === base && !/\.(tsx?|css)$/.test(c)) continue;

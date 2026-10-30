@@ -1,7 +1,13 @@
 import type { SchemaDoc } from "@jsudc/core";
 import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from "react";
-import { humanize, storage } from "../lib/storage";
-import { type BuiltinLocale, LOCALES, type Locale, type Term, TRANSLATIONS } from "./translations";
+import { humanize, storage } from "../lib/storage.js";
+import {
+  type BuiltinLocale,
+  LOCALES,
+  type Locale,
+  type Term,
+  TRANSLATIONS,
+} from "./translations.js";
 
 export const LOCALE_STORAGE_KEY = "udc-locale";
 

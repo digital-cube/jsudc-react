@@ -1,10 +1,10 @@
 import type { Condition, FilterableField, FilterNode, FilterOp } from "@jsudc/core";
 import { ListFilter, Plus, Trash2, X } from "lucide-react";
 import { type ReactNode, useState } from "react";
-import { useI18n } from "../i18n/i18n";
-import { cn } from "../lib/utils";
-import { useUiKit } from "../ui-kit/context";
-import { conditionsToTree, treeToConditions } from "./compose";
+import { useI18n } from "../i18n/i18n.js";
+import { cn } from "../lib/utils.js";
+import { useUiKit } from "../ui-kit/context.js";
+import { conditionsToTree, treeToConditions } from "./compose.js";
 
 /** Ops that take no value: the builder hides the value input for them. */
 export const NULLARY_OPS: readonly FilterOp[] = ["is_null", "is_not_null"];

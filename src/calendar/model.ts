@@ -13,7 +13,7 @@ import {
   startOfDay,
   weekdayOf,
   zonedToInstant,
-} from "../time/zoned";
+} from "../time/zoned.js";
 
 /*
  * The calendar's pure half: which days a preset shows, the window the server

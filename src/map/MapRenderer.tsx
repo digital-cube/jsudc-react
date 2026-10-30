@@ -4,13 +4,13 @@ import L from "leaflet";
 import { Maximize } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { tableSection, useI18n } from "../i18n/i18n";
-import { AllRowsStatus } from "../renderers/AllRowsStatus";
-import type { RendererProps } from "../renderers/types";
-import { CellValue } from "../table/cells";
-import { EmptyState, ErrorState } from "../table/states";
-import { useUdcAllRows } from "../udc/hooks";
-import { useUiKit } from "../ui-kit/context";
+import { tableSection, useI18n } from "../i18n/i18n.js";
+import { AllRowsStatus } from "../renderers/AllRowsStatus.js";
+import type { RendererProps } from "../renderers/types.js";
+import { CellValue } from "../table/cells.js";
+import { EmptyState, ErrorState } from "../table/states.js";
+import { useUdcAllRows } from "../udc/hooks.js";
+import { useUiKit } from "../ui-kit/context.js";
 import {
   airplaneHtml,
   boundsOf,
@@ -20,7 +20,7 @@ import {
   regionById,
   toMarkers,
   trailMarkers,
-} from "./model";
+} from "./model.js";
 
 const OSM_TILES = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 const OSM_ATTRIBUTION =

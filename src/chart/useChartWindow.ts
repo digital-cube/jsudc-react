@@ -1,8 +1,8 @@
 import type { ChartWindow, FilterNode, ViewConfig } from "@jsudc/core";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useTimezone } from "../time/timezone";
-import { useUrlSearchParams } from "../url-state/UrlState";
-import { readWindow, type WindowSel, windowCondition, windowRange, writeWindow } from "./window";
+import { useTimezone } from "../time/timezone.js";
+import { useUrlSearchParams } from "../url-state/UrlState.js";
+import { readWindow, type WindowSel, windowCondition, windowRange, writeWindow } from "./window.js";
 
 export interface ChartWindowState {
   cfg: ChartWindow;
