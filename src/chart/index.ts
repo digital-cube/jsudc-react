@@ -1,9 +1,9 @@
 // @jsudc/react/chart: the chart renderer. Needs the `recharts` peer.
 import { ChartLine } from "lucide-react";
-import type { RendererDefinition } from "../renderers/types";
-import { ChartRenderer } from "./ChartRenderer";
+import type { RendererDefinition } from "../renderers/types.js";
+import { ChartRenderer } from "./ChartRenderer.js";
 
-export { ChartRenderer } from "./ChartRenderer";
+export { ChartRenderer } from "./ChartRenderer.js";
 
 /**
  * `createRendererRegistry(chartRenderer, …)`: the `chart` tab. The window control is drawn by

@@ -26,15 +26,15 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { tableSection, useI18n } from "../i18n/i18n";
-import { cn, humanize } from "../lib/utils";
-import { AllRowsStatus } from "../renderers/AllRowsStatus";
-import type { RendererProps } from "../renderers/types";
-import { CellValue } from "../table/cells";
-import { EmptyState, ErrorState } from "../table/states";
-import { isoInZone } from "../time/zoned";
-import { useUdcAllRows, useUdcCollection } from "../udc/hooks";
-import { useUiKit } from "../ui-kit/context";
+import { tableSection, useI18n } from "../i18n/i18n.js";
+import { cn, humanize } from "../lib/utils.js";
+import { AllRowsStatus } from "../renderers/AllRowsStatus.js";
+import type { RendererProps } from "../renderers/types.js";
+import { CellValue } from "../table/cells.js";
+import { EmptyState, ErrorState } from "../table/states.js";
+import { isoInZone } from "../time/zoned.js";
+import { useUdcAllRows, useUdcCollection } from "../udc/hooks.js";
+import { useUiKit } from "../ui-kit/context.js";
 import {
   axisFrames,
   barSize,
@@ -48,7 +48,7 @@ import {
   seriesColor,
   timeTicks,
   X_KEY,
-} from "./model";
+} from "./model.js";
 
 /** The `chart` tab: the rows of the filter (and the window) drawn as `chart_options` says. */
 export function ChartRenderer(props: RendererProps) {

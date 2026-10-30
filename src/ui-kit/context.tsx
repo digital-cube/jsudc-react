@@ -1,6 +1,6 @@
 import { createContext, type ReactNode, useContext } from "react";
-import { defaultUiKit } from "./default";
-import type { UiKit } from "./types";
+import { defaultUiKit } from "./default.js";
+import type { UiKit } from "./types.js";
 
 // Without a provider the renderers draw with the default kit, so a renderer
 // mounted on its own (a test, a host page without `UdcProvider`) still works.

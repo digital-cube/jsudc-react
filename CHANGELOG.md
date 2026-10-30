@@ -157,6 +157,17 @@ In this order; a host that does all five renders as before.
   `github:digital-cube/jsudc-core#v0.1.0`; `package-lock.json` no longer pins
   it over SSH, and CI and the publish workflow drop the deploy-key step.
 
+### Fixed
+
+- **The declarations resolve under `moduleResolution: NodeNext`.** Every
+  relative import in the `.d.ts` (and in the source) carries its `.js`
+  extension; before, a host on NodeNext got `any` for the root and "no
+  exported member" for `@jsudc/react/headless`, `/table` and the other
+  subpaths (0.1.x had the same defect). `tsconfig.build.json` compiles under
+  NodeNext so an import without the extension no longer builds, and
+  `npm run check:types` (in CI and in the publish workflow) compiles
+  `smoke/types.ts` against the built package under NodeNext and Bundler.
+
 ### Follow-up
 
 - `radix-ui` is still a required peer: the default kit is the fallback when no

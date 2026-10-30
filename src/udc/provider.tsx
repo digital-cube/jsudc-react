@@ -1,12 +1,12 @@
 import type { UdcClient } from "@jsudc/core/client";
 import type { ReactNode } from "react";
-import { UdcRenderersProvider } from "../renderers/context";
-import type { RendererRegistry } from "../renderers/types";
-import { UdcUiProvider } from "../ui-kit/context";
-import type { UiKit } from "../ui-kit/types";
-import { UdcClientContext } from "./client";
+import { UdcRenderersProvider } from "../renderers/context.js";
+import type { RendererRegistry } from "../renderers/types.js";
+import { UdcUiProvider } from "../ui-kit/context.js";
+import type { UiKit } from "../ui-kit/types.js";
+import { UdcClientContext } from "./client.js";
 
-export { createUdcQueryClient, shouldRetry, useUdcClient } from "./client";
+export { createUdcQueryClient, shouldRetry, useUdcClient } from "./client.js";
 
 /**
  * The root provider: the client, the renderers `UdcDataView` draws its tabs

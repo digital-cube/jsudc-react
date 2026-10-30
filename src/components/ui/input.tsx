@@ -1,5 +1,5 @@
 import { type ComponentProps, forwardRef } from "react";
-import { cn } from "../../lib/utils";
+import { cn } from "../../lib/utils.js";
 
 export const inputClass = cn(
   "udc:h-8 udc:w-full udc:min-w-0 udc:rounded-md udc:border udc:border-input udc:bg-surface udc:px-2.5 udc:text-[13px] udc:text-foreground udc:shadow-xs",

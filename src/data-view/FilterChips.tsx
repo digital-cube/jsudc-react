@@ -1,10 +1,10 @@
 import type { FilterChipConfig } from "@jsudc/core";
 import { Check, ChevronDown, PlusCircle, X } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
-import { useI18n } from "../i18n/i18n";
-import { cn, humanize } from "../lib/utils";
-import { useUiKit } from "../ui-kit/context";
-import { type ChipState, type ChipValue, isEmptyChip } from "./urlState";
+import { useI18n } from "../i18n/i18n.js";
+import { cn, humanize } from "../lib/utils.js";
+import { useUiKit } from "../ui-kit/context.js";
+import { type ChipState, type ChipValue, isEmptyChip } from "./urlState.js";
 
 type Label = (cfg: FilterChipConfig) => string;
 

@@ -1,7 +1,7 @@
 import { type FilterNode, type Row, UdcError } from "@jsudc/core";
 import type { UdcClient } from "@jsudc/core/client";
-import type { UdcMutateVars } from "../udc/hooks";
-import { type DropPlan, orderOf, replanDrop } from "./model";
+import type { UdcMutateVars } from "../udc/hooks.js";
+import { type DropPlan, orderOf, replanDrop } from "./model.js";
 
 const SCOPE_LIMIT = 1000;
 

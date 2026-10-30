@@ -105,6 +105,7 @@
     "build:css": "tailwindcss -i src/styles.css -o dist/styles.css --minify && node -e \"require('node:fs').copyFileSync('src/tokens.css', 'dist/tokens.css')\" && node scripts/check-css.mjs",
     "prepare": "npm run build",
     "typecheck": "tsc -p tsconfig.json --noEmit",
+    "check:types": "tsc -p smoke/tsconfig.nodenext.json && tsc -p smoke/tsconfig.bundler.json",
     "lint": "biome check .",
     "test": "vitest run",
     "test:watch": "vitest"

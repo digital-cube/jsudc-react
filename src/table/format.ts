@@ -1,8 +1,8 @@
 // The text and kind of a cell value, without markup: what the table, the cards and the
 // chart's axis format with. Part of `@jsudc/react/headless`.
 import { COLUMN_COLORS, type ColumnColor, type ColumnConfig, type FieldDef } from "@jsudc/core";
-import { zonedFormat } from "../time/zoned";
-import { applyTransforms, hasTransforms, parseIsoParts } from "./transforms";
+import { zonedFormat } from "../time/zoned.js";
+import { applyTransforms, hasTransforms, parseIsoParts } from "./transforms.js";
 
 export type RenderKind =
   | "text"

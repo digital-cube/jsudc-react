@@ -3,11 +3,11 @@ import { CSS } from "@dnd-kit/utilities";
 import type { KanbanOptions, Row, SchemaDoc } from "@jsudc/core";
 import { MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
 import { type KeyboardEvent, useState } from "react";
-import { useI18n } from "../i18n/i18n";
-import { cn } from "../lib/utils";
-import { useUiKit } from "../ui-kit/context";
-import { KanbanCard, PendingCard, TONE_DOT } from "./KanbanCard";
-import type { AddWhere, Bucket } from "./model";
+import { useI18n } from "../i18n/i18n.js";
+import { cn } from "../lib/utils.js";
+import { useUiKit } from "../ui-kit/context.js";
+import { KanbanCard, PendingCard, TONE_DOT } from "./KanbanCard.js";
+import type { AddWhere, Bucket } from "./model.js";
 
 export const bucketDndId = (id: string) => `bucket:${id}`;
 /** The id of a column's card list (dnd-kit's sortable container). */

@@ -1,7 +1,7 @@
 import { Search, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { useI18n } from "../i18n/i18n";
-import { useUiKit } from "../ui-kit/context";
+import { useI18n } from "../i18n/i18n.js";
+import { useUiKit } from "../ui-kit/context.js";
 
 export const SEARCH_DEBOUNCE_MS = 300;
 

@@ -1,5 +1,5 @@
 import { createContext, type ReactNode, useCallback, useContext, useState } from "react";
-import { storage } from "./utils";
+import { storage } from "./utils.js";
 
 export type Theme = "light" | "dark";
 

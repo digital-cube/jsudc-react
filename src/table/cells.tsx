@@ -1,10 +1,10 @@
 import type { ColumnColor, ColumnConfig, FieldDef } from "@jsudc/core";
 import { Check, X } from "lucide-react";
 import type { ReactNode } from "react";
-import { resolveIcon } from "../icons/resolve";
-import { cn } from "../lib/utils";
-import { useTimezone } from "../time/timezone";
-import { HeadingGlyph, Sparkline } from "./sparkline";
+import { resolveIcon } from "../icons/resolve.js";
+import { cn } from "../lib/utils.js";
+import { useTimezone } from "../time/timezone.js";
+import { HeadingGlyph, Sparkline } from "./sparkline.js";
 
 export {
   badgeTone,
@@ -17,9 +17,9 @@ export {
   isBlank,
   type RenderKind,
   renderKind,
-} from "./format";
+} from "./format.js";
 
-import { badgeTone, displayText, formatNumber, isBlank, renderKind } from "./format";
+import { badgeTone, displayText, formatNumber, isBlank, renderKind } from "./format.js";
 
 function BoolValue({ value, style }: { value: unknown; style: unknown }) {
   const on = value === true;

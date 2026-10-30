@@ -1,7 +1,7 @@
 import type { DescribeResponse, Row } from "@jsudc/core";
-import { tableSection, useI18n } from "../i18n/i18n";
-import { CellValue } from "../table/cells";
-import { useUiKit } from "../ui-kit/context";
+import { tableSection, useI18n } from "../i18n/i18n.js";
+import { CellValue } from "../table/cells.js";
+import { useUiKit } from "../ui-kit/context.js";
 
 /**
  * A card, read-only: its title and body, then every live field as the table

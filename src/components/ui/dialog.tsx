@@ -1,7 +1,7 @@
 import { X } from "lucide-react";
 import { Dialog as D } from "radix-ui";
 import { type ComponentProps, forwardRef, type ReactNode } from "react";
-import { cn } from "../../lib/utils";
+import { cn } from "../../lib/utils.js";
 
 export const Dialog = D.Root;
 export const DialogTrigger = D.Trigger;

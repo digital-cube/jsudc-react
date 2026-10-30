@@ -1,7 +1,7 @@
 import { AlertTriangle, RotateCw, SearchX, Table2 } from "lucide-react";
 import type { ReactNode } from "react";
-import { useI18n } from "../i18n/i18n";
-import { useUiKit } from "../ui-kit/context";
+import { useI18n } from "../i18n/i18n.js";
+import { useUiKit } from "../ui-kit/context.js";
 
 function Panel({
   icon,

@@ -1,11 +1,11 @@
 import type { CalendarOptions } from "@jsudc/core";
 import { useState } from "react";
-import { useI18n } from "../i18n/i18n";
-import { cn } from "../lib/utils";
-import { type CivilDay, dayKey, formatDay, formatTime, sameDay } from "../time/zoned";
-import { useUiKit } from "../ui-kit/context";
-import { eventTint } from "./EventBlock";
-import { type CalendarEvent, type CalendarWindow, eventsOnDay } from "./model";
+import { useI18n } from "../i18n/i18n.js";
+import { cn } from "../lib/utils.js";
+import { type CivilDay, dayKey, formatDay, formatTime, sameDay } from "../time/zoned.js";
+import { useUiKit } from "../ui-kit/context.js";
+import { eventTint } from "./EventBlock.js";
+import { type CalendarEvent, type CalendarWindow, eventsOnDay } from "./model.js";
 
 const DRAG_TYPE = "application/x-udc-event";
 

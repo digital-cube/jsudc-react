@@ -1,5 +1,5 @@
 import { createContext, createElement, type ReactNode, useContext } from "react";
-import type { RendererRegistry } from "./types";
+import type { RendererRegistry } from "./types.js";
 
 const EMPTY: RendererRegistry = Object.freeze({});
 

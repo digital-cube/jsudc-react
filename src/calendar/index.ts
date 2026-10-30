@@ -2,11 +2,11 @@
 import type { DescribeResponse } from "@jsudc/core";
 import { CalendarDays } from "lucide-react";
 import { createElement } from "react";
-import { KanbanBoardSwitcher } from "../kanban/KanbanBoardSwitcher";
-import type { RendererDefinition } from "../renderers/types";
-import { CalendarRenderer } from "./CalendarRenderer";
+import { KanbanBoardSwitcher } from "../kanban/KanbanBoardSwitcher.js";
+import type { RendererDefinition } from "../renderers/types.js";
+import { CalendarRenderer } from "./CalendarRenderer.js";
 
-export { CalendarRenderer } from "./CalendarRenderer";
+export { CalendarRenderer } from "./CalendarRenderer.js";
 
 /** The calendar of a kanban collection keeps the board switcher: it shows the board's tickets. */
 function CalendarToolbar(props: { collection: string; describe: DescribeResponse }) {

@@ -1,8 +1,8 @@
 import type { Row } from "@jsudc/core";
 import { CornerLeftUp, File, Folder } from "lucide-react";
 import type { ReactNode } from "react";
-import { cn } from "../lib/utils";
-import { type FolderNav, isFolderRow } from "../renderers/types";
+import { cn } from "../lib/utils.js";
+import { type FolderNav, isFolderRow } from "../renderers/types.js";
 
 /**
  * The label of a row of a folder listing: a folder (and `..`) as a link that

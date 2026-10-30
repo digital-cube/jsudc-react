@@ -1,7 +1,7 @@
 import { type CalendarOptions, type CalendarPreset, isCalendarPreset } from "@jsudc/core";
-import { type CivilDay, dayKey, parseDayKey } from "../time/zoned";
-import { useUrlSearchParams } from "../url-state/UrlState";
-import { stepAnchor } from "./model";
+import { type CivilDay, dayKey, parseDayKey } from "../time/zoned.js";
+import { useUrlSearchParams } from "../url-state/UrlState.js";
+import { stepAnchor } from "./model.js";
 
 export const PRESET_PARAM = "preset";
 export const DATE_PARAM = "date";

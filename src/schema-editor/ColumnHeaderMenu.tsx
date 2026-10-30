@@ -1,8 +1,8 @@
 import { ArrowLeftToLine, ArrowRightToLine, EllipsisVertical, Pencil, Trash2 } from "lucide-react";
-import { useI18n } from "../i18n/i18n";
-import { cn } from "../lib/utils";
-import { useUiKit } from "../ui-kit/context";
-import type { SchemaAction } from "./fieldForm";
+import { useI18n } from "../i18n/i18n.js";
+import { cn } from "../lib/utils.js";
+import { useUiKit } from "../ui-kit/context.js";
+import type { SchemaAction } from "./fieldForm.js";
 
 /**
  * The kebab on a column header: add a column before or after this one, edit

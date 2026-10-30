@@ -1,8 +1,8 @@
 import type { Row } from "@jsudc/core";
 import { useQuery } from "@tanstack/react-query";
-import { useI18n } from "../i18n/i18n";
-import { useUdcClient } from "../udc/provider";
-import { useUiKit } from "../ui-kit/context";
+import { useI18n } from "../i18n/i18n.js";
+import { useUdcClient } from "../udc/provider.js";
+import { useUiKit } from "../ui-kit/context.js";
 
 const IMAGE = /\.(png|jpe?g|gif|webp|svg)$/i;
 

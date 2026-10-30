@@ -1,10 +1,10 @@
 import { type FieldType, isUdcError, type SchemaDoc, type SchemaPosition } from "@jsudc/core";
 import { AlertTriangle, Lock } from "lucide-react";
 import { type FormEvent, type ReactNode, useId, useState } from "react";
-import { useI18n } from "../i18n/i18n";
-import { cn } from "../lib/utils";
-import { useUdcSchema } from "../udc/hooks";
-import { useUiKit } from "../ui-kit/context";
+import { useI18n } from "../i18n/i18n.js";
+import { cn } from "../lib/utils.js";
+import { useUdcSchema } from "../udc/hooks.js";
+import { useUiKit } from "../ui-kit/context.js";
 import {
   type DraftErrors,
   draftFromDef,
@@ -16,8 +16,8 @@ import {
   suggestName,
   typeControls,
   validateDraft,
-} from "./fieldForm";
-import { TagInput } from "./TagInput";
+} from "./fieldForm.js";
+import { TagInput } from "./TagInput.js";
 
 export type FieldFormTarget =
   | { mode: "add"; position: SchemaPosition }

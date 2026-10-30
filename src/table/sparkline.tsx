@@ -1,5 +1,5 @@
 import { Navigation2 } from "lucide-react";
-import { cn } from "../lib/utils";
+import { cn } from "../lib/utils.js";
 
 /** The finite numbers of a value that should be an array (a history); anything else drops out. */
 export function sparkValues(v: unknown): number[] {

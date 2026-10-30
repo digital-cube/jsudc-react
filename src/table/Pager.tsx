@@ -1,8 +1,8 @@
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 import type { ReactNode } from "react";
-import { useI18n } from "../i18n/i18n";
-import { cn } from "../lib/utils";
-import { useUiKit } from "../ui-kit/context";
+import { useI18n } from "../i18n/i18n.js";
+import { cn } from "../lib/utils.js";
+import { useUiKit } from "../ui-kit/context.js";
 
 /** Page numbers to show: first, last, and a window around the current one; `null` is a gap. */
 export function pageWindow(page: number, pages: number, radius = 1): (number | null)[] {

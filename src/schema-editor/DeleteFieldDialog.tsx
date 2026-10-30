@@ -1,9 +1,9 @@
 import { isUdcError } from "@jsudc/core";
 import { AlertTriangle, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { useI18n } from "../i18n/i18n";
-import { useUdcSchema } from "../udc/hooks";
-import { useUiKit } from "../ui-kit/context";
+import { useI18n } from "../i18n/i18n.js";
+import { useUdcSchema } from "../udc/hooks.js";
+import { useUiKit } from "../ui-kit/context.js";
 
 /** Confirms a soft delete: the column goes, the data stays. */
 export function DeleteFieldDialog({

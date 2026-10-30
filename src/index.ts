@@ -6,7 +6,7 @@
 // primitives (Radix + Tailwind) and the default kit: `@jsudc/react/ui`.
 
 // One collection: the tabs its view declares, each drawn by a registered renderer.
-export { UdcDataView, type UdcDataViewProps } from "./data-view/UdcDataView";
+export { UdcDataView, type UdcDataViewProps } from "./data-view/UdcDataView.js";
 // Strings: the provider, the library dictionary and the helpers over it.
 export {
   INTL_LOCALE,
@@ -25,7 +25,7 @@ export {
   type UdcI18nProviderProps,
   useI18n,
   type Vars,
-} from "./i18n/i18n";
+} from "./i18n/i18n.js";
 export {
   type BuiltinLocale,
   LOCALES,
@@ -33,24 +33,24 @@ export {
   type Term,
   TRANSLATIONS,
   type Translations,
-} from "./i18n/translations";
+} from "./i18n/translations.js";
 // Icons, theme, helpers, renderer registry and types, the time zone.
-export { LUCIDE_ICONS } from "./icons/lucide.generated";
-export { FALLBACK_ICON, resolveIcon } from "./icons/resolve";
-export { THEME_STORAGE_KEY, type Theme, ThemeProvider, useTheme } from "./lib/theme";
-export { cn, humanize, storage } from "./lib/utils";
+export { LUCIDE_ICONS } from "./icons/lucide.generated.js";
+export { FALLBACK_ICON, resolveIcon } from "./icons/resolve.js";
+export { THEME_STORAGE_KEY, type Theme, ThemeProvider, useTheme } from "./lib/theme.js";
+export { cn, humanize, storage } from "./lib/utils.js";
 export {
   UdcRenderersProvider,
   type UdcRenderersProviderProps,
   useRendererRegistry,
-} from "./renderers/context";
+} from "./renderers/context.js";
 export {
   createRendererRegistry,
   type RendererTab,
   rendererEntry,
   rendererTabs,
   resolveTab,
-} from "./renderers/registry";
+} from "./renderers/registry.js";
 export {
   type FolderNav,
   isFolderRow,
@@ -59,8 +59,8 @@ export {
   type RendererEntry,
   type RendererProps,
   type RendererRegistry,
-} from "./renderers/types";
-export { EmptyState, ErrorState, NoRendererState } from "./table/states";
+} from "./renderers/types.js";
+export { EmptyState, ErrorState, NoRendererState } from "./table/states.js";
 export {
   BROWSER_TZ,
   COMMON_ZONES,
@@ -68,7 +68,7 @@ export {
   type TimezoneState,
   TZ_STORAGE_KEY,
   useTimezone,
-} from "./time/timezone";
+} from "./time/timezone.js";
 export {
   allZones,
   browserZone,
@@ -76,8 +76,8 @@ export {
   offsetLabel,
   offsetMinutes,
   zoneCity,
-} from "./time/zoned";
-export { i18nKey } from "./tree/model";
+} from "./time/zoned.js";
+export { i18nKey } from "./tree/model.js";
 // The hooks over @jsudc/core's client, the client context and the TanStack Query client.
 export {
   ALL_ROWS_MAX,
@@ -99,9 +99,9 @@ export {
   useUdcMutate,
   useUdcSchema,
   useUdcSource,
-} from "./udc/hooks";
-export { type ListKeyParams, type PagingMode, udcKeys } from "./udc/keys";
-export { createUdcQueryClient, shouldRetry, UdcProvider, useUdcClient } from "./udc/provider";
+} from "./udc/hooks.js";
+export { type ListKeyParams, type PagingMode, udcKeys } from "./udc/keys.js";
+export { createUdcQueryClient, shouldRetry, UdcProvider, useUdcClient } from "./udc/provider.js";
 // The UI kit: the primitives every renderer draws with, from context. The default kit and the
 // primitives themselves are `@jsudc/react/ui`; a host brings its own through the provider.
 export {
@@ -136,7 +136,7 @@ export {
   type UiTipProps,
   type UiTriggerProps,
   useUiKit,
-} from "./ui-kit";
+} from "./ui-kit/index.js";
 // URL state: where the data view keeps filters, sort and page. `window.location` by default;
 // a router's adapter through the provider (the package ships one on a subpath, see README).
 export {
@@ -147,4 +147,4 @@ export {
   useUrlSearchParams,
   useUrlStateAdapter,
   windowLocationAdapter,
-} from "./url-state";
+} from "./url-state/index.js";

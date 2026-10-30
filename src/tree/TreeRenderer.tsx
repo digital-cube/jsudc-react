@@ -28,16 +28,16 @@ import {
   useRef,
   useState,
 } from "react";
-import { useI18n } from "../i18n/i18n";
-import { CardDetailDialog } from "../kanban/CardDetailDialog";
-import { AllRowsStatus } from "../renderers/AllRowsStatus";
-import type { RendererProps } from "../renderers/types";
-import { EmptyState, ErrorState } from "../table/states";
-import { useUdcAllRows, useUdcCollection, useUdcMutate } from "../udc/hooks";
-import { udcKeys } from "../udc/keys";
-import { useUdcClient } from "../udc/provider";
-import { useUiKit } from "../ui-kit/context";
-import { type TreeExpand, useTreeExpand } from "./expand";
+import { useI18n } from "../i18n/i18n.js";
+import { CardDetailDialog } from "../kanban/CardDetailDialog.js";
+import { AllRowsStatus } from "../renderers/AllRowsStatus.js";
+import type { RendererProps } from "../renderers/types.js";
+import { EmptyState, ErrorState } from "../table/states.js";
+import { useUdcAllRows, useUdcCollection, useUdcMutate } from "../udc/hooks.js";
+import { udcKeys } from "../udc/keys.js";
+import { useUdcClient } from "../udc/provider.js";
+import { useUiKit } from "../ui-kit/context.js";
+import { type TreeExpand, useTreeExpand } from "./expand.js";
 import {
   type BuiltTree,
   buildTree,
@@ -56,8 +56,8 @@ import {
   searchExpansion,
   siblingsQuery,
   sortSiblings,
-} from "./model";
-import { TreeNode, TreeNodeLabel } from "./TreeNode";
+} from "./model.js";
+import { TreeNode, TreeNodeLabel } from "./TreeNode.js";
 
 /** A node moved in this session, drawn at its new place until the lists are read again. */
 interface Moved {

@@ -9,7 +9,7 @@ import {
   toChartNumber,
   yAxisFrame,
 } from "@jsudc/core";
-import { formatBytes } from "../table/format";
+import { formatBytes } from "../table/format.js";
 import {
   addDays,
   DAY,
@@ -19,7 +19,7 @@ import {
   startOfDay,
   zonedFormat,
   zonedToInstant,
-} from "../time/zoned";
+} from "../time/zoned.js";
 
 /** The x value of a point: an instant (ms) on a time axis, the category's text otherwise. */
 export const X_KEY = "__x";

@@ -4,34 +4,34 @@
 // it needs only `react`, `@tanstack/react-query` and `@jsudc/core`.
 
 // Each renderer's model and state hook.
-export * from "./calendar/model";
-export * from "./calendar/useCalendarUrl";
-export * from "./cards/cardModel";
-export * from "./chart/model";
-export * from "./chart/useChartWindow";
-export * from "./chart/window";
+export * from "./calendar/model.js";
+export * from "./calendar/useCalendarUrl.js";
+export * from "./cards/cardModel.js";
+export * from "./chart/model.js";
+export * from "./chart/useChartWindow.js";
+export * from "./chart/window.js";
 // The data view's state: tab, search, chips, filter tree, sort, paging, in the URL.
-export * from "./data-view/compose";
-export * from "./data-view/folder";
-export * from "./data-view/liveView";
-export * from "./data-view/urlState";
-export * from "./data-view/useDataViewState";
-export * from "./kanban/model";
-export * from "./kanban/persist";
-export * from "./kanban/useKanbanBoard";
-export * from "./map/model";
+export * from "./data-view/compose.js";
+export * from "./data-view/folder.js";
+export * from "./data-view/liveView.js";
+export * from "./data-view/urlState.js";
+export * from "./data-view/useDataViewState.js";
+export * from "./kanban/model.js";
+export * from "./kanban/persist.js";
+export * from "./kanban/useKanbanBoard.js";
+export * from "./map/model.js";
 // Which renderer draws a tab (the registry holds components, but this module imports none).
-export * from "./renderers/context";
-export * from "./renderers/registry";
-export type * from "./renderers/types";
-export { isFolderRow } from "./renderers/types";
-export * from "./table/format";
-export * from "./table/style";
-export * from "./table/transforms";
+export * from "./renderers/context.js";
+export * from "./renderers/registry.js";
+export type * from "./renderers/types.js";
+export { isFolderRow } from "./renderers/types.js";
+export * from "./table/format.js";
+export * from "./table/style.js";
+export * from "./table/transforms.js";
 // Time zones: the display zone preference and the zoned formatting.
-export * from "./time/timezone";
-export * from "./time/zoned";
-export * from "./tree/expand";
+export * from "./time/timezone.js";
+export * from "./time/zoned.js";
+export * from "./tree/expand.js";
 // The tree's drop plan shares its names with the kanban's: prefixed here.
 export {
   type BuiltTree,
@@ -59,10 +59,10 @@ export {
   searchExpansion,
   siblingsQuery,
   sortSiblings,
-} from "./tree/model";
+} from "./tree/model.js";
 // The client context and the hooks over @jsudc/core's client.
-export * from "./udc/client";
-export * from "./udc/hooks";
-export * from "./udc/keys";
-export * from "./url-state/adapter";
-export * from "./url-state/UrlState";
+export * from "./udc/client.js";
+export * from "./udc/hooks.js";
+export * from "./udc/keys.js";
+export * from "./url-state/adapter.js";
+export * from "./url-state/UrlState.js";

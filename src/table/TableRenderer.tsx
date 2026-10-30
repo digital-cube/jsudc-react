@@ -11,28 +11,28 @@ import {
 import { type Column, type ColumnDef, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { ArrowDown, ArrowUp, ChevronsUpDown, Plus } from "lucide-react";
 import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
-import { FolderEntry } from "../data-view/FolderEntry";
-import { tableSection, useI18n } from "../i18n/i18n";
-import { cn } from "../lib/utils";
-import type { FolderNav } from "../renderers/types";
-import { ColumnHeaderMenu } from "../schema-editor/ColumnHeaderMenu";
-import type { SchemaAction } from "../schema-editor/fieldForm";
-import type { UdcCollectionResult } from "../udc/hooks";
-import { useUdcMutate } from "../udc/hooks";
-import type { PagingMode } from "../udc/keys";
-import { useUiKit } from "../ui-kit/context";
+import { FolderEntry } from "../data-view/FolderEntry.js";
+import { tableSection, useI18n } from "../i18n/i18n.js";
+import { cn } from "../lib/utils.js";
+import type { FolderNav } from "../renderers/types.js";
+import { ColumnHeaderMenu } from "../schema-editor/ColumnHeaderMenu.js";
+import type { SchemaAction } from "../schema-editor/fieldForm.js";
+import type { UdcCollectionResult } from "../udc/hooks.js";
+import { useUdcMutate } from "../udc/hooks.js";
+import type { PagingMode } from "../udc/keys.js";
+import { useUiKit } from "../ui-kit/context.js";
 import {
   CellEditor,
   type CommitReason,
   editorKind,
   fromEditorValue,
   sameValue,
-} from "./CellEditor";
-import { CellValue } from "./cells";
-import { Pager } from "./Pager";
-import { EmptyState, ErrorState } from "./states";
-import { BG_COLOR, resolveRowColor, TEXT_COLOR } from "./style";
-import { useInfiniteSentinel } from "./useInfiniteSentinel";
+} from "./CellEditor.js";
+import { CellValue } from "./cells.js";
+import { Pager } from "./Pager.js";
+import { EmptyState, ErrorState } from "./states.js";
+import { BG_COLOR, resolveRowColor, TEXT_COLOR } from "./style.js";
+import { useInfiniteSentinel } from "./useInfiniteSentinel.js";
 
 interface ColMeta {
   config: ColumnConfig;

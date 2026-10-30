@@ -1,6 +1,6 @@
 import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
-import { cn } from "../lib/utils";
-import { ACCENT, type CalendarEvent, type DragKind } from "./model";
+import { cn } from "../lib/utils.js";
+import { ACCENT, type CalendarEvent, type DragKind } from "./model.js";
 
 /** The tinted fill and edge an event colour draws with, legible in both themes. */
 export function eventTint(color: string | null, strength = 16): CSSProperties {

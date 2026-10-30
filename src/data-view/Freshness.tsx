@@ -1,9 +1,9 @@
 import type { SourceInfo } from "@jsudc/core";
 import { CloudOff, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useI18n } from "../i18n/i18n";
-import { cn } from "../lib/utils";
-import { useUiKit } from "../ui-kit/context";
+import { useI18n } from "../i18n/i18n.js";
+import { cn } from "../lib/utils.js";
+import { useUiKit } from "../ui-kit/context.js";
 
 /** "12 s ago", "3 min ago", "pre 12 s": the age of a fetched copy. */
 export function ageText(fetchedAt: string, now: number, intlLocale: string): string {

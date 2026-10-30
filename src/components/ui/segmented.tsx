@@ -1,7 +1,7 @@
 import { ToggleGroup } from "radix-ui";
-import { cn } from "../../lib/utils";
-import type { SegmentedOption } from "../../ui-kit/types";
-import { Tip } from "./tooltip";
+import { cn } from "../../lib/utils.js";
+import type { SegmentedOption } from "../../ui-kit/types.js";
+import { Tip } from "./tooltip.js";
 
 export type { SegmentedOption };
 
