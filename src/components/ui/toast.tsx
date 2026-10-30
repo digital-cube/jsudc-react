@@ -2,14 +2,9 @@ import { AlertTriangle, CheckCircle2, Info, X } from "lucide-react";
 import { Toast as T } from "radix-ui";
 import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from "react";
 import { cn } from "../../lib/utils";
+import type { ToastInput, ToastVariant } from "../../ui-kit/types";
 
-export type ToastVariant = "info" | "success" | "warning" | "danger";
-
-export interface ToastInput {
-  title: string;
-  description?: string;
-  variant?: ToastVariant;
-}
+export type { ToastInput, ToastVariant };
 
 interface ToastItem extends ToastInput {
   id: number;
@@ -18,10 +13,10 @@ interface ToastItem extends ToastInput {
 const ToastContext = createContext<((t: ToastInput) => void) | null>(null);
 
 const ICON: Record<ToastVariant, ReactNode> = {
-  info: <Info className="size-4 text-sem-info" />,
-  success: <CheckCircle2 className="size-4 text-sem-success" />,
-  warning: <AlertTriangle className="size-4 text-sem-warning" />,
-  danger: <AlertTriangle className="size-4 text-sem-danger" />,
+  info: <Info className="udc:size-4 udc:text-sem-info" />,
+  success: <CheckCircle2 className="udc:size-4 udc:text-sem-success" />,
+  warning: <AlertTriangle className="udc:size-4 udc:text-sem-warning" />,
+  danger: <AlertTriangle className="udc:size-4 udc:text-sem-danger" />,
 };
 
 let nextId = 1;
@@ -46,28 +41,28 @@ export function Toaster({ children }: { children: ReactNode }) {
             data-variant={t.variant ?? "info"}
             onOpenChange={(open) => !open && remove(t.id)}
             className={cn(
-              "grid grid-cols-[auto_1fr_auto] items-start gap-3 rounded-lg border border-border bg-surface-raised p-3 pr-2 shadow-lg shadow-black/10 dark:shadow-black/40",
-              "data-[state=open]:animate-in data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)]",
+              "udc:grid udc:grid-cols-[auto_1fr_auto] udc:items-start udc:gap-3 udc:rounded-lg udc:border udc:border-border udc:bg-surface-raised udc:p-3 udc:pr-2 udc:shadow-lg udc:shadow-black/10 udc:dark:shadow-black/40",
+              "udc:data-[state=open]:animate-in udc:data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)]",
             )}
           >
-            <span className="mt-0.5">{ICON[t.variant ?? "info"]}</span>
-            <div className="min-w-0">
-              <T.Title className="text-[13px] font-semibold">{t.title}</T.Title>
+            <span className="udc:mt-0.5">{ICON[t.variant ?? "info"]}</span>
+            <div className="udc:min-w-0">
+              <T.Title className="udc:text-[13px] udc:font-semibold">{t.title}</T.Title>
               {t.description ? (
-                <T.Description className="mt-0.5 text-xs text-muted-foreground">
+                <T.Description className="udc:mt-0.5 udc:text-xs udc:text-muted-foreground">
                   {t.description}
                 </T.Description>
               ) : null}
             </div>
             <T.Close
               aria-label="Close"
-              className="rounded p-1 text-muted-foreground hover:bg-hover hover:text-foreground"
+              className="udc:rounded udc:p-1 udc:text-muted-foreground udc:hover:bg-hover udc:hover:text-foreground"
             >
-              <X className="size-3.5" />
+              <X className="udc:size-3.5" />
             </T.Close>
           </T.Root>
         ))}
-        <T.Viewport className="fixed right-0 bottom-0 z-[100] m-0 flex w-[380px] max-w-[100vw] list-none flex-col gap-2 p-4 outline-none" />
+        <T.Viewport className="udc:fixed udc:right-0 udc:bottom-0 udc:z-[100] udc:m-0 udc:flex udc:w-[380px] udc:max-w-[100vw] udc:list-none udc:flex-col udc:gap-2 udc:p-4 udc:outline-none" />
       </T.Provider>
     </ToastContext.Provider>
   );

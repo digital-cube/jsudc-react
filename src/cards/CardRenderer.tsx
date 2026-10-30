@@ -1,11 +1,11 @@
 import type { ColumnColor, DescribeResponse, Row } from "@jsudc/core";
 import { useEffect, useMemo, useRef } from "react";
-import { Skeleton, Spinner } from "../components/ui/misc";
 import { FolderEntry } from "../data-view/FolderEntry";
 import { tableSection, useI18n } from "../i18n/i18n";
 import { cn } from "../lib/utils";
 import type { FolderNav } from "../renderers/types";
-import { CellValue, displayText, isBlank, renderKind } from "../table/cells";
+import { CellValue } from "../table/cells";
+import { displayText, isBlank, renderKind } from "../table/format";
 import { Pager } from "../table/Pager";
 import { Sparkline } from "../table/sparkline";
 import { EmptyState, ErrorState } from "../table/states";
@@ -14,6 +14,7 @@ import { useInfiniteSentinel } from "../table/useInfiniteSentinel";
 import { useTimezone } from "../time/timezone";
 import type { UdcCollectionResult } from "../udc/hooks";
 import type { PagingMode } from "../udc/keys";
+import { useUiKit } from "../ui-kit/context";
 import {
   avatarTone,
   CARD_MIN_WIDTH,
@@ -25,23 +26,23 @@ import {
 
 /** The `row_color` accent bar on the left edge. Literal classes so Tailwind sees them. */
 const ACCENT_BAR: Record<ColumnColor, string> = {
-  default: "bg-border-strong",
-  accent: "bg-sem-accent",
-  success: "bg-sem-success",
-  warning: "bg-sem-warning",
-  danger: "bg-sem-danger",
-  info: "bg-sem-info",
-  muted: "bg-sem-muted/60",
+  default: "udc:bg-border-strong",
+  accent: "udc:bg-sem-accent",
+  success: "udc:bg-sem-success",
+  warning: "udc:bg-sem-warning",
+  danger: "udc:bg-sem-danger",
+  info: "udc:bg-sem-info",
+  muted: "udc:bg-sem-muted/60",
 };
 
 const AVATAR: Record<ColumnColor, string> = {
-  default: "bg-muted text-muted-foreground",
-  accent: "bg-sem-accent-bg text-sem-accent",
-  success: "bg-sem-success-bg text-sem-success",
-  warning: "bg-sem-warning-bg text-sem-warning",
-  danger: "bg-sem-danger-bg text-sem-danger",
-  info: "bg-sem-info-bg text-sem-info",
-  muted: "bg-sem-muted-bg text-sem-muted",
+  default: "udc:bg-muted udc:text-muted-foreground",
+  accent: "udc:bg-sem-accent-bg udc:text-sem-accent",
+  success: "udc:bg-sem-success-bg udc:text-sem-success",
+  warning: "udc:bg-sem-warning-bg udc:text-sem-warning",
+  danger: "udc:bg-sem-danger-bg udc:text-sem-danger",
+  info: "udc:bg-sem-info-bg udc:text-sem-info",
+  muted: "udc:bg-sem-muted-bg udc:text-sem-muted",
 };
 
 const SKELETON_CARDS = 12;
@@ -67,6 +68,7 @@ export interface CardRendererProps {
  * data, paging and states as the table; read-only in phase 1.
  */
 export function CardRenderer(props: CardRendererProps) {
+  const { Spinner } = useUiKit();
   const { collection, describe, data, mode } = props;
   const { view } = describe;
   const { t, intlLocale } = useI18n();
@@ -90,16 +92,16 @@ export function CardRenderer(props: CardRendererProps) {
   };
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <div className="udc:flex udc:min-h-0 udc:flex-1 udc:flex-col">
       <div
         ref={scrollRef}
         data-testid="cards-scroll"
-        className="scroll-thin relative min-h-0 flex-1 overflow-auto bg-background/60"
+        className="udc-scroll-thin udc:relative udc:min-h-0 udc:flex-1 udc:overflow-auto udc:bg-background/60"
       >
         {data.isFetching && !data.isLoading && !data.isFetchingNextPage ? (
-          <div className="pointer-events-none sticky top-0 z-30 h-0">
-            <div className="h-0.5 w-full overflow-hidden bg-primary/15">
-              <div className="h-full w-1/3 animate-[shimmer_1s_linear_infinite] bg-primary/70" />
+          <div className="udc:pointer-events-none udc:sticky udc:top-0 udc:z-30 udc:h-0">
+            <div className="udc:h-0.5 udc:w-full udc:overflow-hidden udc:bg-primary/15">
+              <div className="udc:h-full udc:w-1/3 udc:animate-[shimmer_1s_linear_infinite] udc:bg-primary/70" />
             </div>
           </div>
         ) : null}
@@ -109,7 +111,7 @@ export function CardRenderer(props: CardRendererProps) {
             data-testid="card-grid"
             data-size={slots.size}
             aria-busy={data.isFetching}
-            className="grid gap-3 p-4"
+            className="udc:grid udc:gap-3 udc:p-4"
             style={grid}
           >
             {showSkeleton
@@ -137,7 +139,7 @@ export function CardRenderer(props: CardRendererProps) {
         {mode === "infinite" && data.rows.length > 0 ? (
           <div
             data-testid="infinite-footer"
-            className="flex h-12 items-center justify-center gap-2 text-xs text-muted-foreground"
+            className="udc:flex udc:h-12 udc:items-center udc:justify-center udc:gap-2 udc:text-xs udc:text-muted-foreground"
           >
             {data.isFetchingNextPage ? (
               <>
@@ -149,7 +151,7 @@ export function CardRenderer(props: CardRendererProps) {
             )}
           </div>
         ) : null}
-        <div ref={sentinelRef} data-testid="infinite-sentinel" className="h-px" />
+        <div ref={sentinelRef} data-testid="infinite-sentinel" className="udc:h-px" />
       </div>
 
       {mode === "pages" && !showError && (data.total ?? 0) > 0 ? (
@@ -201,15 +203,16 @@ function Card({
       data-row-id={row.__meta.id}
       data-accent={tone ?? undefined}
       className={cn(
-        "group/card relative flex min-w-0 flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-xs shadow-black/[0.03]",
-        "transition-[transform,box-shadow,border-color] duration-150 ease-out hover:-translate-y-0.5 hover:border-border-strong hover:shadow-md hover:shadow-black/[0.06] dark:hover:shadow-black/40",
+        "udc-card",
+        "udc:group/card udc:relative udc:flex udc:min-w-0 udc:flex-col udc:overflow-hidden udc:rounded-xl udc:border udc:border-border udc:bg-surface udc:shadow-xs udc:shadow-black/[0.03]",
+        "udc:transition-[transform,box-shadow,border-color] udc:duration-150 udc:ease-out udc:hover:-translate-y-0.5 udc:hover:border-border-strong udc:hover:shadow-md udc:hover:shadow-black/[0.06] udc:dark:hover:shadow-black/40",
       )}
     >
       {tone && tone !== "default" ? (
         <span
           aria-hidden
           data-testid="card-accent"
-          className={cn("absolute inset-y-0 left-0 w-[3px]", ACCENT_BAR[tone])}
+          className={cn("udc:absolute udc:inset-y-0 udc:left-0 udc:w-[3px]", ACCENT_BAR[tone])}
         />
       ) : null}
       {cover ? (
@@ -218,17 +221,17 @@ function Card({
           alt=""
           loading="lazy"
           data-testid="card-cover"
-          className="aspect-[16/9] w-full border-b border-border bg-muted object-cover"
+          className="udc:aspect-[16/9] udc:w-full udc:border-b udc:border-border udc:bg-muted udc:object-cover"
         />
       ) : null}
-      <div className="flex items-center gap-3 px-4 pt-3.5 pb-3">
+      <div className="udc:flex udc:items-center udc:gap-3 udc:px-4 udc:pt-3.5 udc:pb-3">
         {hasImage && !cover ? (
           <img
             src={image as string}
             alt=""
             loading="lazy"
             data-testid="card-image-avatar"
-            className="size-9 shrink-0 rounded-full border border-border bg-muted object-cover"
+            className="udc:size-9 udc:shrink-0 udc:rounded-full udc:border udc:border-border udc:bg-muted udc:object-cover"
           />
         ) : null}
         {hasImage ? null : (
@@ -236,35 +239,35 @@ function Card({
             aria-hidden
             data-testid="card-avatar"
             className={cn(
-              "grid size-9 shrink-0 place-items-center rounded-lg text-[13px] font-semibold tracking-tight",
+              "udc:grid udc:size-9 udc:shrink-0 udc:place-items-center udc:rounded-lg udc:text-[13px] udc:font-semibold udc:tracking-tight",
               AVATAR[avatarTone(title)],
             )}
           >
             {initials(title)}
           </span>
         )}
-        <div className="min-w-0 flex-1">
+        <div className="udc:min-w-0 udc:flex-1">
           <h3
             data-testid="card-title"
-            className="truncate text-sm leading-5 font-semibold tracking-tight"
+            className="udc:truncate udc:text-sm udc:leading-5 udc:font-semibold udc:tracking-tight"
             title={title}
           >
             {folder ? (
               <FolderEntry row={row} nav={folder}>
-                <span className="truncate">{title}</span>
+                <span className="udc:truncate">{title}</span>
               </FolderEntry>
             ) : (
-              title || <span className="text-muted-foreground/60">—</span>
+              title || <span className="udc:text-muted-foreground/60">—</span>
             )}
           </h3>
           {slots.subtitle ? (
             <p
               data-testid="card-subtitle"
-              className="truncate text-xs leading-4 text-muted-foreground tabular-nums"
+              className="udc:truncate udc:text-xs udc:leading-4 udc:text-muted-foreground udc:tabular-nums"
             >
               {subtitle ? (
                 <>
-                  <span className="text-muted-foreground/70">
+                  <span className="udc:text-muted-foreground/70">
                     {t(section, slots.subtitle.field)}
                   </span>{" "}
                   {subtitle}
@@ -279,31 +282,33 @@ function Card({
       {slots.metric ? (
         <div
           data-testid="card-metric"
-          className="flex items-baseline justify-between gap-3 border-t border-border/70 px-4 py-2.5"
+          className="udc:flex udc:items-baseline udc:justify-between udc:gap-3 udc:border-t udc:border-border/70 udc:px-4 udc:py-2.5"
         >
-          <span className="text-xs text-muted-foreground">
+          <span className="udc:text-xs udc:text-muted-foreground">
             {slots.metric.label ?? t(section, slots.metric.field)}
           </span>
           <span
             data-testid="card-metric-value"
-            className="text-xl leading-7 font-semibold tracking-tight tabular-nums"
+            className="udc:text-xl udc:leading-7 udc:font-semibold udc:tracking-tight udc:tabular-nums"
           >
             {metricText(row[slots.metric.field], slots.metric, intlLocale) ?? (
-              <span className="text-muted-foreground/50">—</span>
+              <span className="udc:text-muted-foreground/50">—</span>
             )}
           </span>
         </div>
       ) : null}
       {slots.meta.length ? (
-        <dl className="mt-auto flex flex-col border-t border-border/70 px-4 py-2">
+        <dl className="udc:mt-auto udc:flex udc:flex-col udc:border-t udc:border-border/70 udc:px-4 udc:py-2">
           {slots.meta.map((col) => (
             <div
               key={col.field}
               data-testid={`card-meta-${col.field}`}
-              className="flex min-h-7 min-w-0 items-center justify-between gap-3 border-b border-dashed border-border/80 py-1 last:border-b-0"
+              className="udc:flex udc:min-h-7 udc:min-w-0 udc:items-center udc:justify-between udc:gap-3 udc:border-b udc:border-dashed udc:border-border/80 udc:py-1 udc:last:border-b-0"
             >
-              <dt className="shrink-0 text-xs text-muted-foreground">{t(section, col.field)}</dt>
-              <dd className="flex min-w-0 items-center justify-end text-right text-[13px] font-medium">
+              <dt className="udc:shrink-0 udc:text-xs udc:text-muted-foreground">
+                {t(section, col.field)}
+              </dt>
+              <dd className="udc:flex udc:min-w-0 udc:items-center udc:justify-end udc:text-right udc:text-[13px] udc:font-medium">
                 <CellValue
                   value={row[col.field]}
                   column={col}
@@ -317,7 +322,10 @@ function Card({
         </dl>
       ) : null}
       {slots.sparkline ? (
-        <div data-testid="card-sparkline" className="border-t border-border/70 px-4 py-2.5">
+        <div
+          data-testid="card-sparkline"
+          className="udc:border-t udc:border-border/70 udc:px-4 udc:py-2.5"
+        >
           <Sparkline
             value={row[slots.sparkline.field]}
             width={slots.sparkline.width}
@@ -325,7 +333,7 @@ function Card({
             format={(n) =>
               slots.metric ? (metricText(n, slots.metric, intlLocale) ?? "") : String(n)
             }
-            className="h-auto max-w-full"
+            className="udc:h-auto udc:max-w-full"
           />
         </div>
       ) : null}
@@ -334,24 +342,25 @@ function Card({
 }
 
 function SkeletonCard({ meta, seed }: { meta: number; seed: number }) {
+  const { Skeleton } = useUiKit();
   return (
     <div
       data-testid="skeleton-card"
-      className="flex flex-col overflow-hidden rounded-xl border border-border bg-surface"
+      className="udc:flex udc:flex-col udc:overflow-hidden udc:rounded-xl udc:border udc:border-border udc:bg-surface"
     >
-      <div className="flex items-center gap-3 px-4 pt-3.5 pb-3">
-        <Skeleton className="size-9 rounded-lg" />
-        <div className="flex flex-1 flex-col gap-1.5">
-          <Skeleton className="h-3.5" style={{ width: `${55 + ((seed * 17) % 35)}%` }} />
-          <Skeleton className="h-2.5 w-1/3" />
+      <div className="udc:flex udc:items-center udc:gap-3 udc:px-4 udc:pt-3.5 udc:pb-3">
+        <Skeleton className="udc:size-9 udc:rounded-lg" />
+        <div className="udc:flex udc:flex-1 udc:flex-col udc:gap-1.5">
+          <Skeleton className="udc:h-3.5" style={{ width: `${55 + ((seed * 17) % 35)}%` }} />
+          <Skeleton className="udc:h-2.5 udc:w-1/3" />
         </div>
       </div>
-      <div className="flex flex-col gap-3 border-t border-border/70 px-4 py-3.5">
+      <div className="udc:flex udc:flex-col udc:gap-3 udc:border-t udc:border-border/70 udc:px-4 udc:py-3.5">
         {Array.from({ length: Math.max(2, meta) }, (_, i) => (
           // biome-ignore lint/suspicious/noArrayIndexKey: placeholders
-          <div key={i} className="flex items-center justify-between gap-6">
-            <Skeleton className="h-2.5 w-16" />
-            <Skeleton className="h-3" style={{ width: `${20 + ((seed + i * 11) % 35)}%` }} />
+          <div key={i} className="udc:flex udc:items-center udc:justify-between udc:gap-6">
+            <Skeleton className="udc:h-2.5 udc:w-16" />
+            <Skeleton className="udc:h-3" style={{ width: `${20 + ((seed + i * 11) % 35)}%` }} />
           </div>
         ))}
       </div>

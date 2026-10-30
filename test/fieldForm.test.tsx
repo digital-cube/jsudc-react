@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
+import { RENDERERS } from "../src/all";
 import { Dialog } from "../src/components/ui/dialog";
 import { UdcI18nProvider } from "../src/i18n/i18n";
 import { FieldFormDialog, type FieldFormTarget } from "../src/schema-editor/FieldFormDialog";
@@ -141,7 +142,7 @@ function renderForm(target: FieldFormTarget, handlers: Parameters<typeof mockUdc
   const client = new UdcClient({ httpUrl: "http://api", fetch: mock.fetch });
   const onSaved = vi.fn();
   render(
-    <UdcProvider client={client}>
+    <UdcProvider client={client} renderers={RENDERERS}>
       <QueryClientProvider client={createUdcQueryClient()}>
         <UdcI18nProvider>
           <Dialog open>

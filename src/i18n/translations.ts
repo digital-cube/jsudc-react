@@ -163,6 +163,14 @@ export const TRANSLATIONS: Translations = {
       en: "The {name} view is not available yet",
       sr: "Prikaz {name} još nije dostupan",
     },
+    NO_RENDERER_TITLE: {
+      en: "No renderer is registered for {name}",
+      sr: "Za {name} nije registrovan nijedan prikaz",
+    },
+    NO_RENDERER_BODY: {
+      en: "Pass renderers to UdcProvider: RENDERERS from @jsudc/react/all, or a registry of the ones this page needs.",
+      sr: "Prosledite renderers u UdcProvider: RENDERERS iz @jsudc/react/all ili registar prikaza koji su ovoj stranici potrebni.",
+    },
     CAPPED: {
       en: "Showing the first {shown} of {total}. Narrow the search to see the rest.",
       sr: "Prikazano prvih {shown} od {total}. Suzite pretragu da vidite ostale.",

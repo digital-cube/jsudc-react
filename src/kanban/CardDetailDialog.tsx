@@ -1,7 +1,7 @@
 import type { DescribeResponse, Row } from "@jsudc/core";
-import { Dialog, DialogBody, DialogContent } from "../components/ui/dialog";
 import { tableSection, useI18n } from "../i18n/i18n";
 import { CellValue } from "../table/cells";
+import { useUiKit } from "../ui-kit/context";
 
 /**
  * A card, read-only: its title and body, then every live field as the table
@@ -28,6 +28,7 @@ export function CardDetailDialog({
   bodyField?: string | undefined;
   testId?: string;
 }) {
+  const { Dialog, DialogBody, DialogContent } = useUiKit();
   const { t, locale, intlLocale } = useI18n();
   const { schema, view } = describe;
   const section = tableSection(collection);
@@ -41,22 +42,22 @@ export function CardDetailDialog({
       {row ? (
         <DialogContent
           data-testid={testId}
-          className="max-w-lg"
+          className="udc:max-w-lg"
           title={String((titleField && row[titleField]) || "—")}
         >
           <DialogBody>
             {typeof body === "string" && body ? (
-              <p className="mb-4 text-[13px] leading-relaxed whitespace-pre-wrap text-muted-foreground">
+              <p className="udc:mb-4 udc:text-[13px] udc:leading-relaxed udc:whitespace-pre-wrap udc:text-muted-foreground">
                 {body}
               </p>
             ) : null}
-            <dl className="grid grid-cols-[minmax(7rem,auto)_1fr] gap-x-4 border-t border-border">
+            <dl className="udc:grid udc:grid-cols-[minmax(7rem,auto)_1fr] udc:gap-x-4 udc:border-t udc:border-border">
               {fields.map((field) => (
-                <div key={field} className="contents" data-testid={`${testId}-${field}`}>
-                  <dt className="border-b border-dashed border-border/80 py-2 text-xs text-muted-foreground">
+                <div key={field} className="udc:contents" data-testid={`${testId}-${field}`}>
+                  <dt className="udc:border-b udc:border-dashed udc:border-border/80 udc:py-2 udc:text-xs udc:text-muted-foreground">
                     {t(section, field)}
                   </dt>
-                  <dd className="min-w-0 border-b border-dashed border-border/80 py-2 text-[13px]">
+                  <dd className="udc:min-w-0 udc:border-b udc:border-dashed udc:border-border/80 udc:py-2 udc:text-[13px]">
                     <CellValue
                       value={labels[field]?.get(String(row[field])) ?? row[field]}
                       column={view.columns.find((c) => c.field === field) ?? { field }}

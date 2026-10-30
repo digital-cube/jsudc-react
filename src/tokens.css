@@ -1,9 +1,12 @@
 /*
  * @jsudc/react tokens: the dark variant, the colour/font tokens of both themes,
  * their Tailwind theme mapping and the library's few rules of its own (base,
- * skeleton, map markers, the Doc tab's prose). Raw Tailwind v4 input: a host
- * that runs Tailwind imports it after `@import "tailwindcss"` and adds an
- * `@source` for the package; `styles.css` is this file compiled.
+ * skeleton, map markers, the Doc tab's prose). Raw Tailwind v4 input, compiled
+ * into `styles.css` under the `udc` prefix. A host restyles by redefining the
+ * variables below (`:root` and `.dark`) in its own CSS, loaded after
+ * `@jsudc/react/styles.css`; it does not run Tailwind over the package.
+ * Plain CSS here uses the raw tokens (`var(--border)`) or `--theme(...)`: the
+ * prefixed build renames Tailwind's own theme variables to `--udc-*`.
  */
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -165,7 +168,7 @@
   body {
     background: var(--background);
     color: var(--foreground);
-    font-family: var(--font-sans);
+    font-family: --theme(--font-sans);
     font-size: 14px;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -181,20 +184,20 @@
 
 @layer components {
   /* A thin scrollbar that follows the theme. */
-  .scroll-thin {
+  .udc-scroll-thin {
     scrollbar-width: thin;
     scrollbar-color: var(--border-strong) transparent;
   }
-  .select-chevron {
+  .udc-select-chevron {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
     background-position: right 8px center;
     background-repeat: no-repeat;
     background-size: 14px;
   }
-  .select-chevron:disabled {
+  .udc-select-chevron:disabled {
     background-image: none;
   }
-  .skeleton {
+  .udc-skeleton {
     background: linear-gradient(
       90deg,
       var(--muted) 25%,
@@ -202,7 +205,7 @@
       var(--muted) 75%
     );
     background-size: 200% 100%;
-    animation: var(--animate-shimmer);
+    animation: --theme(--animate-shimmer);
   }
 }
 
@@ -220,7 +223,7 @@
    the theme's tokens by tone, so a muted row is a muted circle in both themes. */
 .udc-map.leaflet-container {
   background: var(--muted);
-  font-family: var(--font-sans);
+  font-family: --theme(--font-sans);
 }
 .dark .udc-map .leaflet-tile-pane {
   filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9) saturate(0.55);
@@ -358,7 +361,7 @@
 
 /* The Doc tab: a collection's README. Theme tokens only, so it follows light and dark. */
 .udc-prose {
-  color: var(--color-foreground);
+  color: var(--foreground);
   font-size: 14px;
   line-height: 1.7;
 }
@@ -378,7 +381,7 @@
   letter-spacing: -0.01em;
   margin: 1.8rem 0 0.6rem;
   padding-bottom: 0.3rem;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--border);
 }
 .udc-prose h3 {
   font-size: 1rem;
@@ -407,10 +410,10 @@
   margin: 0.3rem 0;
 }
 .udc-prose li::marker {
-  color: var(--color-muted-foreground);
+  color: var(--muted-foreground);
 }
 .udc-prose a:any-link {
-  color: var(--color-primary);
+  color: var(--primary);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
@@ -418,19 +421,19 @@
   font-weight: 620;
 }
 .udc-prose em {
-  color: var(--color-foreground);
+  color: var(--foreground);
 }
 .udc-prose code {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 0.85em;
   padding: 0.1rem 0.35rem;
   border-radius: 4px;
-  background: var(--color-muted);
+  background: var(--muted);
 }
 .udc-prose pre {
   padding: 0.8rem 1rem;
   border-radius: 8px;
-  background: var(--color-muted);
+  background: var(--muted);
   overflow-x: auto;
 }
 .udc-prose pre code {
@@ -439,8 +442,8 @@
 }
 .udc-prose blockquote {
   padding-left: 1rem;
-  border-left: 3px solid var(--color-border-strong);
-  color: var(--color-muted-foreground);
+  border-left: 3px solid var(--border-strong);
+  color: var(--muted-foreground);
 }
 .udc-prose table {
   border-collapse: collapse;
@@ -448,7 +451,7 @@
 }
 .udc-prose th,
 .udc-prose td {
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--border);
   padding: 0.35rem 0.7rem;
   text-align: left;
 }

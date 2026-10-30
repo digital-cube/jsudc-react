@@ -18,8 +18,8 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { useState } from "react";
+import { useUdcClient } from "./client";
 import { type ListKeyParams, type PagingMode, udcKeys } from "./keys";
-import { useUdcClient } from "./provider";
 
 export function useUdcCollections() {
   const client = useUdcClient();

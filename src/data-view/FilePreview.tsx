@@ -1,9 +1,8 @@
 import type { Row } from "@jsudc/core";
 import { useQuery } from "@tanstack/react-query";
-import { Dialog, DialogBody, DialogContent } from "../components/ui/dialog";
-import { Skeleton } from "../components/ui/misc";
 import { useI18n } from "../i18n/i18n";
 import { useUdcClient } from "../udc/provider";
+import { useUiKit } from "../ui-kit/context";
 
 const IMAGE = /\.(png|jpe?g|gif|webp|svg)$/i;
 
@@ -25,6 +24,7 @@ export function FilePreview({
   pathField: string;
   onClose: () => void;
 }) {
+  const { Dialog, DialogBody, DialogContent, Skeleton } = useUiKit();
   const { t } = useI18n();
   const client = useUdcClient();
   const path = row ? String(row[pathField] ?? "") : "";
@@ -46,21 +46,21 @@ export function FilePreview({
   });
   return (
     <Dialog open={row !== null} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent title={path} className="max-w-3xl" data-testid="file-preview">
+      <DialogContent title={path} className="udc:max-w-3xl" data-testid="file-preview">
         <DialogBody>
           {image ? (
-            <div className="grid place-items-center rounded-lg bg-[repeating-conic-gradient(var(--color-muted)_0_25%,transparent_0_50%)] bg-[length:16px_16px] p-4">
+            <div className="udc:grid udc:place-items-center udc:rounded-lg udc:bg-[repeating-conic-gradient(var(--muted)_0_25%,transparent_0_50%)] udc:bg-[length:16px_16px] udc:p-4">
               <img
                 src={url}
                 alt={path}
                 data-testid="preview-image"
-                className="max-h-[60vh] max-w-full"
+                className="udc:max-h-[60vh] udc:max-w-full"
               />
             </div>
           ) : text.isLoading ? (
-            <Skeleton className="h-40" />
+            <Skeleton className="udc:h-40" />
           ) : text.error ? (
-            <p className="text-sm text-muted-foreground" data-testid="preview-error">
+            <p className="udc:text-sm udc:text-muted-foreground" data-testid="preview-error">
               {t(
                 "APP",
                 text.error.message === "PREVIEW_TOO_LARGE"
@@ -71,7 +71,7 @@ export function FilePreview({
           ) : (
             <pre
               data-testid="preview-text"
-              className="scroll-thin max-h-[60vh] overflow-auto rounded-lg bg-muted/60 p-3 font-mono text-[12px] leading-relaxed whitespace-pre-wrap"
+              className="udc-scroll-thin udc:max-h-[60vh] udc:overflow-auto udc:rounded-lg udc:bg-muted/60 udc:p-3 udc:font-mono udc:text-[12px] udc:leading-relaxed udc:whitespace-pre-wrap"
             >
               {text.data}
             </pre>

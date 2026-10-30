@@ -1,6 +1,6 @@
 import type { TreeOptions } from "@jsudc/core";
 import { useCallback, useMemo, useState } from "react";
-import { storage } from "../lib/utils";
+import { storage } from "../lib/storage";
 
 /**
  * What is open, relative to `default_depth`: a node is expanded when it is

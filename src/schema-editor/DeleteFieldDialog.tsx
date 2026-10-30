@@ -1,11 +1,9 @@
 import { isUdcError } from "@jsudc/core";
 import { AlertTriangle, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { Button } from "../components/ui/button";
-import { DialogBody, DialogContent, DialogFooter } from "../components/ui/dialog";
-import { Spinner } from "../components/ui/misc";
 import { useI18n } from "../i18n/i18n";
 import { useUdcSchema } from "../udc/hooks";
+import { useUiKit } from "../ui-kit/context";
 
 /** Confirms a soft delete: the column goes, the data stays. */
 export function DeleteFieldDialog({
@@ -21,6 +19,7 @@ export function DeleteFieldDialog({
   onDeleted: () => void;
   onCancel: () => void;
 }) {
+  const { Button, DialogBody, DialogContent, DialogFooter, Spinner } = useUiKit();
   const { t } = useI18n();
   const { softDeleteField } = useUdcSchema(collection);
   const [error, setError] = useState<string | null>(null);
@@ -38,21 +37,22 @@ export function DeleteFieldDialog({
 
   return (
     <DialogContent
+      className="udc-schema-editor"
       role="alertdialog"
       data-testid="delete-field"
       title={t("APP", "DELETE_TITLE", { label })}
       onEscapeKeyDown={(e) => pending && e.preventDefault()}
       onInteractOutside={(e) => pending && e.preventDefault()}
     >
-      <DialogBody className="flex gap-3">
-        <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-sem-danger-bg text-sem-danger">
-          <Trash2 className="size-4" />
+      <DialogBody className="udc:flex udc:gap-3">
+        <span className="udc:grid udc:size-9 udc:shrink-0 udc:place-items-center udc:rounded-lg udc:bg-sem-danger-bg udc:text-sem-danger">
+          <Trash2 className="udc:size-4" />
         </span>
-        <div className="min-w-0 text-[13px] text-muted-foreground">
+        <div className="udc:min-w-0 udc:text-[13px] udc:text-muted-foreground">
           <p data-testid="delete-field-body">{t("APP", "DELETE_BODY")}</p>
-          <p className="mt-2">
+          <p className="udc:mt-2">
             {t("APP", "DELETE_FIELD_NAME")}{" "}
-            <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs text-foreground">
+            <code className="udc:rounded udc:bg-muted udc:px-1 udc:py-0.5 udc:font-mono udc:text-xs udc:text-foreground">
               {field}
             </code>
           </p>
@@ -60,9 +60,9 @@ export function DeleteFieldDialog({
             <p
               role="alert"
               data-testid="delete-field-error"
-              className="mt-3 flex items-start gap-1.5 text-sem-danger"
+              className="udc:mt-3 udc:flex udc:items-start udc:gap-1.5 udc:text-sem-danger"
             >
-              <AlertTriangle className="mt-0.5 size-3.5 shrink-0" />
+              <AlertTriangle className="udc:mt-0.5 udc:size-3.5 udc:shrink-0" />
               {error}
             </p>
           ) : null}

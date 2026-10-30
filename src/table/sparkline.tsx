@@ -61,7 +61,7 @@ export function Sparkline({
 }) {
   const values = sparkValues(value);
   const geo = sparkGeometry(values, width, height);
-  if (!geo) return <span className="text-muted-foreground/50">—</span>;
+  if (!geo) return <span className="udc:text-muted-foreground/50">—</span>;
   const last = geo.points[geo.points.length - 1] as [number, number];
   const title = `${format(geo.min)} – ${format(geo.max)} · ${format(values[values.length - 1] as number)}`;
   return (
@@ -73,7 +73,7 @@ export function Sparkline({
       width={width}
       height={height}
       viewBox={`0 0 ${width} ${height}`}
-      className={cn("block shrink-0 overflow-visible text-sem-info", className)}
+      className={cn("udc:block udc:shrink-0 udc:overflow-visible udc:text-sem-info", className)}
       role="img"
       aria-label={title}
     >
@@ -103,17 +103,17 @@ export function headingDegrees(v: unknown): number | null {
 /** An arrow pointing where the value says (north up), the degrees in its tooltip. */
 export function HeadingGlyph({ value }: { value: unknown }) {
   const deg = headingDegrees(value);
-  if (deg === null) return <span className="text-muted-foreground/50">—</span>;
+  if (deg === null) return <span className="udc:text-muted-foreground/50">—</span>;
   const label = `${Math.round(deg)}°`;
   return (
     <span
       data-testid="heading-glyph"
       data-deg={deg}
       title={label}
-      className="inline-grid size-5 place-items-center text-muted-foreground"
+      className="udc:inline-grid udc:size-5 udc:place-items-center udc:text-muted-foreground"
     >
       <Navigation2
-        className="size-3.5 fill-current"
+        className="udc:size-3.5 udc:fill-current"
         style={{ transform: `rotate(${deg}deg)` }}
         aria-label={label}
       />

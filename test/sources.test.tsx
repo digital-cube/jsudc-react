@@ -6,6 +6,7 @@ import { act, render, renderHook, screen, waitFor } from "@testing-library/react
 import type { ReactNode } from "react";
 import { MemoryRouter } from "react-router";
 import { describe, expect, it } from "vitest";
+import { RENDERERS } from "../src/all";
 import { ageText } from "../src/data-view/Freshness";
 import { folderCrumbs, joinFolder, splitFolder } from "../src/data-view/folder";
 import { DOC_TAB, useDataViewState } from "../src/data-view/useDataViewState";
@@ -36,7 +37,7 @@ describe("the Doc tab", () => {
       ...o,
     });
   const at = (url: string, v: ViewConfig, doc: boolean) =>
-    renderHook(() => useDataViewState("c", v, { doc }), {
+    renderHook(() => useDataViewState("c", v, { doc, renderers: RENDERERS }), {
       wrapper: ({ children }: { children: ReactNode }) => (
         <MemoryRouter initialEntries={[url]}>
           <UdcReactRouterUrlState>{children}</UdcReactRouterUrlState>
@@ -68,7 +69,7 @@ function setup(handlers: Parameters<typeof mockUdcFetch>[0]) {
   const client = new UdcClient({ httpUrl: "http://api", fetch: mock.fetch });
   const qc = createUdcQueryClient();
   const wrapper = ({ children }: { children: ReactNode }) => (
-    <UdcProvider client={client}>
+    <UdcProvider client={client} renderers={RENDERERS}>
       <QueryClientProvider client={qc}>{children}</QueryClientProvider>
     </UdcProvider>
   );

@@ -2,24 +2,24 @@ import type { ColumnColor, RowColorConfig } from "@jsudc/core";
 
 /** Semantic text colour tokens → classes. Literal strings so Tailwind sees them. */
 export const TEXT_COLOR: Record<ColumnColor, string> = {
-  default: "text-foreground",
-  accent: "text-sem-accent",
-  success: "text-sem-success",
-  warning: "text-sem-warning",
-  danger: "text-sem-danger",
-  info: "text-sem-info",
-  muted: "text-sem-muted",
+  default: "udc:text-foreground",
+  accent: "udc:text-sem-accent",
+  success: "udc:text-sem-success",
+  warning: "udc:text-sem-warning",
+  danger: "udc:text-sem-danger",
+  info: "udc:text-sem-info",
+  muted: "udc:text-sem-muted",
 };
 
 /** Semantic background tokens → classes; `default` paints nothing. */
 export const BG_COLOR: Record<ColumnColor, string> = {
   default: "",
-  accent: "bg-sem-accent-bg",
-  success: "bg-sem-success-bg",
-  warning: "bg-sem-warning-bg",
-  danger: "bg-sem-danger-bg",
-  info: "bg-sem-info-bg",
-  muted: "bg-sem-muted-bg",
+  accent: "udc:bg-sem-accent-bg",
+  success: "udc:bg-sem-success-bg",
+  warning: "udc:bg-sem-warning-bg",
+  danger: "udc:bg-sem-danger-bg",
+  info: "udc:bg-sem-info-bg",
+  muted: "udc:bg-sem-muted-bg",
 };
 
 export interface RowTone {

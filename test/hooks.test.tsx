@@ -4,6 +4,7 @@ import { type QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it } from "vitest";
+import { RENDERERS } from "../src/all";
 import { pageOffset, useUdcCollection, useUdcMutate } from "../src/udc/hooks";
 import { udcKeys } from "../src/udc/keys";
 import { createUdcQueryClient, shouldRetry, UdcProvider } from "../src/udc/provider";
@@ -14,7 +15,7 @@ function setup(handlers: Parameters<typeof mockUdcFetch>[0]) {
   const client = new UdcClient({ httpUrl: "http://api", fetch: mock.fetch });
   const qc = createUdcQueryClient();
   const wrapper = ({ children }: { children: ReactNode }) => (
-    <UdcProvider client={client}>
+    <UdcProvider client={client} renderers={RENDERERS}>
       <QueryClientProvider client={qc}>{children}</QueryClientProvider>
     </UdcProvider>
   );
