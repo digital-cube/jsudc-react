@@ -7,6 +7,11 @@ All notable changes to `@jsudc/react` are recorded here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- Development installs `@jsudc/core` from npm (`^0.1.1`) instead of
+  `github:digital-cube/jsudc-core#v0.1.0`; `package-lock.json` no longer pins
+  it over SSH, and CI and the publish workflow drop the deploy-key step.
 ### Changed (breaking)
 
 - **`react-router` is no longer a required peer.** The URL state of the data
