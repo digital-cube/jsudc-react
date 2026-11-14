@@ -1,13 +1,18 @@
-import type { FieldDef } from "@jsudc/core";
+import { type FieldDef, lookupOf } from "@jsudc/core";
 import { type KeyboardEvent, useEffect, useRef, useState } from "react";
 import { cn } from "../lib/utils.js";
+import { LookupCombobox } from "../lookup/LookupCombobox.js";
 import { useUiKit } from "../ui-kit/context.js";
 
 export type CommitReason = "enter" | "tab" | "shift-tab" | "blur";
 
-export type EditorKind = "text" | "number" | "checkbox" | "date" | "datetime" | "select";
+export type EditorKind = "text" | "number" | "checkbox" | "date" | "datetime" | "select" | "lookup";
+
+/** What an editor commits: the input's text or checkbox state, or a picked lookup key (list). */
+export type EditorRaw = string | boolean | { picked: unknown };
 
 export function editorKind(def: FieldDef | undefined): EditorKind {
+  if (lookupOf(def)) return "lookup";
   switch (def?.type) {
     case "integer":
     case "decimal":
@@ -40,10 +45,11 @@ export function toEditorValue(v: unknown, kind: EditorKind): string | boolean {
  * cannot be one (the server validates the rest: range, required, length).
  */
 export function fromEditorValue(
-  raw: string | boolean,
+  raw: EditorRaw,
   kind: EditorKind,
   def: FieldDef | undefined,
 ): { value: unknown } | { error: string } {
+  if (typeof raw === "object") return { value: raw.picked };
   if (kind === "checkbox") return { value: raw === true };
   const s = String(raw);
   if (s.trim() === "") return { value: null };
@@ -61,6 +67,8 @@ export function fromEditorValue(
 
 export function sameValue(a: unknown, b: unknown): boolean {
   const norm = (v: unknown) => (v === undefined || v === "" ? null : v);
+  if (Array.isArray(a) || Array.isArray(b))
+    return JSON.stringify(a ?? []) === JSON.stringify(b ?? []);
   return norm(a) === norm(b);
 }
 
@@ -85,12 +93,15 @@ export function CellEditor({
   /** Bumped on every failed save, so the same message twice still re-arms the editor. */
   errorSeq?: number;
   align?: "left" | "right" | "center" | undefined;
-  onCommit: (raw: string | boolean, reason: CommitReason) => void;
+  onCommit: (raw: EditorRaw, reason: CommitReason) => void;
   onCancel: () => void;
 }) {
   const { Spinner } = useUiKit();
   const kind = editorKind(def);
-  const [raw, setRaw] = useState<string | boolean>(() => toEditorValue(initial, kind));
+  const lookup = lookupOf(def);
+  const [raw, setRaw] = useState<string | boolean>(() =>
+    kind === "lookup" ? "" : toEditorValue(initial, kind),
+  );
   const ref = useRef<HTMLInputElement & HTMLSelectElement>(null);
   const done = useRef(false);
 
@@ -139,7 +150,16 @@ export function CellEditor({
 
   return (
     <div className={shell} data-testid="cell-editor">
-      {kind === "checkbox" ? (
+      {kind === "lookup" && def && lookup ? (
+        <LookupCombobox
+          def={def}
+          lookup={lookup}
+          initial={initial}
+          saving={saving}
+          onCommit={(picked, reason) => onCommit({ picked }, reason)}
+          onCancel={onCancel}
+        />
+      ) : kind === "checkbox" ? (
         <label className="udc:flex udc:h-full udc:w-full udc:cursor-pointer udc:items-center udc:justify-center">
           <input
             ref={ref}

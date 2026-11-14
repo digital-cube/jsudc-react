@@ -1,8 +1,9 @@
-import type { ColumnColor, ColumnConfig, FieldDef } from "@jsudc/core";
+import { type ColumnColor, type ColumnConfig, type FieldDef, lookupOf } from "@jsudc/core";
 import { Check, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { resolveIcon } from "../icons/resolve.js";
 import { cn } from "../lib/utils.js";
+import { LookupValue } from "../lookup/LookupValue.js";
 import { useTimezone } from "../time/timezone.js";
 import { HeadingGlyph, Sparkline } from "./sparkline.js";
 
@@ -112,6 +113,10 @@ export function CellValue({
   }
   if (isBlank(value) || (Array.isArray(value) && value.length === 0)) {
     return <span className="udc:text-muted-foreground/50">—</span>;
+  }
+  // A lookup shows its target's label as a link, unless the column asks for another render.
+  if (def && lookupOf(def) && column.render === undefined) {
+    return <LookupValue def={def} value={value} field={column.field} />;
   }
   if (kind === "badge") return <Badges value={value} column={column} />;
   if (kind === "sparkline") {

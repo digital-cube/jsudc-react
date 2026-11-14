@@ -19,6 +19,9 @@ export * from "./data-view/useDataViewState.js";
 export * from "./kanban/model.js";
 export * from "./kanban/persist.js";
 export * from "./kanban/useKanbanBoard.js";
+export * from "./lookup/label.js";
+export * from "./lookup/options.js";
+export * from "./lookup/useUdcLookup.js";
 export * from "./map/model.js";
 // Which renderer draws a tab (the registry holds components, but this module imports none).
 export * from "./renderers/context.js";

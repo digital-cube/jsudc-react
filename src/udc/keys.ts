@@ -19,4 +19,13 @@ export const udcKeys = {
   source: (collection: string) => ["udc", "source", collection] as const,
   lists: (collection: string) => ["udc", "list", collection] as const,
   list: (collection: string, params: ListKeyParams) => ["udc", "list", collection, params] as const,
+  lookups: (collection: string) => ["udc", "lookup", collection] as const,
+  /** One lookup batch: the target collection, its sorted keys, and the key field when not `id`. */
+  lookup: (collection: string, sortedKeys: readonly string[], keyField = "id") =>
+    keyField === "id"
+      ? (["udc", "lookup", collection, sortedKeys] as const)
+      : (["udc", "lookup", collection, sortedKeys, keyField] as const),
+  /** The options of a lookup picker (a chip, the inline editor): target, label field, search. */
+  lookupOptions: (collection: string, labelField: string, search: string) =>
+    ["udc", "lookup-options", collection, labelField, search] as const,
 };

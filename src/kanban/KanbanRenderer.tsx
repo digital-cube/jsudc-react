@@ -31,6 +31,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { KanbanSquare } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useI18n } from "../i18n/i18n.js";
+import { UdcLookupBatch, useLookupBatch } from "../lookup/batch.js";
 import { AllRowsStatus } from "../renderers/AllRowsStatus.js";
 import type { RendererProps } from "../renderers/types.js";
 import { EmptyState, ErrorState } from "../table/states.js";
@@ -444,6 +445,9 @@ function Board({
     if (plan) void moveCard(plan);
   };
 
+  // The cards' lookup fields (assignees, the detail's fields): one batch for the board.
+  const lookups = useLookupBatch(cardsQ.rows, schema);
+
   // --- render ----------------------------------------------------------------------
   const error = cardsQ.error ?? bucketsQ.error;
   if (error && cardsQ.rows.length === 0) {
@@ -480,97 +484,99 @@ function Board({
   const noMatches = filtered && !loading && cardsQ.rows.length === 0;
 
   return (
-    <div
-      className="udc-kanban udc:flex udc:min-h-0 udc:flex-1 udc:flex-col"
-      data-testid="kanban"
-      data-board-id={boardId ?? undefined}
-    >
-      <AllRowsStatus result={cardsQ} />
-      {noMatches ? (
-        <div className="udc:border-b udc:border-border">
-          <EmptyState filtered onClear={onClearFilters} />
-        </div>
-      ) : null}
+    <UdcLookupBatch value={lookups}>
       <div
-        data-testid="kanban-scroll"
-        className="udc-scroll-thin udc:flex udc:min-h-0 udc:flex-1 udc:items-start udc:gap-3 udc:overflow-x-auto udc:overflow-y-hidden udc:bg-background/60 udc:p-4"
+        className="udc-kanban udc:flex udc:min-h-0 udc:flex-1 udc:flex-col"
+        data-testid="kanban"
+        data-board-id={boardId ?? undefined}
       >
-        {loading ? (
-          SKELETON_COLUMNS.map((key, i) => (
-            <div
-              key={key}
-              className="udc:flex udc:w-72 udc:shrink-0 udc:flex-col udc:gap-2 udc:rounded-xl udc:border udc:border-border udc:bg-muted/40 udc:p-3"
+        <AllRowsStatus result={cardsQ} />
+        {noMatches ? (
+          <div className="udc:border-b udc:border-border">
+            <EmptyState filtered onClear={onClearFilters} />
+          </div>
+        ) : null}
+        <div
+          data-testid="kanban-scroll"
+          className="udc-scroll-thin udc:flex udc:min-h-0 udc:flex-1 udc:items-start udc:gap-3 udc:overflow-x-auto udc:overflow-y-hidden udc:bg-background/60 udc:p-4"
+        >
+          {loading ? (
+            SKELETON_COLUMNS.map((key, i) => (
+              <div
+                key={key}
+                className="udc:flex udc:w-72 udc:shrink-0 udc:flex-col udc:gap-2 udc:rounded-xl udc:border udc:border-border udc:bg-muted/40 udc:p-3"
+              >
+                <Skeleton className="udc:h-4 udc:w-24" />
+                {SKELETON_COLUMNS.slice(0, 3 - (i % 2)).map((card) => (
+                  <Skeleton key={card} className="udc:h-20 udc:rounded-lg" />
+                ))}
+              </div>
+            ))
+          ) : (
+            <DndContext
+              sensors={sensors}
+              collisionDetection={collision}
+              onDragStart={onDragStart}
+              onDragOver={onDragOver}
+              onDragEnd={onDragEnd}
+              onDragCancel={() => {
+                setActive(null);
+                setDragIds(null);
+              }}
             >
-              <Skeleton className="udc:h-4 udc:w-24" />
-              {SKELETON_COLUMNS.slice(0, 3 - (i % 2)).map((card) => (
-                <Skeleton key={card} className="udc:h-20 udc:rounded-lg" />
-              ))}
-            </div>
-          ))
-        ) : (
-          <DndContext
-            sensors={sensors}
-            collisionDetection={collision}
-            onDragStart={onDragStart}
-            onDragOver={onDragOver}
-            onDragEnd={onDragEnd}
-            onDragCancel={() => {
-              setActive(null);
-              setDragIds(null);
-            }}
-          >
-            <SortableContext
-              items={buckets.map((b) => bucketDndId(b.id))}
-              strategy={horizontalListSortingStrategy}
-            >
-              {buckets.map((bucket) => (
-                <KanbanColumn
-                  key={bucket.id}
-                  bucket={bucket}
-                  ids={ids[bucket.id] ?? []}
-                  rowById={rowById}
-                  opts={opts}
-                  schema={schema}
-                  readOnly={readOnly}
-                  pending={pendingAdds.filter((p) => p.bucketId === bucket.id)}
-                  onOpen={(row: Row) => setDetailId(row.__meta.id)}
-                  onQuickAdd={(where, title) => void quickAdd(bucket.id, where, title)}
-                  onRename={(name) => renameBucket(bucket.id, name)}
-                  onDelete={() => void deleteBucket(bucket.id)}
-                />
-              ))}
-            </SortableContext>
-            {opts.board.extendable_with_buckets && !readOnly ? (
-              <AddBucketSlot onAdd={addBucket} />
-            ) : null}
-            <DragOverlay>
-              {activeRow ? (
-                <div
-                  className={`${cardShellClass(
-                    opts.card.priority_field
-                      ? priorityTone(
-                          activeRow[opts.card.priority_field],
-                          schema.fields[opts.card.priority_field],
-                        )
-                      : null,
-                    opts,
-                  )} udc:rotate-2 udc:cursor-grabbing udc:shadow-xl udc:shadow-black/15`}
-                  style={{ width: opts.buckets.min_width_px - 16 }}
-                >
-                  <KanbanCardBody row={activeRow} opts={opts} schema={schema} />
-                </div>
+              <SortableContext
+                items={buckets.map((b) => bucketDndId(b.id))}
+                strategy={horizontalListSortingStrategy}
+              >
+                {buckets.map((bucket) => (
+                  <KanbanColumn
+                    key={bucket.id}
+                    bucket={bucket}
+                    ids={ids[bucket.id] ?? []}
+                    rowById={rowById}
+                    opts={opts}
+                    schema={schema}
+                    readOnly={readOnly}
+                    pending={pendingAdds.filter((p) => p.bucketId === bucket.id)}
+                    onOpen={(row: Row) => setDetailId(row.__meta.id)}
+                    onQuickAdd={(where, title) => void quickAdd(bucket.id, where, title)}
+                    onRename={(name) => renameBucket(bucket.id, name)}
+                    onDelete={() => void deleteBucket(bucket.id)}
+                  />
+                ))}
+              </SortableContext>
+              {opts.board.extendable_with_buckets && !readOnly ? (
+                <AddBucketSlot onAdd={addBucket} />
               ) : null}
-            </DragOverlay>
-          </DndContext>
-        )}
+              <DragOverlay>
+                {activeRow ? (
+                  <div
+                    className={`${cardShellClass(
+                      opts.card.priority_field
+                        ? priorityTone(
+                            activeRow[opts.card.priority_field],
+                            schema.fields[opts.card.priority_field],
+                          )
+                        : null,
+                      opts,
+                    )} udc:rotate-2 udc:cursor-grabbing udc:shadow-xl udc:shadow-black/15`}
+                    style={{ width: opts.buckets.min_width_px - 16 }}
+                  >
+                    <KanbanCardBody row={activeRow} opts={opts} schema={schema} />
+                  </div>
+                ) : null}
+              </DragOverlay>
+            </DndContext>
+          )}
+        </div>
+        <CardDetailDialog
+          row={detail}
+          describe={describe}
+          collection={collection}
+          labels={labels}
+          onClose={() => setDetailId(null)}
+        />
       </div>
-      <CardDetailDialog
-        row={detail}
-        describe={describe}
-        collection={collection}
-        labels={labels}
-        onClose={() => setDetailId(null)}
-      />
-    </div>
+    </UdcLookupBatch>
   );
 }

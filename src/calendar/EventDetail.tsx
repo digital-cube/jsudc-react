@@ -2,7 +2,13 @@ import type { CalendarOptions, DescribeResponse } from "@jsudc/core";
 import { Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { tableSection, useI18n } from "../i18n/i18n.js";
-import { CellEditor, editorKind, fromEditorValue, sameValue } from "../table/CellEditor.js";
+import {
+  CellEditor,
+  type EditorRaw,
+  editorKind,
+  fromEditorValue,
+  sameValue,
+} from "../table/CellEditor.js";
 import { CellValue } from "../table/cells.js";
 import { formatDay, formatTime, zonedParts } from "../time/zoned.js";
 import { useUiKit } from "../ui-kit/context.js";
@@ -63,7 +69,7 @@ export function EventDetail({
     ? `${dateOf(ev.start)}, ${formatTime(ev.start, intlLocale, timeZone)} – ${formatTime(ev.end, intlLocale, timeZone)}`
     : `${dateOf(ev.start)} ${formatTime(ev.start, intlLocale, timeZone)} – ${dateOf(ev.end)} ${formatTime(ev.end, intlLocale, timeZone)}`;
 
-  const commit = async (field: string, raw: string | boolean) => {
+  const commit = async (field: string, raw: EditorRaw) => {
     const def = schema.fields[field];
     const parsed = fromEditorValue(raw, editorKind(def), def);
     if ("error" in parsed) {

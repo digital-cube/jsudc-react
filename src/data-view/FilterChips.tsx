@@ -1,8 +1,9 @@
-import type { FilterChipConfig } from "@jsudc/core";
+import { type FilterChipConfig, lookupOf, type SchemaDoc } from "@jsudc/core";
 import { Check, ChevronDown, PlusCircle, X } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
 import { useI18n } from "../i18n/i18n.js";
 import { cn, humanize } from "../lib/utils.js";
+import { LookupSelectChip } from "../lookup/LookupSelectChip.js";
 import { useUiKit } from "../ui-kit/context.js";
 import { type ChipState, type ChipValue, isEmptyChip } from "./urlState.js";
 
@@ -14,11 +15,14 @@ export function FilterChips({
   state,
   onChange,
   label,
+  schema,
 }: {
   configs: readonly FilterChipConfig[];
   state: ChipState;
   onChange: (next: ChipState) => void;
   label: Label;
+  /** With it, a `select` chip over a lookup field lists the target's rows by label. */
+  schema?: Pick<SchemaDoc, "fields"> | undefined;
 }) {
   const set = (field: string, v: ChipValue | null) => {
     const next = { ...state };
@@ -33,6 +37,18 @@ export function FilterChips({
         const v = state[cfg.field];
         const value = v && v.kind === cfg.kind ? v : undefined;
         const props = { cfg, label: label(cfg), onClear: () => set(cfg.field, null) };
+        const lookup = cfg.kind === "select" ? lookupOf(schema?.fields[cfg.field]) : undefined;
+        if (lookup) {
+          return (
+            <LookupSelectChip
+              key={cfg.field}
+              {...props}
+              lookup={lookup}
+              value={value as Extract<ChipValue, { kind: "select" }> | undefined}
+              onChange={(values) => set(cfg.field, { kind: "select", values })}
+            />
+          );
+        }
         if (cfg.kind === "select") {
           return (
             <SelectChip
@@ -66,7 +82,7 @@ export function FilterChips({
   );
 }
 
-function ChipTrigger({
+export function ChipTrigger({
   field,
   label,
   summary,

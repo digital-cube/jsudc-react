@@ -5,15 +5,18 @@ import {
   isUdcError,
   isVersionConflict,
   type Row,
+  rowLinkCondition,
   type SortKey,
   type UdcError,
 } from "@jsudc/core";
 import { type Column, type ColumnDef, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { ArrowDown, ArrowUp, ChevronsUpDown, Plus } from "lucide-react";
-import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
+import { type CSSProperties, type MouseEvent, useEffect, useMemo, useRef, useState } from "react";
 import { FolderEntry } from "../data-view/FolderEntry.js";
 import { tableSection, useI18n } from "../i18n/i18n.js";
 import { cn } from "../lib/utils.js";
+import { UdcLookupBatch, useLookupBatch } from "../lookup/batch.js";
+import { filterHref, followLink, useUdcLinks } from "../lookup/links.js";
 import type { FolderNav } from "../renderers/types.js";
 import { ColumnHeaderMenu } from "../schema-editor/ColumnHeaderMenu.js";
 import type { SchemaAction } from "../schema-editor/fieldForm.js";
@@ -24,6 +27,7 @@ import { useUiKit } from "../ui-kit/context.js";
 import {
   CellEditor,
   type CommitReason,
+  type EditorRaw,
   editorKind,
   fromEditorValue,
   sameValue,
@@ -91,6 +95,11 @@ export function TableRenderer(props: TableRendererProps) {
   const { toast } = useToast();
   const mutate = useUdcMutate(collection);
   const section = tableSection(collection);
+  const links = useUdcLinks();
+  const rowLink = view.row_link;
+  // One lookup batch per lookup column for the rows on screen, not one call per cell.
+  const lookupFields = useMemo(() => view.columns.map((c) => c.field), [view.columns]);
+  const lookups = useLookupBatch(data.rows, schema, lookupFields);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -170,6 +179,21 @@ export function TableRenderer(props: TableRendererProps) {
   const { hasNextPage, isFetchingNextPage } = data;
   useInfiniteSentinel(mode === "infinite", scrollRef, sentinelRef, data);
 
+  const rowLinkHref = (row: Row) =>
+    rowLink ? filterHref(links, rowLink.collection, rowLinkCondition(row, rowLink)) : "";
+  /**
+   * A click on a row of a view with `row_link` opens the linked collection;
+   * Cmd / Ctrl / the middle button opens it in a new tab. A click in an
+   * editable cell, on a link or a control, or while a cell is edited, stays
+   * where it is (double-click still edits).
+   */
+  const onRowLinkClick = (e: MouseEvent<HTMLElement>, row: Row) => {
+    if (!rowLink || edit || (e.type === "auxclick" && e.button !== 1)) return;
+    const target = e.target as HTMLElement;
+    if (target.closest("a,button,input,select,textarea,label,[data-editable]")) return;
+    followLink(e, rowLinkHref(row), links);
+  };
+
   const focusCell = (target: EditTarget) =>
     requestAnimationFrame(() => {
       const sel = `[data-cell="${CSS.escape(`${target.rowId}:${target.colId}`)}"]`;
@@ -184,7 +208,7 @@ export function TableRenderer(props: TableRendererProps) {
   const commit = async (
     row: Row,
     col: Column<Row, unknown>,
-    raw: string | boolean,
+    raw: EditorRaw,
     reason: CommitReason,
   ) => {
     const { config, def } = meta(col);
@@ -429,93 +453,105 @@ export function TableRenderer(props: TableRendererProps) {
               {right.map(header)}
             </tr>
           </thead>
-          <tbody>
-            {showSkeleton
-              ? Array.from({ length: SKELETON_ROWS }, (_, i) => (
-                  // biome-ignore lint/suspicious/noArrayIndexKey: placeholders
-                  <tr key={i} data-testid="skeleton-row" style={{ height: rowHeight }}>
-                    {[...left, ...center].map((c, j) => (
-                      <td
-                        key={c.id}
-                        style={pinStyle(c)}
-                        className={cn(
-                          "udc:border-b udc:border-border udc:bg-surface udc:px-3",
-                          pinClass(c),
-                        )}
-                      >
-                        <Skeleton
-                          className="udc:h-3"
-                          style={{ width: `${45 + ((i * 7 + j * 13) % 45)}%` }}
-                        />
-                      </td>
-                    ))}
-                    {addColumnCell("a", "udc:bg-surface")}
-                    {filler("f", "udc:border-b udc:border-border udc:bg-surface")}
-                    {right.map((c) => (
-                      <td
-                        key={c.id}
-                        style={pinStyle(c)}
-                        className={cn(
-                          "udc:border-b udc:border-border udc:bg-surface udc:px-3",
-                          pinClass(c),
-                        )}
-                      >
-                        <Skeleton className="udc:h-3 udc:w-2/3" />
-                      </td>
-                    ))}
-                  </tr>
-                ))
-              : null}
-            {table.getRowModel().rows.map((r) => {
-              const row = r.original;
-              const tone = resolveRowColor(row, view.row_color);
-              const cell = (c: Column<Row, unknown>) => {
-                const { config, def } = meta(c);
-                const editable = canEdit(c);
-                const id = `${row.__meta.id}:${c.id}`;
-                const editing = edit?.rowId === row.__meta.id && edit.colId === c.id;
-                const color = config.color ?? tone?.color;
-                const bg = config.bg ?? tone?.bg;
-                return (
-                  <td
-                    key={c.id}
-                    data-cell={id}
-                    data-testid={`cell-${config.field}`}
-                    data-editable={editable || undefined}
-                    tabIndex={editable ? 0 : undefined}
-                    title={editable && !editing ? t("APP", "EDIT_HINT") : undefined}
-                    onDoubleClick={
-                      editable ? () => startEdit({ rowId: row.__meta.id, colId: c.id }) : undefined
-                    }
-                    onKeyDown={
-                      editable && !editing
-                        ? (e) => {
-                            if (e.key === "Enter" || e.key === "F2") {
-                              e.preventDefault();
-                              startEdit({ rowId: row.__meta.id, colId: c.id });
+          <UdcLookupBatch value={lookups}>
+            <tbody>
+              {showSkeleton
+                ? Array.from({ length: SKELETON_ROWS }, (_, i) => (
+                    // biome-ignore lint/suspicious/noArrayIndexKey: placeholders
+                    <tr key={i} data-testid="skeleton-row" style={{ height: rowHeight }}>
+                      {[...left, ...center].map((c, j) => (
+                        <td
+                          key={c.id}
+                          style={pinStyle(c)}
+                          className={cn(
+                            "udc:border-b udc:border-border udc:bg-surface udc:px-3",
+                            pinClass(c),
+                          )}
+                        >
+                          <Skeleton
+                            className="udc:h-3"
+                            style={{ width: `${45 + ((i * 7 + j * 13) % 45)}%` }}
+                          />
+                        </td>
+                      ))}
+                      {addColumnCell("a", "udc:bg-surface")}
+                      {filler("f", "udc:border-b udc:border-border udc:bg-surface")}
+                      {right.map((c) => (
+                        <td
+                          key={c.id}
+                          style={pinStyle(c)}
+                          className={cn(
+                            "udc:border-b udc:border-border udc:bg-surface udc:px-3",
+                            pinClass(c),
+                          )}
+                        >
+                          <Skeleton className="udc:h-3 udc:w-2/3" />
+                        </td>
+                      ))}
+                    </tr>
+                  ))
+                : null}
+              {table.getRowModel().rows.map((r) => {
+                const row = r.original;
+                const tone = resolveRowColor(row, view.row_color);
+                const cell = (c: Column<Row, unknown>) => {
+                  const { config, def } = meta(c);
+                  const editable = canEdit(c);
+                  const id = `${row.__meta.id}:${c.id}`;
+                  const editing = edit?.rowId === row.__meta.id && edit.colId === c.id;
+                  const color = config.color ?? tone?.color;
+                  const bg = config.bg ?? tone?.bg;
+                  return (
+                    <td
+                      key={c.id}
+                      data-cell={id}
+                      data-testid={`cell-${config.field}`}
+                      data-editable={editable || undefined}
+                      tabIndex={editable ? 0 : undefined}
+                      title={editable && !editing ? t("APP", "EDIT_HINT") : undefined}
+                      onDoubleClick={
+                        editable
+                          ? () => startEdit({ rowId: row.__meta.id, colId: c.id })
+                          : undefined
+                      }
+                      onKeyDown={
+                        editable && !editing
+                          ? (e) => {
+                              if (e.key === "Enter" || e.key === "F2") {
+                                e.preventDefault();
+                                startEdit({ rowId: row.__meta.id, colId: c.id });
+                              }
                             }
-                          }
-                        : undefined
-                    }
-                    style={pinStyle(c)}
-                    className={cn(
-                      "udc-cell",
-                      "udc:relative udc:border-b udc:border-border udc:px-3 udc:align-middle udc:outline-none",
-                      bg && bg !== "default"
-                        ? BG_COLOR[bg]
-                        : "udc:bg-surface udc:group-hover/row:bg-hover",
-                      color ? TEXT_COLOR[color] : "",
-                      color === "info" || color === "accent" ? "udc:font-medium" : "",
-                      editable &&
-                        "udc:cursor-text udc:focus-visible:ring-2 udc:focus-visible:ring-ring udc:focus-visible:ring-inset udc:hover:shadow-[inset_0_0_0_1px_var(--border-strong)]",
-                      pinClass(c),
-                      // Above the next rows, so the validation message under the cell shows.
-                      editing && "udc:z-[25]",
-                    )}
-                  >
-                    <div className={cn("udc:flex udc:min-w-0 udc:items-center", alignClass(c))}>
-                      {props.folder && config.field === props.folder.options.label_field ? (
-                        <FolderEntry row={row} nav={props.folder}>
+                          : undefined
+                      }
+                      style={pinStyle(c)}
+                      className={cn(
+                        "udc-cell",
+                        "udc:relative udc:border-b udc:border-border udc:px-3 udc:align-middle udc:outline-none",
+                        bg && bg !== "default"
+                          ? BG_COLOR[bg]
+                          : "udc:bg-surface udc:group-hover/row:bg-hover",
+                        color ? TEXT_COLOR[color] : "",
+                        color === "info" || color === "accent" ? "udc:font-medium" : "",
+                        editable &&
+                          "udc:cursor-text udc:focus-visible:ring-2 udc:focus-visible:ring-ring udc:focus-visible:ring-inset udc:hover:shadow-[inset_0_0_0_1px_var(--border-strong)]",
+                        pinClass(c),
+                        // Above the next rows, so the validation message under the cell shows.
+                        editing && "udc:z-[25]",
+                      )}
+                    >
+                      <div className={cn("udc:flex udc:min-w-0 udc:items-center", alignClass(c))}>
+                        {props.folder && config.field === props.folder.options.label_field ? (
+                          <FolderEntry row={row} nav={props.folder}>
+                            <CellValue
+                              value={row[config.field]}
+                              column={config}
+                              def={def}
+                              locale={locale}
+                              intlLocale={intlLocale}
+                            />
+                          </FolderEntry>
+                        ) : (
                           <CellValue
                             value={row[config.field]}
                             column={config}
@@ -523,55 +559,50 @@ export function TableRenderer(props: TableRendererProps) {
                             locale={locale}
                             intlLocale={intlLocale}
                           />
-                        </FolderEntry>
-                      ) : (
-                        <CellValue
-                          value={row[config.field]}
-                          column={config}
+                        )}
+                      </div>
+                      {editing ? (
+                        <CellEditor
                           def={def}
-                          locale={locale}
-                          intlLocale={intlLocale}
+                          initial={row[config.field]}
+                          saving={saving}
+                          error={editError?.message ?? null}
+                          errorSeq={editError?.seq ?? 0}
+                          align={config.align}
+                          onCommit={(raw, reason) => void commit(row, c, raw, reason)}
+                          onCancel={() => {
+                            setEdit(null);
+                            setEditError(null);
+                            focusCell({ rowId: row.__meta.id, colId: c.id });
+                          }}
                         />
-                      )}
-                    </div>
-                    {editing ? (
-                      <CellEditor
-                        def={def}
-                        initial={row[config.field]}
-                        saving={saving}
-                        error={editError?.message ?? null}
-                        errorSeq={editError?.seq ?? 0}
-                        align={config.align}
-                        onCommit={(raw, reason) => void commit(row, c, raw, reason)}
-                        onCancel={() => {
-                          setEdit(null);
-                          setEditError(null);
-                          focusCell({ rowId: row.__meta.id, colId: c.id });
-                        }}
-                      />
-                    ) : null}
-                  </td>
+                      ) : null}
+                    </td>
+                  );
+                };
+                return (
+                  <tr
+                    key={r.id}
+                    data-testid="row"
+                    data-row-id={row.__meta.id}
+                    data-row-link={rowLink ? rowLinkHref(row) : undefined}
+                    className={cn("udc-row udc:group/row", rowLink && "udc:cursor-pointer")}
+                    style={{ height: rowHeight }}
+                    onClick={rowLink ? (e) => onRowLinkClick(e, row) : undefined}
+                    onAuxClick={rowLink ? (e) => onRowLinkClick(e, row) : undefined}
+                  >
+                    {[...left, ...center].map(cell)}
+                    {addColumnCell("a", "udc:bg-surface udc:group-hover/row:bg-hover")}
+                    {filler(
+                      "f",
+                      "udc:border-b udc:border-border udc:bg-surface udc:group-hover/row:bg-hover",
+                    )}
+                    {right.map(cell)}
+                  </tr>
                 );
-              };
-              return (
-                <tr
-                  key={r.id}
-                  data-testid="row"
-                  data-row-id={row.__meta.id}
-                  className="udc-row udc:group/row"
-                  style={{ height: rowHeight }}
-                >
-                  {[...left, ...center].map(cell)}
-                  {addColumnCell("a", "udc:bg-surface udc:group-hover/row:bg-hover")}
-                  {filler(
-                    "f",
-                    "udc:border-b udc:border-border udc:bg-surface udc:group-hover/row:bg-hover",
-                  )}
-                  {right.map(cell)}
-                </tr>
-              );
-            })}
-          </tbody>
+              })}
+            </tbody>
+          </UdcLookupBatch>
         </table>
 
         {showError && data.error ? <ErrorState error={data.error} onRetry={data.refetch} /> : null}
