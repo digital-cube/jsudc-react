@@ -40,7 +40,7 @@ npm install @jsudc/react @jsudc/core \
 # then the peers of the renderers you register (see Renderers), all of them:
 npm install @tanstack/react-table leaflet recharts @dnd-kit/core @dnd-kit/sortable @dnd-kit/utilities
 # or straight from a GitHub tag:
-npm install github:digital-cube/jsudc-core#v0.2.0 github:digital-cube/jsudc-react#v0.2.1
+npm install github:digital-cube/jsudc-core#v0.3.0 github:digital-cube/jsudc-react#v0.3.0
 ```
 
 ## Quick start
@@ -355,7 +355,7 @@ peer while the default kit is the fallback.
 Everything the components import that a host is likely to have too is a peer,
 so there is one copy of it in the bundle:
 
-- `@jsudc/core` ^0.2.0 — one copy of the protocol, shared with the host's
+- `@jsudc/core` ^0.3.0 — one copy of the protocol, shared with the host's
   own `UdcClient`;
 - `react`, `react-dom` ^19 — one React, or hooks break;
 - `@tanstack/react-query` ^5 — one `QueryClient` context, shared with the
