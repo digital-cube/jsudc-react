@@ -439,12 +439,13 @@ describe("the table over lookup fields", () => {
   });
 });
 
-describe("row_link", () => {
-  function Where() {
-    const loc = useLocation();
-    return <div data-testid="where">{loc.pathname + loc.search}</div>;
-  }
+/** Shows where the router is, for the row_link tests. */
+function Where() {
+  const loc = useLocation();
+  return <div data-testid="where">{loc.pathname + loc.search}</div>;
+}
 
+describe("row_link", () => {
   it("a row click opens the linked collection filtered by the row id, through the router", async () => {
     const s = setup();
     render(
