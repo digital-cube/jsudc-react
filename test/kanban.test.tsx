@@ -7,15 +7,18 @@ import {
 } from "@jsudc/core";
 import { UdcClient } from "@jsudc/core/client";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, renderHook, screen, waitFor } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 import { RENDERERS } from "../src/all";
 import { Toaster } from "../src/components/ui/toast";
 import { TooltipProvider } from "../src/components/ui/tooltip";
+import { encodeFilterParam } from "../src/data-view/urlState";
 import { UdcI18nProvider } from "../src/i18n/i18n";
 import { KanbanRenderer } from "../src/kanban/KanbanRenderer";
 import {
+  boardFromFilter,
   boardSource,
   bucketsOf,
   groupCards,
@@ -27,6 +30,7 @@ import {
   quickAddRow,
 } from "../src/kanban/model";
 import { persistOrder } from "../src/kanban/persist";
+import { useKanbanBoard } from "../src/kanban/useKanbanBoard";
 import { UdcReactRouterUrlState } from "../src/react-router";
 import { rendererEntry, rendererTabs, resolveTab } from "../src/renderers/registry";
 import type { RendererProps } from "../src/renderers/types";
@@ -450,5 +454,119 @@ describe("KanbanRenderer read-only gating", () => {
     expect(screen.queryByTestId(/^kanban-add/)).toBeNull();
     expect(screen.queryByTestId("kanban-column-menu")).toBeNull();
     expect(screen.getByTestId("kanban-card")).toHaveAttribute("aria-disabled", "true");
+  });
+});
+
+describe("boardFromFilter", () => {
+  it("reads an eq on the board field at the root or under and", () => {
+    expect(boardFromFilter({ field: "board_id", op: "eq", value: "B2" }, "board_id")).toBe("B2");
+    expect(
+      boardFromFilter(
+        {
+          and: [
+            { field: "title", op: "contains", value: "x" },
+            { and: [{ field: "board_id", op: "eq", value: "B3" }] },
+          ],
+        },
+        "board_id",
+      ),
+    ).toBe("B3");
+  });
+
+  it("ignores what does not pin one board: or, not, other ops, other fields, non-strings", () => {
+    const field = "board_id";
+    expect(boardFromFilter(null, field)).toBeNull();
+    expect(boardFromFilter(undefined, field)).toBeNull();
+    expect(boardFromFilter({ or: [{ field, op: "eq", value: "B2" }] }, field)).toBeNull();
+    expect(boardFromFilter({ not: { field, op: "eq", value: "B2" } }, field)).toBeNull();
+    expect(boardFromFilter({ field, op: "neq", value: "B2" }, field)).toBeNull();
+    expect(boardFromFilter({ field: "owner", op: "eq", value: "B2" }, field)).toBeNull();
+    expect(boardFromFilter({ field, op: "eq", value: 7 }, field)).toBeNull();
+  });
+});
+
+describe("useKanbanBoard picks the board", () => {
+  const boards = [
+    row("B1", 1, { name: "Product roadmap" }),
+    row("B2", 1, { name: "Release 3.0" }),
+    row("B3", 1, { name: "Support desk" }),
+  ];
+  const describeTickets: DescribeResponse = {
+    collection: "tickets",
+    capabilities: {
+      mutate: true,
+      subscribe: false,
+      total_count: true,
+      schema_edit: false,
+      config_edit: false,
+      reindex: true,
+      tree_reparent: false,
+      source_yaml: false,
+      supported_filter_ops: [],
+    },
+    schema,
+    view: ViewConfigSchema.parse({
+      available_renderers: ["kanban", "table"],
+      default_renderer: "kanban",
+      kanban_options: opts,
+    }),
+    filterable: { fields: [] },
+    source_kind: "postgres_jsonb",
+  };
+
+  function boardAt(search: string) {
+    const mock = mockUdcFetch({
+      describe: () => ({
+        ok: {
+          collection: "boards",
+          capabilities: describeTickets.capabilities,
+          schema: SchemaDocSchema.parse({ version: "v1", fields: { name: { type: "string" } } }),
+          view: ViewConfigSchema.parse({}),
+          filterable: { fields: [] },
+          source_kind: "postgres_jsonb",
+        },
+      }),
+      list: () => ({ ok: listOf(boards) }),
+    });
+    const client = new UdcClient({ httpUrl: "http://api", fetch: mock.fetch });
+    const qc = createUdcQueryClient();
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <UdcProvider client={client} renderers={RENDERERS}>
+        <QueryClientProvider client={qc}>
+          <MemoryRouter initialEntries={[`/c/tickets${search}`]}>
+            <UdcReactRouterUrlState>{children}</UdcReactRouterUrlState>
+          </MemoryRouter>
+        </QueryClientProvider>
+      </UdcProvider>
+    );
+    return renderHook(() => useKanbanBoard(describeTickets), { wrapper });
+  }
+
+  const f = (node: Parameters<typeof encodeFilterParam>[0]) => `f=${encodeFilterParam(node)}`;
+
+  it("without ?board= or a filter, the first board", async () => {
+    const { result } = boardAt("");
+    await waitFor(() => expect(result.current.boardId).toBe("B1"));
+  });
+
+  it("without ?board=, the board an eq filter on the board field names (a row_link drill-down)", async () => {
+    const { result } = boardAt(`?${f({ field: "board_id", op: "eq", value: "B2" })}`);
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.boardId).toBe("B2");
+  });
+
+  it("?board= wins over the filter", async () => {
+    const { result } = boardAt(`?board=B3&${f({ field: "board_id", op: "eq", value: "B2" })}`);
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.boardId).toBe("B3");
+  });
+
+  it("an unknown ?board= falls back to the filter's board, an unknown filter board to the first", async () => {
+    const a = boardAt(`?board=nope&${f({ field: "board_id", op: "eq", value: "B2" })}`);
+    await waitFor(() => expect(a.result.current.isLoading).toBe(false));
+    expect(a.result.current.boardId).toBe("B2");
+    const b = boardAt(`?${f({ field: "board_id", op: "eq", value: "nope" })}`);
+    await waitFor(() => expect(b.result.current.isLoading).toBe(false));
+    expect(b.result.current.boardId).toBe("B1");
   });
 });

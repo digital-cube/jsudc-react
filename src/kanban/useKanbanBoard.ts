@@ -1,8 +1,9 @@
 import type { DescribeResponse, KanbanOptions } from "@jsudc/core";
 import { useCallback, useMemo } from "react";
+import { decodeFilterParam, PARAM } from "../data-view/urlState.js";
 import { useUdcCollection, useUdcDescribe } from "../udc/hooks.js";
 import { useUrlSearchParams } from "../url-state/UrlState.js";
-import { boardSource } from "./model.js";
+import { boardFromFilter, boardSource } from "./model.js";
 
 export const BOARD_PARAM = "board";
 const MAX_BOARDS = 200;
@@ -15,7 +16,11 @@ export interface BoardChoice {
 export interface KanbanBoardState {
   opts: KanbanOptions | undefined;
   boards: BoardChoice[];
-  /** `?board=` when it names a board, else the first board; `null` while loading. */
+  /**
+   * `?board=` when it names a board, else the board an `eq` on
+   * `ticket_board_field` in `?f=` names (a `row_link` drill-down), else the
+   * first board; `null` while loading.
+   */
   boardId: string | null;
   setBoard: (id: string) => void;
   isLoading: boolean;
@@ -54,10 +59,17 @@ export function useKanbanBoard(describe: DescribeResponse): KanbanBoardState {
 
   const [params, setParams] = useUrlSearchParams();
   const wanted = params.get(BOARD_PARAM);
+  const fParam = params.get(PARAM.filter);
+  // A drill-down (`?f=board eq X`, no `?board=`) lands on board X, not on the first one.
+  const filtered = useMemo(
+    () => (opts ? boardFromFilter(decodeFilterParam(fParam), opts.ticket_board_field) : null),
+    [fParam, opts],
+  );
+  const known = (id: string | null) => (id ? boards.find((b) => b.id === id)?.id : undefined);
   // Without a board collection the URL alone names the board.
   const boardId = source
-    ? (boards.find((b) => b.id === wanted)?.id ?? boards[0]?.id ?? null)
-    : wanted;
+    ? (known(wanted) ?? known(filtered) ?? boards[0]?.id ?? null)
+    : (wanted ?? filtered);
 
   const setBoard = useCallback(
     (id: string) =>

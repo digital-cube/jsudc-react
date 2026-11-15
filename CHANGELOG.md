@@ -9,6 +9,12 @@ All notable changes to `@jsudc/react` are recorded here. The format follows
 
 ### Fixed
 
+- A `row_link` drill-down onto a collection whose default renderer is kanban
+  no longer lands on an empty board. Without `?board=`, the kanban's and the
+  calendar's board select follow an `eq` on `kanban_options.ticket_board_field`
+  in `?f=` (at the root or under `and`s); an unknown `?board=` falls back to it,
+  and only then to the first board. `boardFromFilter(tree, boardField)` is
+  exported from the headless entry with the rest of the kanban model.
 - The option list of `LookupCombobox` (the inline editor of a `lookup` /
   `lookup_array` cell) had no background: it used `udc:bg-popover` /
   `udc:text-popover-foreground`, which the theme does not define, so the

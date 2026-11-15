@@ -169,7 +169,8 @@ URL state.
 The data view keeps what the user chose in the query string, so a link or a
 reload opens the same view: the tab (`?tab=`), the search (`?q=`), the chips
 and the filter tree, the sort, the paging mode and the page, the kanban board
-(`?board=`), the chart window (`?win=`, `?from=&to=`) and the calendar
+(`?board=`; without it, the board an `eq` filter on the board field names, else
+the first), the chart window (`?win=`, `?from=&to=`) and the calendar
 (`?preset=&date=`). Filters, sort and windows **replace** the current history
 entry; they are not a step the Back button walks through.
 
@@ -553,6 +554,9 @@ only stores and filters keys.
   by a value of the clicked row, on a row click; Cmd / Ctrl-click and the
   middle button open a new tab. Rows show a pointer. A click in an editable
   cell, on a link or a control stays where it is (double-click still edits).
+  A drill-down onto a kanban collection lands on the linked board: without a
+  `?board=`, the board select (kanban and calendar) follows an `eq` on
+  `kanban_options.ticket_board_field` in the filter.
 
 ```ts
 const { row, rows, isLoading } = useUdcLookup("boards", ["b1", "b2"]); // keys are ids
