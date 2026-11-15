@@ -198,6 +198,30 @@ export function boardFilter(opts: KanbanOptions, boardId: string): FilterNode {
   return { field: opts.ticket_board_field, op: "eq", value: boardId };
 }
 
+/**
+ * The board a filter pins: an `eq` on the card's board field with a string
+ * value, at the root or anywhere under `and`s (never under `or` / `not`,
+ * which do not pin one board). A `row_link` drill-down opens the cards with
+ * exactly that filter; the board select follows it. `null` when none does.
+ */
+export function boardFromFilter(
+  tree: FilterNode | null | undefined,
+  boardField: string,
+): string | null {
+  if (!tree) return null;
+  if ("and" in tree) {
+    for (const node of tree.and) {
+      const id = boardFromFilter(node, boardField);
+      if (id !== null) return id;
+    }
+    return null;
+  }
+  if ("or" in tree || "not" in tree) return null;
+  return tree.field === boardField && tree.op === "eq" && typeof tree.value === "string"
+    ? tree.value
+    : null;
+}
+
 /** The board's cards narrowed by the data view's filter (search, chips, tree). */
 export function cardsFilter(
   opts: KanbanOptions,
