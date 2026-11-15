@@ -7,7 +7,11 @@ All notable changes to `@jsudc/react` are recorded here. The format follows
 
 ## [Unreleased]
 
-Needs `@jsudc/core` and `@jsudc/server` with lookups (the same release).
+## [0.3.0] - 2026-11-15
+
+Lookups, level 1, and drill-down (`row_link`) in the components, released
+together with `@jsudc/core` 0.3.0 and `@jsudc/server` 0.3.0. Needs
+`@jsudc/core` 0.3.0, and a server that speaks lookups (`@jsudc/server` 0.3.0).
 
 ### Added
 
@@ -32,6 +36,7 @@ Needs `@jsudc/core` and `@jsudc/server` with lookups (the same release).
 
 ### Changed
 
+- The `@jsudc/core` peer range (and the development dependency) is `^0.3.0`.
 - `useUdcMutate` also invalidates the lookups of the collection it wrote.
 - The kanban finds its board collection from a `lookup` board field too
   (`boardSource`), not only from a `relation`'s `ref`.
@@ -267,7 +272,8 @@ First tagged version, installed from the GitHub tag.
   Serbian), theme and time-zone providers, the UI primitives.
 - `styles.css`, compiled at build time, and `tokens.css`, its raw source.
 
-[Unreleased]: https://github.com/digital-cube/jsudc-react/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/digital-cube/jsudc-react/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/digital-cube/jsudc-react/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/digital-cube/jsudc-react/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/digital-cube/jsudc-react/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/digital-cube/jsudc-react/compare/v0.1.0...v0.1.1
