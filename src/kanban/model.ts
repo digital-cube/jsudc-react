@@ -5,6 +5,7 @@ import {
   type FieldDef,
   type FilterNode,
   type KanbanOptions,
+  lookupOf,
   orderBetween,
   type Row,
   type SchemaDoc,
@@ -222,12 +223,17 @@ export function priorityTone(value: unknown, def: FieldDef | undefined): ColumnC
   return PRIORITY_SCALE[step] ?? null;
 }
 
-/** The board collection: the `ref` of the card's board field, with its label field. */
+/**
+ * The board collection: the target of the card's board field (a `lookup`),
+ * or its `ref` (a `relation`, the udc-py spelling), with its label field.
+ */
 export function boardSource(
   schema: SchemaDoc,
   opts: KanbanOptions,
 ): { collection: string; labelField: string } | null {
   const def = schema.fields[opts.ticket_board_field];
+  const lookup = lookupOf(def);
+  if (lookup) return { collection: lookup.collection, labelField: lookup.label_field };
   if (!def?.ref) return null;
   return { collection: def.ref, labelField: def.label_field ?? "name" };
 }

@@ -379,6 +379,19 @@ describe("the table over lookup fields", () => {
     ).toBe(true);
   });
 
+  it("in an editable cell a plain click on the label stays; Cmd-click opens the target", async () => {
+    const links = { href: (c: string) => `/udc/${c}`, navigate: vi.fn() };
+    await mountTickets(links);
+    const open = vi.spyOn(window, "open").mockImplementation(() => null);
+    const cell = screen.getAllByTestId("cell-board_id")[0] as HTMLElement;
+    const link = within(cell).getByTestId("lookup-link");
+    fireEvent.click(link);
+    expect(links.navigate).not.toHaveBeenCalled();
+    fireEvent.click(link, { ctrlKey: true });
+    expect(open).toHaveBeenCalledWith("/udc/boards", "_blank", "noopener");
+    open.mockRestore();
+  });
+
   it("edits a lookup with the combobox and writes the key", async () => {
     const { calls } = await mountTickets();
     const cell = screen.getAllByTestId("cell-board_id")[0] as HTMLElement;
@@ -453,6 +466,17 @@ describe("row_link", () => {
     expect(where.startsWith("/udc/tickets?f=")).toBe(true);
     const f = new URL(where, "http://x").searchParams.get("f");
     expect(decodeFilterParam(f)).toEqual({ field: "board_id", op: "eq", value: "b2" });
+  });
+
+  it("the drilled view's filter pill names the board, not its id", async () => {
+    const s = setup();
+    const f = btoa(JSON.stringify({ field: "board_id", op: "eq", value: "b2" }))
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/, "");
+    window.history.replaceState(null, "", `/c/tickets?f=${f}`);
+    render(<UdcDataView collection="tickets" />, { wrapper: s.wrapper });
+    await waitFor(() => expect(screen.getByTestId("fb-pill-0")).toHaveTextContent("Support"));
   });
 
   it("Cmd-click opens a new tab; the row carries its link", async () => {

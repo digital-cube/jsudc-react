@@ -2,6 +2,7 @@ import {
   type DescribeResponse,
   type FilterNode,
   isCondition,
+  isRowIdField,
   type SchemaDoc,
   type SortKey,
   type ViewConfig,
@@ -57,7 +58,10 @@ export function liveSort(sort: readonly SortKey[], schema: SchemaDoc): SortKey[]
  */
 export function pruneTree(tree: FilterNode | null, schema: SchemaDoc): FilterNode | null {
   if (!tree) return null;
-  if (isCondition(tree)) return isLiveField(schema, tree.field) ? tree : null;
+  // `id` stays when it means the row id (a lookup link opens the target that way).
+  if (isCondition(tree)) {
+    return isLiveField(schema, tree.field) || isRowIdField(schema, tree.field) ? tree : null;
+  }
   if ("not" in tree) {
     const inner = pruneTree(tree.not, schema);
     return inner ? { not: inner } : null;

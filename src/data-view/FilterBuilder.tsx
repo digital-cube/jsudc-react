@@ -1,8 +1,17 @@
-import type { Condition, FilterableField, FilterNode, FilterOp } from "@jsudc/core";
+import {
+  type Condition,
+  type FieldDef,
+  type FilterableField,
+  type FilterNode,
+  type FilterOp,
+  lookupOf,
+  type SchemaDoc,
+} from "@jsudc/core";
 import { ListFilter, Plus, Trash2, X } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { useI18n } from "../i18n/i18n.js";
 import { cn } from "../lib/utils.js";
+import { useLookupLabels } from "../lookup/LookupValue.js";
 import { useUiKit } from "../ui-kit/context.js";
 import { conditionsToTree, treeToConditions } from "./compose.js";
 
@@ -228,11 +237,14 @@ export function FilterPills({
   tree,
   onChange,
   fieldLabel,
+  schema,
 }: {
   fields: readonly FilterableField[];
   tree: FilterNode | null;
   onChange: (tree: FilterNode | null) => void;
   fieldLabel: (field: string) => string;
+  /** With it, a condition on a lookup field shows the target's labels, not the keys. */
+  schema?: Pick<SchemaDoc, "fields"> | undefined;
 }) {
   const { t, intlLocale } = useI18n();
   const conditions = treeToConditions(tree);
@@ -274,7 +286,13 @@ export function FilterPills({
               <span className="udc:font-medium">{fieldLabel(c.field)}</span>
               <span className="udc:text-muted-foreground">{t("APP", `OP_${c.op}`)}</span>
               {NULLARY_OPS.includes(c.op) ? null : (
-                <span className="udc:font-medium udc:text-primary">{formatValue(c)}</span>
+                <span className="udc:font-medium udc:text-primary">
+                  {lookupOf(schema?.fields[c.field]) ? (
+                    <LookupPillValue def={schema?.fields[c.field] as FieldDef} value={c.value} />
+                  ) : (
+                    formatValue(c)
+                  )}
+                </span>
               )}
             </>
           }
@@ -282,6 +300,11 @@ export function FilterPills({
       ))}
     </>
   );
+}
+
+/** The labels of the keys a lookup condition holds (the keys until they resolve). */
+function LookupPillValue({ def, value }: { def: FieldDef; value: unknown }) {
+  return <>{useLookupLabels(def, value).join(", ")}</>;
 }
 
 function Pill({

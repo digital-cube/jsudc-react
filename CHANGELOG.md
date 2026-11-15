@@ -28,10 +28,15 @@ Needs `@jsudc/core` and `@jsudc/server` with lookups (the same release).
   `defaultUdcLinks`, `filterHref`, `followLink`) and
   `UdcReactRouterUrlState collectionPath`: where those links go.
 - `udcKeys.lookup`, `udcKeys.lookups`, `udcKeys.lookupOptions`.
+- A filter pill on a lookup field shows the target's labels.
 
 ### Changed
 
 - `useUdcMutate` also invalidates the lookups of the collection it wrote.
+- The kanban finds its board collection from a `lookup` board field too
+  (`boardSource`), not only from a `relation`'s `ref`.
+- A filter tree keeps a condition on `id` (the row id) instead of pruning it
+  as an unknown field.
 - `CellEditor`'s `onCommit` and `fromEditorValue` take `EditorRaw`
   (`string | boolean | { picked }`).
 

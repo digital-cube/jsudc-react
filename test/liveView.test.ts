@@ -62,6 +62,9 @@ describe("liveView", () => {
     ).toEqual({ and: [{ not: { field: "name", op: "eq", value: "x" } }] });
     expect(pruneTree({ field: "city", op: "is_null" }, schema)).toBeNull();
     expect(pruneTree(null, schema)).toBeNull();
+    // `id` is the row id when the schema has no such field: a lookup link filters by it.
+    const byId = { field: "id", op: "in" as const, value: ["a"] };
+    expect(pruneTree(byId, schema)).toEqual(byId);
   });
 });
 

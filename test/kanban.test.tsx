@@ -221,6 +221,16 @@ describe("kanban model", () => {
     expect(boardSource(schema, opts)).toEqual({ collection: "boards", labelField: "name" });
   });
 
+  it("finds the board collection from a lookup, nested or flat", () => {
+    for (const board_id of [
+      { type: "lookup", lookup: { collection: "projects", label_field: "title" } },
+      { type: "lookup", ref: "projects", label_field: "title" },
+    ]) {
+      const s = SchemaDocSchema.parse({ version: "v1", fields: { ...schema.fields, board_id } });
+      expect(boardSource(s, opts)).toEqual({ collection: "projects", labelField: "title" });
+    }
+  });
+
   it("overdue is before today", () => {
     const today = new Date(2026, 9, 27);
     expect(isOverdue("2026-10-26", today)).toBe(true);

@@ -558,6 +558,7 @@ export function TableRenderer(props: TableRendererProps) {
                             def={def}
                             locale={locale}
                             intlLocale={intlLocale}
+                            editable={editable}
                           />
                         )}
                       </div>

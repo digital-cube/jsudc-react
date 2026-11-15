@@ -535,7 +535,9 @@ only stores and filters keys.
   `lookup_array` is a row of such chips; `extra_fields` are the link's tooltip.
   Cards, the kanban card's detail and the calendar's event detail draw the same
   cell; the kanban card's avatars read the labels of an `assignees_field` that
-  is a `lookup_array`.
+  is a `lookup_array`. In an `editable` cell a plain click on a label stays in
+  the cell (double-click edits) and Cmd / Ctrl-click opens the target. A filter
+  pill on a lookup field shows the labels too.
 - **One call per lookup field**, not per cell: the table (and the kanban
   board) resolve the keys of the rows on screen with `useLookupBatch` and hand
   them down through `<UdcLookupBatch>`. A `LookupValue` outside a batch

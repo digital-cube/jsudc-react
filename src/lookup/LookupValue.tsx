@@ -50,11 +50,13 @@ function LookupLink({
   keyValue,
   row,
   chip,
+  editable,
 }: {
   lookup: LookupDef;
   keyValue: string;
   row: Row | undefined;
   chip: boolean;
+  editable: boolean;
 }) {
   const links = useUdcLinks();
   const label = lookupLabel(row, lookup);
@@ -65,6 +67,12 @@ function LookupLink({
     value: keyValue,
   });
   const onClick = (e: MouseEvent) => {
+    // In an editable cell a plain click belongs to the cell (double-click edits);
+    // Cmd / Ctrl-click still opens the target.
+    if (editable && !(e.metaKey || e.ctrlKey || e.button === 1)) {
+      e.preventDefault();
+      return;
+    }
     // The row under the link may have a row_link of its own: the link wins.
     e.stopPropagation();
     followLink(e, href, links);
@@ -73,7 +81,6 @@ function LookupLink({
     <a
       href={href}
       onClick={onClick}
-      onDoubleClick={(e) => e.stopPropagation()}
       data-testid="lookup-link"
       data-key={keyValue}
       data-resolved={label !== undefined || undefined}
@@ -100,11 +107,14 @@ export function LookupValue({
   def,
   value,
   field,
+  editable = false,
 }: {
   def: FieldDef;
   value: unknown;
   /** The field, so the batch around the cell (if any) answers for it. */
   field?: string | undefined;
+  /** In an editable cell a plain click does not follow the link (Cmd / Ctrl-click does). */
+  editable?: boolean;
 }) {
   const { lookup, keys, row } = useLookupRows(def, value, field);
   if (!lookup) return <span className="udc:truncate">{keys.join(", ")}</span>;
@@ -115,13 +125,19 @@ export function LookupValue({
         className="udc:flex udc:min-w-0 udc:items-center udc:gap-1 udc:overflow-hidden"
       >
         {keys.map((k) => (
-          <LookupLink key={k} lookup={lookup} keyValue={k} row={row(k)} chip />
+          <LookupLink key={k} lookup={lookup} keyValue={k} row={row(k)} chip editable={editable} />
         ))}
       </span>
     );
   }
   const key = keys[0];
   return key === undefined ? null : (
-    <LookupLink lookup={lookup} keyValue={keyString(key)} row={row(key)} chip={false} />
+    <LookupLink
+      lookup={lookup}
+      keyValue={keyString(key)}
+      row={row(key)}
+      chip={false}
+      editable={editable}
+    />
   );
 }

@@ -99,12 +99,15 @@ export function CellValue({
   def,
   locale,
   intlLocale,
+  editable = false,
 }: {
   value: unknown;
   column: ColumnConfig;
   def: FieldDef | undefined;
   locale: string;
   intlLocale: string;
+  /** The cell edits on double-click: a lookup link then follows only on Cmd / Ctrl-click. */
+  editable?: boolean;
 }): ReactNode {
   const { timeZone } = useTimezone();
   const kind = renderKind(column, def);
@@ -116,7 +119,7 @@ export function CellValue({
   }
   // A lookup shows its target's label as a link, unless the column asks for another render.
   if (def && lookupOf(def) && column.render === undefined) {
-    return <LookupValue def={def} value={value} field={column.field} />;
+    return <LookupValue def={def} value={value} field={column.field} editable={editable} />;
   }
   if (kind === "badge") return <Badges value={value} column={column} />;
   if (kind === "sparkline") {
