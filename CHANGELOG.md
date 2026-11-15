@@ -7,6 +7,11 @@ All notable changes to `@jsudc/react` are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-11-15
+
+Patch release of `@jsudc/react` alone; `@jsudc/core` and `@jsudc/server` stay
+0.3.0 and the peer range `^0.3.0` is unchanged.
+
 ### Fixed
 
 - A `row_link` drill-down onto a collection whose default renderer is kanban
@@ -292,7 +297,8 @@ First tagged version, installed from the GitHub tag.
   Serbian), theme and time-zone providers, the UI primitives.
 - `styles.css`, compiled at build time, and `tokens.css`, its raw source.
 
-[Unreleased]: https://github.com/digital-cube/jsudc-react/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/digital-cube/jsudc-react/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/digital-cube/jsudc-react/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/digital-cube/jsudc-react/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/digital-cube/jsudc-react/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/digital-cube/jsudc-react/compare/v0.1.1...v0.2.0
