@@ -102,7 +102,7 @@
   },
   "scripts": {
     "build": "vite build && tsc -p tsconfig.build.json && npm run build:css",
-    "build:css": "tailwindcss -i src/styles.css -o dist/styles.css --minify && node -e \"require('node:fs').copyFileSync('src/tokens.css', 'dist/tokens.css')\" && node scripts/check-css.mjs",
+    "build:css": "tailwindcss -i src/styles.css -o dist/styles.css --minify && node -e \"require('node:fs').copyFileSync('src/tokens.css', 'dist/tokens.css')\" && node scripts/check-css.mjs && node scripts/check-classes.mjs",
     "prepare": "npm run build",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "check:types": "tsc -p smoke/tsconfig.nodenext.json && tsc -p smoke/tsconfig.bundler.json",
