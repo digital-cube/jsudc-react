@@ -1,11 +1,18 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import type { ColumnColor, KanbanOptions, Row, SchemaDoc } from "@jsudc/core";
+import {
+  type ColumnColor,
+  type KanbanOptions,
+  lookupOf,
+  type Row,
+  type SchemaDoc,
+} from "@jsudc/core";
 import { CalendarDays } from "lucide-react";
 import type { CSSProperties, KeyboardEvent } from "react";
 import { avatarTone, initials } from "../cards/cardModel.js";
 import { useI18n } from "../i18n/i18n.js";
 import { cn } from "../lib/utils.js";
+import { useLookupLabels } from "../lookup/LookupValue.js";
 import { formatDate } from "../table/format.js";
 import { useUiKit } from "../ui-kit/context.js";
 import { isOverdue, priorityTone } from "./model.js";
@@ -73,7 +80,18 @@ export function KanbanCardBody({ row, opts, schema }: KanbanCardBodyProps) {
   const shownTags = tags.slice(0, cards.tags_max_visible);
   const due = card.due_field ? row[card.due_field] : null;
   const overdue = isOverdue(due);
-  const people = card.assignees_field ? strings(row[card.assignees_field]) : [];
+  // A lookup_array of people shows their labels, not their keys.
+  const assigneesDef = card.assignees_field ? schema.fields[card.assignees_field] : undefined;
+  const assigneeLabels = useLookupLabels(
+    lookupOf(assigneesDef) ? assigneesDef : undefined,
+    card.assignees_field ? row[card.assignees_field] : undefined,
+    card.assignees_field,
+  );
+  const people = !card.assignees_field
+    ? []
+    : lookupOf(assigneesDef)
+      ? assigneeLabels
+      : strings(row[card.assignees_field]);
   const footer = (card.footer_fields ?? [])
     .map((f) => row[f])
     .filter((v) => v !== null && v !== undefined && v !== "");

@@ -7,6 +7,39 @@ All notable changes to `@jsudc/react` are recorded here. The format follows
 
 ## [Unreleased]
 
+Needs `@jsudc/core` and `@jsudc/server` with lookups (the same release).
+
+### Added
+
+- Lookups, level 1: a `lookup` / `lookup_array` cell shows the target's
+  `label_field` as a link to the target filtered by the key (the bare key
+  until it resolves), a `lookup_array` as chips. Cards, kanban and calendar
+  details draw the same cell; kanban avatars read the labels.
+- `useUdcLookup(target, keys)` and `useUdcLookups`: one batch `list` with an
+  `in` filter, cached under `["udc", "lookup", collection, sortedKeys]`.
+  `useLookupBatch` / `UdcLookupBatch`: one call per lookup field for the rows
+  of a table or a board.
+- The `select` chip over a lookup field lists the target's rows by label
+  (`LookupSelectChip`), with a server-side search above 50 rows.
+- Inline edit of a lookup: `LookupCombobox`, a search over the target.
+- `row_link`: a row click opens the linked collection filtered by the row's
+  value; Cmd / Ctrl / middle click opens a new tab.
+- `UdcLinks` (`UdcProvider links`, `UdcLinksProvider`, `useUdcLinks`,
+  `defaultUdcLinks`, `filterHref`, `followLink`) and
+  `UdcReactRouterUrlState collectionPath`: where those links go.
+- `udcKeys.lookup`, `udcKeys.lookups`, `udcKeys.lookupOptions`.
+- A filter pill on a lookup field shows the target's labels.
+
+### Changed
+
+- `useUdcMutate` also invalidates the lookups of the collection it wrote.
+- The kanban finds its board collection from a `lookup` board field too
+  (`boardSource`), not only from a `relation`'s `ref`.
+- A filter tree keeps a condition on `id` (the row id) instead of pruning it
+  as an unknown field.
+- `CellEditor`'s `onCommit` and `fromEditorValue` take `EditorRaw`
+  (`string | boolean | { picked }`).
+
 ## [0.2.1] - 2026-10-30
 
 Released in lockstep with `@jsudc/server` 0.2.1; `@jsudc/core` stays 0.2.0 and

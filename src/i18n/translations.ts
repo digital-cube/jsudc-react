@@ -241,6 +241,10 @@ export const TRANSLATIONS: Translations = {
     MAX: { en: "Max", sr: "Do" },
     OPTIONS_FILTER: { en: "Filter options", sr: "Filtriraj opcije" },
     SELECTED_N: { en: "{n} selected", sr: "izabrano: {n}" },
+    LOOKUP_SEARCH: { en: "Search…", sr: "Pretraga…" },
+    LOOKUP_NO_MATCH: { en: "No match", sr: "Nema rezultata" },
+    LOOKUP_MORE: { en: "{n} more: type to search", sr: "Još {n}: kucajte za pretragu" },
+    LOOKUP_NONE: { en: "— none —", sr: "— bez vrednosti —" },
     FILTER: { en: "Filter", sr: "Filter" },
     FILTER_TITLE: { en: "Filter conditions", sr: "Uslovi filtera" },
     FILTER_HINT: {

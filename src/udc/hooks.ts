@@ -409,7 +409,13 @@ export function useUdcMutate(collection: string) {
         }
       }
     },
-    onSettled: () => qc.invalidateQueries({ queryKey: udcKeys.lists(collection) }),
+    // A row of this collection may be another collection's lookup label: those batches go stale too.
+    onSettled: () =>
+      Promise.all([
+        qc.invalidateQueries({ queryKey: udcKeys.lists(collection) }),
+        qc.invalidateQueries({ queryKey: udcKeys.lookups(collection) }),
+        qc.invalidateQueries({ queryKey: ["udc", "lookup-options", collection] }),
+      ]),
   });
 }
 

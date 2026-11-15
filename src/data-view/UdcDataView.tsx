@@ -314,6 +314,7 @@ export function UdcDataView({ collection, renderers }: UdcDataViewProps) {
                     state={state.chips}
                     onChange={state.setChips}
                     label={chipLabel}
+                    schema={schema}
                   />
                 ) : null}
                 {live?.filterable.fields.length ? (
@@ -374,6 +375,7 @@ export function UdcDataView({ collection, renderers }: UdcDataViewProps) {
               tree={userTree}
               onChange={setUserTree}
               fieldLabel={fieldLabel}
+              schema={schema}
             />
             <Button
               size="sm"

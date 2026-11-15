@@ -40,6 +40,46 @@ export { FALLBACK_ICON, resolveIcon } from "./icons/resolve.js";
 export { THEME_STORAGE_KEY, type Theme, ThemeProvider, useTheme } from "./lib/theme.js";
 export { cn, humanize, storage } from "./lib/utils.js";
 export {
+  type BatchEntry,
+  batchCovers,
+  type LookupBatch,
+  UdcLookupBatch,
+  useLookupBatch,
+  useLookupBatchContext,
+} from "./lookup/batch.js";
+export { LookupCombobox } from "./lookup/LookupCombobox.js";
+export { LookupSelectChip } from "./lookup/LookupSelectChip.js";
+export { LookupValue, useLookupLabels, useLookupRows } from "./lookup/LookupValue.js";
+export { lookupExtras, lookupLabel } from "./lookup/label.js";
+export {
+  defaultUdcLinks,
+  filterHref,
+  followLink,
+  type UdcLinks,
+  UdcLinksProvider,
+  useUdcLinks,
+} from "./lookup/links.js";
+export {
+  LOOKUP_OPTIONS_LIMIT,
+  type LookupOption,
+  type LookupOptionsResult,
+  optionsFilter,
+  useLookupOptions,
+} from "./lookup/options.js";
+export {
+  asLookup,
+  fetchLookupRows,
+  keyString,
+  type LookupRequest,
+  type LookupRows,
+  lookupKeys,
+  lookupQuery,
+  type UdcLookupResult,
+  useUdcLookup,
+  useUdcLookups,
+  valueKeys,
+} from "./lookup/useUdcLookup.js";
+export {
   UdcRenderersProvider,
   type UdcRenderersProviderProps,
   useRendererRegistry,

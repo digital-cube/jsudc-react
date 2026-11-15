@@ -1,5 +1,6 @@
 import type { UdcClient } from "@jsudc/core/client";
 import type { ReactNode } from "react";
+import { type UdcLinks, UdcLinksProvider } from "../lookup/links.js";
 import { UdcRenderersProvider } from "../renderers/context.js";
 import type { RendererRegistry } from "../renderers/types.js";
 import { UdcUiProvider } from "../ui-kit/context.js";
@@ -19,15 +20,23 @@ export function UdcProvider({
   client,
   kit,
   renderers,
+  links,
   children,
 }: {
   client: UdcClient;
+  /**
+   * Where a lookup link and a `row_link` go: the address of a collection's
+   * view, and how to navigate there. Default `defaultUdcLinks` (`/c/<name>`);
+   * `UdcReactRouterUrlState collectionPath` sets it for react-router.
+   */
+  links?: UdcLinks;
   kit?: UiKit;
   /** `createRendererRegistry(tableRenderer, …)`, or `RENDERERS` from `@jsudc/react/all`. */
   renderers?: RendererRegistry;
   children: ReactNode;
 }) {
   let inner = <UdcClientContext.Provider value={client}>{children}</UdcClientContext.Provider>;
+  if (links) inner = <UdcLinksProvider links={links}>{inner}</UdcLinksProvider>;
   if (renderers) inner = <UdcRenderersProvider renderers={renderers}>{inner}</UdcRenderersProvider>;
   return kit ? <UdcUiProvider kit={kit}>{inner}</UdcUiProvider> : inner;
 }

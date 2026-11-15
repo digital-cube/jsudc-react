@@ -93,6 +93,7 @@ collections, so each one starts from a fresh view.
 | `TooltipProvider`                                     | yes    | Radix tooltips on headers, chips and buttons; with your own kit, `kit.TooltipProvider` (see [Bring your own primitives](#bring-your-own-primitives))  |
 | `Toaster`                                             | yes    | save, conflict and schema-edit toasts (`useToast`); with your own kit, `kit.Toaster`                                                                  |
 | `UdcUrlStateProvider` / `UdcReactRouterUrlState`      | no     | where search, filters, sort, paging and the tab live; without it `window.location` (see [URL state](#url-state))                                      |
+| `UdcLinksProvider` / `collectionPath`                 | no     | where lookup links and `row_link`s go; without it `/c/<collection>` (see [Lookups and drill-down](#lookups-and-drill-down))                           |
 | `TimezoneProvider`                                    | no     | without it instants are shown in the browser's zone; with it the user's pick, kept in `localStorage` (`udc-tz`)                                       |
 | `ThemeProvider`                                       | no     | `useTheme()` toggles the `dark` class on `<html>` and keeps the choice (`udc-theme`); any other way of setting that class works too                   |
 
@@ -522,6 +523,57 @@ const messages: Messages = {
 - `useI18n()` gives `t`, `tMaybe` (`null` when missing), `locale`,
   `intlLocale`, `locales` and `setLocale` to your own components too.
 
+## Lookups and drill-down
+
+A `lookup` / `lookup_array` field (see `@jsudc/core`) holds the key of a row of
+another collection. The library resolves the labels on the client; the server
+only stores and filters keys.
+
+- **The cell** shows the target's `label_field` as a link to the target
+  collection filtered by that key (`?f=` with `{field: <key field>, op: eq}`),
+  and the bare key until the label arrives or when no target row has it. A
+  `lookup_array` is a row of such chips; `extra_fields` are the link's tooltip.
+  Cards, the kanban card's detail and the calendar's event detail draw the same
+  cell; the kanban card's avatars read the labels of an `assignees_field` that
+  is a `lookup_array`. In an `editable` cell a plain click on a label stays in
+  the cell (double-click edits) and Cmd / Ctrl-click opens the target. A filter
+  pill on a lookup field shows the labels too.
+- **One call per lookup field**, not per cell: the table (and the kanban
+  board) resolve the keys of the rows on screen with `useLookupBatch` and hand
+  them down through `<UdcLookupBatch>`. A `LookupValue` outside a batch
+  resolves its own keys.
+- **The `select` chip** over a lookup field lists the target's rows by label
+  and filters by key (`in`). Up to 50 rows are listed as they are; a larger
+  target gets a search box that asks the server (`contains` on `label_field`).
+- **Inline edit**: an `editable` lookup column edits with a combobox that
+  searches the target. On a `lookup` a pick writes the key ("none" clears it);
+  on a `lookup_array` picks add and remove keys (Backspace removes the last),
+  and Enter on an empty search writes the list. Escape cancels.
+- **Drill-down**: a view with `row_link` opens the linked collection, filtered
+  by a value of the clicked row, on a row click; Cmd / Ctrl-click and the
+  middle button open a new tab. Rows show a pointer. A click in an editable
+  cell, on a link or a control stays where it is (double-click still edits).
+
+```ts
+const { row, rows, isLoading } = useUdcLookup("boards", ["b1", "b2"]); // keys are ids
+const people = useUdcLookup(def.lookup, row.assignees as string[]); // a lookup block
+```
+
+`useUdcLookup(target, keys)` makes one `list` with an `in` filter over the
+key field, cached under `["udc", "lookup", collection, sortedKeys]`; a write
+to the target collection (`useUdcMutate`) invalidates it.
+
+**Where links go.** The library has no routes of its own, so the host says
+where a collection's view is mounted. Under react-router:
+
+```tsx
+<UdcReactRouterUrlState collectionPath={(c) => `/udc/${c}`}>…</UdcReactRouterUrlState>;
+```
+
+Otherwise pass `links={{ href, navigate }}` to `UdcProvider` (`UdcLinks`).
+Without either, links go to `/c/<collection>` and are followed with
+`history.pushState` and a `popstate` event (`defaultUdcLinks`).
+
 ## API
 
 The package root (`dist/index.d.ts`) has the data view, the providers, the
@@ -536,7 +588,11 @@ registry and everything not tied to one renderer. Beyond the above:
 `UrlStateAdapter` type; `UdcUiProvider`, `useUiKit` and the `UiKit` type with
 its props types; `resolveIcon` with the `lucide:<name>` icons the package
 bundles (`LUCIDE_ICONS`); and the zone helpers `allZones`, `offsetLabel`,
-`zoneCity`.
+`zoneCity`; the lookups: `useUdcLookup`, `useUdcLookups`, `useLookupBatch`,
+`UdcLookupBatch`, `LookupValue`, `useLookupLabels`, `useLookupOptions`,
+`LookupSelectChip`, `LookupCombobox`, `UdcLinksProvider`, `useUdcLinks`,
+`defaultUdcLinks`, `filterHref`, `followLink` (the hooks without markup are in
+`@jsudc/react/headless` too).
 
 The subpaths: one per renderer and `@jsudc/react/all` (see
 [Renderers](#renderers)), `@jsudc/react/headless` (see [Headless](#headless)),
