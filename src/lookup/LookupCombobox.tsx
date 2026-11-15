@@ -156,7 +156,7 @@ export function LookupCombobox({
         role="listbox"
         aria-multiselectable={multi || undefined}
         data-testid="lookup-options"
-        className="udc-scroll-thin udc:absolute udc:top-full udc:-left-1.5 udc:z-30 udc:mt-1 udc:max-h-64 udc:w-64 udc:overflow-y-auto udc:rounded-md udc:border udc:border-border udc:bg-popover udc:p-1 udc:text-popover-foreground udc:shadow-md"
+        className="udc-scroll-thin udc:absolute udc:top-full udc:-left-1.5 udc:z-30 udc:mt-1 udc:max-h-64 udc:w-64 udc:overflow-y-auto udc:rounded-md udc:border udc:border-border udc:bg-surface-raised udc:p-1 udc:text-foreground udc:shadow-md"
       >
         {rows.map((o, i) => {
           const selected = o

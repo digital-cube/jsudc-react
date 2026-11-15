@@ -15,6 +15,17 @@ All notable changes to `@jsudc/react` are recorded here. The format follows
   in `?f=` (at the root or under `and`s); an unknown `?board=` falls back to it,
   and only then to the first board. `boardFromFilter(tree, boardField)` is
   exported from the headless entry with the rest of the kanban model.
+- The option list of `LookupCombobox` (the inline editor of a `lookup` /
+  `lookup_array` cell) had no background: it used `udc:bg-popover` /
+  `udc:text-popover-foreground`, which the theme does not define, so the
+  sheet had no rule for them. It now uses `udc:bg-surface-raised` /
+  `udc:text-foreground`, like the other popovers.
+
+### Added
+
+- `scripts/check-classes.mjs`, run by `build:css`: the build fails when a
+  `udc:` class used in `src` produces no rule in `dist/styles.css`, so a
+  missing theme token or a misspelt utility cannot ship again.
 
 ## [0.3.0] - 2026-11-15
 
