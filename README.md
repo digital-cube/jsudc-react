@@ -41,7 +41,7 @@ npm install @jsudc/react @jsudc/core \
 # then the peers of the renderers you register (see Renderers), all of them:
 npm install @tanstack/react-table leaflet recharts @dnd-kit/core @dnd-kit/sortable @dnd-kit/utilities
 # or straight from a GitHub tag:
-npm install github:digital-cube/jsudc-core#v0.5.0 github:digital-cube/jsudc-react#v0.5.0
+npm install github:digital-cube/jsudc-core#v0.5.0 github:digital-cube/jsudc-react#v0.5.1
 ```
 
 ## Quick start
@@ -771,7 +771,7 @@ What happens:
 `UdcClient.changes`. A `UdcProvider` without `changes` inside one with the
 same client uses the outer feed; `changes={false}` turns it off below.
 
-**When the user behind the client changes.** The server runs the plugin's
+**When the user behind the client changes** (0.5.1). The server runs the plugin's
 `context` once, when a stream opens, and keeps that scope for the life of the
 stream. With `headers` as a function (`new UdcClient({ headers: () => ({
 "x-user": current }) })`: a demo user switcher, an account switcher,
