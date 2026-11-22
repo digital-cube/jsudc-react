@@ -1,19 +1,22 @@
 import type { FilterChipConfig, FilterNode, Row } from "@jsudc/core";
 import { BookOpen, FileCode2, InfinityIcon, Rows3 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import { ChartWindowControl } from "../chart/ChartWindowControl.js";
 import { useChartWindow } from "../chart/useChartWindow.js";
 import { andWindow } from "../chart/window.js";
 import { schemaLabelTerms, tableSection, useI18n } from "../i18n/i18n.js";
 import { cn, humanize } from "../lib/utils.js";
 import { useRendererRegistry } from "../renderers/context.js";
-import { rendererEntry, rendererTabs } from "../renderers/registry.js";
+import { rendererEntry, rendererTabs, resolveTab } from "../renderers/registry.js";
 import type { FolderNav, RendererCount, RendererRegistry } from "../renderers/types.js";
 import { useSchemaEditor } from "../schema-editor/useSchemaEditor.js";
 import { ErrorState, NoRendererState } from "../table/states.js";
 import { useUdcCollection, useUdcDescribe } from "../udc/hooks.js";
 import type { PagingMode } from "../udc/keys.js";
 import { useUiKit } from "../ui-kit/context.js";
+import type { UrlStateAdapter } from "../url-state/adapter.js";
+import { createMemoryUrlStateAdapter, prefixUrlStateAdapter } from "../url-state/adapters.js";
+import { UdcUrlStateProvider, useUrlStateAdapter } from "../url-state/UrlState.js";
 import { composeFilter } from "./compose.js";
 import { DocTab } from "./DocTab.js";
 import { FilePreview } from "./FilePreview.js";
@@ -37,9 +40,123 @@ export interface UdcDataViewProps {
   collection: string;
   /** The renderers this view draws its tabs with; the provider's registry when absent. */
   renderers?: RendererRegistry;
+  /**
+   * A filter of the host's (the open folder of a mail client): ANDed into every
+   * list the view and its renderers load, counted in "of M", but not shown as a
+   * chip or pill, not written to the URL, not removed by "clear filters" and not
+   * "the user filtered" for the empty state.
+   */
+  filter?: FilterNode | undefined;
+  /** Which parts of the view's frame are drawn: everything by default. See `UdcDataViewChrome`. */
+  chrome?: UdcDataViewChromePreset | UdcDataViewChrome | undefined;
+  /** The paging mode to open in, instead of the view's `pagination`. */
+  pagingMode?: PagingMode | undefined;
+  /** Host content at the start of the toolbar, before the search box. */
+  toolbarStart?: ReactNode;
+  /** Host content at the end of the toolbar, after the row count. */
+  toolbarEnd?: ReactNode;
+  /**
+   * Where the view keeps its state (search, chips, filter, sort, paging, tab, and
+   * the kanban board, chart window and calendar range of its renderers):
+   * `"url"` (default) the adapter in effect (`UdcUrlStateProvider`, else the
+   * address bar); `"memory"` a store of this view's own that never touches the
+   * address bar; or any `UrlStateAdapter`.
+   */
+  urlState?: "url" | "memory" | UrlStateAdapter | undefined;
+  /**
+   * A prefix for every parameter the view and its renderers read and write
+   * (`inbox.` → `?inbox.q=…&inbox.sort=…`): other parameters are neither read
+   * nor removed, so two views, or a view and a host route with a `q` of its
+   * own, share one query string. End it with a separator.
+   */
+  urlPrefix?: string | undefined;
 }
 
-export function UdcDataView({ collection, renderers }: UdcDataViewProps) {
+/** `full`: today's view, every part drawn. `embedded`: one pane of a host's screen, no part drawn. */
+export type UdcDataViewChromePreset = "full" | "embedded";
+
+/**
+ * The view's frame, part by part: `true` draws the part. A flag left out takes
+ * the preset's value (`full`: all `true`; `embedded`: all `false`).
+ */
+export interface UdcDataViewChrome {
+  preset?: UdcDataViewChromePreset;
+  /** The title and description above the toolbar. */
+  header?: boolean;
+  /** The renderer tabs (table, cards, kanban, …). */
+  tabs?: boolean;
+  /**
+   * The pages / infinite toggle. Without it the mode is the `pagingMode` prop,
+   * else the view's `pagination`, never a choice stored by an earlier session.
+   */
+  pagingToggle?: boolean;
+  /** The Doc pseudo-tab (the collection's README). */
+  docTab?: boolean;
+  /** The Source pseudo-tab (the collection's source file). */
+  sourceTab?: boolean;
+  /** The card around the toolbar and rows: its border, shadow, rounding and outer margins. */
+  frame?: boolean;
+}
+
+/** Every flag of `chrome` resolved against its preset. */
+export function resolveChrome(
+  chrome: UdcDataViewChromePreset | UdcDataViewChrome | undefined,
+): Required<Omit<UdcDataViewChrome, "preset">> {
+  const flags: UdcDataViewChrome = typeof chrome === "string" ? { preset: chrome } : (chrome ?? {});
+  const on = flags.preset !== "embedded";
+  return {
+    header: flags.header ?? on,
+    tabs: flags.tabs ?? on,
+    pagingToggle: flags.pagingToggle ?? on,
+    docTab: flags.docTab ?? on,
+    sourceTab: flags.sourceTab ?? on,
+    frame: flags.frame ?? on,
+  };
+}
+
+/** `a AND b AND …` of the parts that are set; `undefined` when none is. */
+function andAll(...parts: (FilterNode | undefined)[]): FilterNode | undefined {
+  const set = parts.filter((p): p is FilterNode => p !== undefined);
+  if (set.length <= 1) return set[0];
+  return { and: set };
+}
+
+export function UdcDataView(props: UdcDataViewProps) {
+  const { urlState, urlPrefix } = props;
+  const inEffect = useUrlStateAdapter();
+  // One memory store per mounted view; created even when unused, it costs an object.
+  const [memory] = useState(createMemoryUrlStateAdapter);
+  const base =
+    urlState === "memory" ? memory : urlState && urlState !== "url" ? urlState : inEffect;
+  const adapter = useMemo(
+    () => (urlPrefix ? prefixUrlStateAdapter(base, urlPrefix) : base),
+    [base, urlPrefix],
+  );
+  // Without either prop the tree is exactly today's: no provider of its own.
+  if (adapter === inEffect) return <DataViewBody {...props} />;
+  return (
+    <UdcUrlStateProvider adapter={adapter}>
+      <DataViewBody {...props} />
+    </UdcUrlStateProvider>
+  );
+}
+
+function DataViewBody({
+  collection,
+  renderers,
+  filter: hostFilterProp,
+  chrome: chromeProp,
+  pagingMode,
+  toolbarStart,
+  toolbarEnd,
+}: UdcDataViewProps) {
+  const chrome = resolveChrome(chromeProp);
+  // A host passing a new but equal filter object each render keeps the same filter.
+  const hostKey = JSON.stringify(hostFilterProp ?? null);
+  const hostFilter = useMemo<FilterNode | undefined>(
+    () => (hostKey === "null" ? undefined : (JSON.parse(hostKey) as FilterNode)),
+    [hostKey],
+  );
   const provided = useRendererRegistry();
   const registry = renderers ?? provided;
   const { Button, Segmented, Skeleton } = useUiKit();
@@ -56,10 +173,14 @@ export function UdcDataView({ collection, renderers }: UdcDataViewProps) {
   const docs: Partial<Record<string, string>> | undefined = live?.docs;
   const docText = docs?.[locale] ?? docs?.en;
   const hasSource = live?.capabilities.source_yaml === true;
+  const docOn = Boolean(docText) && chrome.docTab;
+  const sourceOn = hasSource && chrome.sourceTab;
   const state = useDataViewState(collection, view, {
-    doc: Boolean(docText),
-    source: hasSource,
+    doc: docOn,
+    source: sourceOn,
     renderers: registry,
+    ...(pagingMode ? { mode: pagingMode } : {}),
+    ...(chrome.pagingToggle ? {} : { fixedMode: true }),
   });
   // The README and the source file are pages of their own: no rows, no toolbar.
   const onSource = state.tab === SOURCE_TAB;
@@ -136,10 +257,15 @@ export function UdcDataView({ collection, renderers }: UdcDataViewProps) {
   const onChart = state.tab === "chart";
   const chartWindow = win && !onPage && (onChart || win.explicit) ? win : undefined;
   const windowCond = chartWindow?.cond;
-  const filter = useMemo(() => andWindow(userFilter, windowCond), [userFilter, windowCond]);
+  // The host's filter is ANDed into every list, under whatever the user picked.
+  const unwindowedFilter = useMemo(() => andAll(hostFilter, userFilter), [hostFilter, userFilter]);
+  const filter = useMemo(
+    () => andWindow(unwindowedFilter, windowCond),
+    [unwindowedFilter, windowCond],
+  );
   const baseFilter = useMemo(
-    () => andWindow(userBaseFilter, windowCond),
-    [userBaseFilter, windowCond],
+    () => andWindow(andAll(hostFilter, userBaseFilter), windowCond),
+    [hostFilter, userBaseFilter, windowCond],
   );
 
   const entry = onPage ? undefined : rendererEntry(registry, state.tab);
@@ -180,20 +306,32 @@ export function UdcDataView({ collection, renderers }: UdcDataViewProps) {
     );
   }
 
-  // The window is not a filter the user can clear: "clear filters" leaves it.
+  // The window and the host's filter are not filters the user can clear: "clear filters" leaves them.
   const filtered = userFilter !== undefined;
   const fmt = (n: number) => new Intl.NumberFormat(intlLocale).format(n);
   const shown = paging ? data.rows.length : (ownCount?.shown ?? 0);
   const total = paging ? data.total : (ownCount?.total ?? null);
   const fetchedAt = paging ? data.fetchedAt : (ownCount?.fetchedAt ?? null);
   const stale = paging ? data.stale : ownCount?.stale === true;
+  // Without the renderer tabs, a Doc or Source tab still needs a way back: the renderer in use.
+  const rendererNames = view
+    ? chrome.tabs
+      ? view.available_renderers
+      : [
+          onPage
+            ? resolveTab(registry, "", view.available_renderers, view.default_renderer ?? "table")
+            : state.tab,
+        ]
+    : [];
   const tabs = view
     ? [
-        ...(docText ? [{ name: DOC_TAB, entry: undefined, doc: true }] : []),
-        ...rendererTabs(registry, view.available_renderers).map((tab) => ({ ...tab, doc: false })),
-        ...(hasSource ? [{ name: SOURCE_TAB, entry: undefined, doc: true }] : []),
+        ...(docOn ? [{ name: DOC_TAB, entry: undefined, doc: true }] : []),
+        ...rendererTabs(registry, rendererNames).map((tab) => ({ ...tab, doc: false })),
+        ...(sourceOn ? [{ name: SOURCE_TAB, entry: undefined, doc: true }] : []),
       ]
     : [];
+  const showToggle = Boolean(view) && paging && chrome.pagingToggle;
+  const showTabs = Boolean(view) && tabs.length > 1;
   const resetKey = JSON.stringify([filter ?? null, sort, state.mode]);
 
   return (
@@ -202,87 +340,106 @@ export function UdcDataView({ collection, renderers }: UdcDataViewProps) {
       data-testid="data-view"
       data-collection={collection}
     >
-      <header className="udc:flex udc:flex-wrap udc:items-end udc:justify-between udc:gap-x-6 udc:gap-y-2 udc:px-6 udc:pt-5 udc:pb-4">
-        <div className="udc:min-w-0">
-          <h1 className="udc:text-lg udc:font-semibold udc:tracking-tight">{title}</h1>
-          {description ? (
-            <p className="udc:text-[13px] udc:text-muted-foreground">{description}</p>
+      {chrome.header || showToggle || showTabs ? (
+        <header className="udc:flex udc:flex-wrap udc:items-end udc:justify-between udc:gap-x-6 udc:gap-y-2 udc:px-6 udc:pt-5 udc:pb-4">
+          {chrome.header ? (
+            <div className="udc:min-w-0" data-testid="data-view-title">
+              <h1 className="udc:text-lg udc:font-semibold udc:tracking-tight">{title}</h1>
+              {description ? (
+                <p className="udc:text-[13px] udc:text-muted-foreground">{description}</p>
+              ) : null}
+            </div>
           ) : null}
-        </div>
-        <div className="udc:flex udc:flex-wrap udc:items-center udc:gap-2">
-          {view && paging ? (
-            <Segmented<PagingMode>
-              aria-label={t("APP", "PAGING")}
-              data-testid="paging-toggle"
-              value={state.mode}
-              onChange={state.setMode}
-              options={[
-                {
-                  value: "pages",
-                  testId: "paging-pages",
-                  label: (
-                    <>
-                      <Rows3 />
-                      {t("APP", "PAGING_PAGES")}
-                    </>
-                  ),
-                },
-                {
-                  value: "infinite",
-                  testId: "paging-infinite",
-                  label: (
-                    <>
-                      <InfinityIcon />
-                      {t("APP", "PAGING_INFINITE")}
-                    </>
-                  ),
-                },
-              ]}
-            />
-          ) : null}
-          {view && paging && tabs.length > 1 ? (
-            <span aria-hidden className="udc:mx-1 udc:h-5 udc:w-px udc:bg-border-strong/70" />
-          ) : null}
-          {view && tabs.length > 1 ? (
-            <Segmented
-              aria-label="Renderer"
-              data-testid="tab-switch"
-              value={state.tab}
-              onChange={state.setTab}
-              options={tabs.map(({ name, entry: e, doc }) => {
-                if (doc) {
-                  const PageIcon = name === SOURCE_TAB ? FileCode2 : BookOpen;
+          <div
+            className={cn(
+              "udc:flex udc:flex-wrap udc:items-center udc:gap-2",
+              !chrome.header && "udc:ml-auto",
+            )}
+          >
+            {showToggle ? (
+              <Segmented<PagingMode>
+                aria-label={t("APP", "PAGING")}
+                data-testid="paging-toggle"
+                value={state.mode}
+                onChange={state.setMode}
+                options={[
+                  {
+                    value: "pages",
+                    testId: "paging-pages",
+                    label: (
+                      <>
+                        <Rows3 />
+                        {t("APP", "PAGING_PAGES")}
+                      </>
+                    ),
+                  },
+                  {
+                    value: "infinite",
+                    testId: "paging-infinite",
+                    label: (
+                      <>
+                        <InfinityIcon />
+                        {t("APP", "PAGING_INFINITE")}
+                      </>
+                    ),
+                  },
+                ]}
+              />
+            ) : null}
+            {showToggle && showTabs ? (
+              <span aria-hidden className="udc:mx-1 udc:h-5 udc:w-px udc:bg-border-strong/70" />
+            ) : null}
+            {showTabs ? (
+              <Segmented
+                aria-label="Renderer"
+                data-testid="tab-switch"
+                value={state.tab}
+                onChange={state.setTab}
+                options={tabs.map(({ name, entry: e, doc }) => {
+                  if (doc) {
+                    const PageIcon = name === SOURCE_TAB ? FileCode2 : BookOpen;
+                    return {
+                      value: name,
+                      testId: `tab-${name}`,
+                      label: (
+                        <>
+                          <PageIcon />
+                          {t("APP", name === SOURCE_TAB ? "TAB_SOURCE" : "TAB_DOC")}
+                        </>
+                      ),
+                    };
+                  }
+                  const Icon = e?.icon;
                   return {
                     value: name,
                     testId: `tab-${name}`,
+                    disabled: e === undefined,
+                    ...(e ? {} : { tooltip: t("APP", "TAB_UNAVAILABLE", { name }) }),
                     label: (
                       <>
-                        <PageIcon />
-                        {t("APP", name === SOURCE_TAB ? "TAB_SOURCE" : "TAB_DOC")}
+                        {Icon ? <Icon /> : null}
+                        {e
+                          ? t("APP", e.labelKey)
+                          : (tMaybe("APP", `TAB_${name}`) ?? humanize(name))}
                       </>
                     ),
                   };
-                }
-                const Icon = e?.icon;
-                return {
-                  value: name,
-                  testId: `tab-${name}`,
-                  disabled: e === undefined,
-                  ...(e ? {} : { tooltip: t("APP", "TAB_UNAVAILABLE", { name }) }),
-                  label: (
-                    <>
-                      {Icon ? <Icon /> : null}
-                      {e ? t("APP", e.labelKey) : (tMaybe("APP", `TAB_${name}`) ?? humanize(name))}
-                    </>
-                  ),
-                };
-              })}
-            />
-          ) : null}
-        </div>
-      </header>
+                })}
+              />
+            ) : null}
+          </div>
+        </header>
+      ) : null}
 
-      <div className="udc:mx-6 udc:mb-6 udc:flex udc:min-h-0 udc:flex-1 udc:flex-col udc:overflow-hidden udc:rounded-xl udc:border udc:border-border udc:bg-surface udc:shadow-sm udc:shadow-black/[0.03]">
+      <div
+        data-testid="data-view-frame"
+        data-framed={chrome.frame}
+        className={
+          chrome.frame
+            ? "udc:mx-6 udc:mb-6 udc:flex udc:min-h-0 udc:flex-1 udc:flex-col udc:overflow-hidden udc:rounded-xl udc:border udc:border-border udc:bg-surface udc:shadow-sm udc:shadow-black/[0.03]"
+            : "udc:flex udc:min-h-0 udc:flex-1 udc:flex-col udc:overflow-hidden"
+        }
+      >
         <div
           data-testid="toolbar"
           className={cn(
@@ -292,6 +449,11 @@ export function UdcDataView({ collection, renderers }: UdcDataViewProps) {
               : "udc:flex udc:flex-wrap udc:items-center udc:gap-2 udc:border-b udc:border-border udc:px-3 udc:py-2.5",
           )}
         >
+          {toolbarStart != null && toolbarStart !== false ? (
+            <div data-testid="toolbar-start" className="udc:flex udc:items-center udc:gap-2">
+              {toolbarStart}
+            </div>
+          ) : null}
           {view ? (
             <>
               {/* A view without a `search` block has nothing to search: no box. */}
@@ -363,6 +525,14 @@ export function UdcDataView({ collection, renderers }: UdcDataViewProps) {
               <Skeleton className="udc:h-7 udc:w-24 udc:rounded-full" />
             </>
           )}
+          {toolbarEnd != null && toolbarEnd !== false ? (
+            <div
+              data-testid="toolbar-end"
+              className={cn("udc:flex udc:items-center udc:gap-2", !view && "udc:ml-auto")}
+            >
+              {toolbarEnd}
+            </div>
+          ) : null}
         </div>
 
         {live && userTree && !onPage ? (
@@ -403,7 +573,7 @@ export function UdcDataView({ collection, renderers }: UdcDataViewProps) {
             filter={filter}
             baseFilter={baseFilter}
             chartWindow={chartWindow}
-            unwindowedFilter={userFilter}
+            unwindowedFilter={unwindowedFilter}
             search={state.search}
             sort={sort}
             onSort={(field, multi) => state.setSort(cycleSort(sort, field, multi))}

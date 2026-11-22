@@ -1,0 +1,23 @@
+/*
+ * @jsudc/react, scoped: compiled at build time into dist/styles.scoped.css. The same
+ * utilities, tokens and resets as styles.css, but nothing in it can reach the host's own
+ * elements: no global preflight, no rule on `*`, `html` or `body`, no token on `:root`.
+ * scripts/scope-css.mjs moves every such rule inside the library's roots, `.udc-data-view`
+ * and `.udc-scope` (the default UI kit's dialogs, popovers, menus, tooltips and toasts, or
+ * any element of the host's that holds library components); scripts/check-scoped-css.mjs
+ * fails the build if a selector could still match outside them. Import one of the two
+ * sheets, not both.
+ */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme) prefix(udc);
+@import "tailwindcss/preflight.css" layer(base);
+@import "tailwindcss/utilities.css" layer(utilities) source(none);
+@import "./tokens.css";
+@source "./";
+
+@layer base {
+  /* tokens.css gives `body` the page background; a root of the library paints none. */
+  :where(.udc-data-view, .udc-scope) {
+    background-color: transparent;
+  }
+}

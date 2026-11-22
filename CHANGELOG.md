@@ -19,6 +19,42 @@ All notable changes to `@jsudc/react` are recorded here. The format follows
   unauthenticated error, in every view.
 - README section "Sessions": a cookie session, a CSRF header read per call,
   `onUnauthenticated` sending the user to the host's login.
+- Embedding a view (`UdcDataView`, every prop optional; without them the view
+  is unchanged):
+  - `filter`: a `FilterNode` of the host's, ANDed into every list the view and
+    its renderers load (`filter`, `baseFilter`, `unwindowedFilter` of
+    `RendererProps`) and counted in "of M"; not a chip or pill, not in the
+    URL, not removed by "clear filters", not "the user filtered".
+  - `chrome`: `"full"` (default), `"embedded"`, or `UdcDataViewChrome` flags
+    `header`, `tabs`, `pagingToggle`, `docTab`, `sourceTab`, `frame` over a
+    `preset`; `resolveChrome` resolves them. Without the paging toggle the mode
+    is `pagingMode`, else the view's `pagination`, not a stored choice.
+  - `pagingMode`: the mode to open in instead of the view's `pagination`.
+  - `toolbarStart`, `toolbarEnd`: host content in the toolbar.
+  - `urlPrefix` and `urlState` (`"url"`, `"memory"` or a `UrlStateAdapter`):
+    the view's parameters, its renderers' (`board`, `win`, `from`, `to`,
+    `preset`, `date`) included, under a prefix or in memory.
+- `prefixUrlStateAdapter(inner, prefix)` (reads and writes only its own keys
+  of any `UrlStateAdapter`) and `createMemoryUrlStateAdapter(initial?)` (a
+  query string in memory, `MemoryUrlStateAdapter`), from the root and
+  `@jsudc/react/headless`.
+- `useDataViewState` options `mode` (instead of the view's `pagination`) and
+  `fixedMode` (ignore `?mode=` and the stored choice).
+- `@jsudc/react/styles.scoped.css`: the same utilities, tokens and resets as
+  `styles.css`, applied only inside `.udc-data-view` and `.udc-scope`; no rule
+  on `*`, `html`, `body` or `:root`, no global preflight, no `@property`.
+  Built by `build:css` (`scripts/scope-css.mjs`) and guarded by
+  `scripts/check-scoped-css.mjs`. `styles.css` is unchanged.
+- The default UI kit's portalled content (dialogs and their overlay, popovers,
+  dropdown menus, selects, tooltips, the toast viewport) carries the class
+  `udc-scope`; `UDC_SCOPE_CLASS` from the root and `@jsudc/react/ui`.
+- `RendererProps` is a documented public contract (README "Renderers", with a
+  host-written renderer); `smoke/types.ts` compiles one against the published
+  declarations, so `npm run check:types` fails when the contract changes.
+- README sections "Embedding a view" (with a three-pane screen), "Writing a
+  renderer: the `RendererProps` contract" and "The scoped sheet".
+- `lightningcss` is a devDependency (it was already installed through
+  Tailwind and Vite); the build uses it to scope the sheet.
 
 ### Changed
 

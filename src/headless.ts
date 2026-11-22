@@ -68,4 +68,5 @@ export * from "./udc/client.js";
 export * from "./udc/hooks.js";
 export * from "./udc/keys.js";
 export * from "./url-state/adapter.js";
+export * from "./url-state/adapters.js";
 export * from "./url-state/UrlState.js";

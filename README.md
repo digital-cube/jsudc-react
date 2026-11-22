@@ -143,6 +143,80 @@ peer is optional, builds and the import throws
 when the module loads. The root, `/table`, `/cards`, `/calendar` and
 `/headless` load without it.
 
+### Writing a renderer: the `RendererProps` contract
+
+A host draws rows its own way (a message list, a timeline) by registering a
+renderer of its own; `UdcDataView` hands its `component` the props below. They
+are a **public contract**: from 0.4.0 none of them is renamed, removed or
+retyped outside a major release, and a prop added later is optional, so a
+renderer written today keeps compiling (the package's `npm run check:types`
+compiles a host-written renderer against the published declarations and fails
+when this table drifts).
+
+| Prop                                 | Type                                       | What it is                                                                                                                        |
+| ------------------------------------ | ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| `collection`                         | `string`                                   | the collection's name                                                                                                             |
+| `describe`                           | `DescribeResponse`                         | its schema, view and capabilities, soft-deleted fields already gone                                                               |
+| `data`                               | `UdcCollectionResult`                      | the view's paged list (`rows`, `total`, `isLoading`, `error`, `hasNextPage`, `fetchNextPage`, …); loaded only when `paging: true` |
+| `filter`                             | `FilterNode \| undefined`                  | everything that filters the rows, composed: the host's `filter`, search, chips, the filter tree, the chart window                 |
+| `baseFilter`                         | `FilterNode \| undefined`                  | `filter` without the search, for a renderer that searches what it loaded                                                          |
+| `unwindowedFilter`                   | `FilterNode \| undefined` (optional)       | `filter` without the chart window: what "of M" counts                                                                             |
+| `chartWindow`                        | `ChartWindowState \| undefined` (optional) | the chart window when one applies (already in `filter`)                                                                           |
+| `search`                             | `string`                                   | the search box as typed (for highlighting)                                                                                        |
+| `sort`, `onSort(field, multi)`       | `SortKey[]`, function                      | the sort and the header click that cycles it                                                                                      |
+| `mode`, `page`, `limit`, `onPage(n)` | `"pages" \| "infinite"`, numbers, function | the paging mode, the 1-based page, the page size, go to a page                                                                    |
+| `filtered`, `onClearFilters()`       | `boolean`, function                        | did the user filter (the host's `filter` does not count), and "clear filters" for the empty state                                 |
+| `resetKey`                           | `string`                                   | changes whenever the rows mean something else: scroll back to the top on it                                                       |
+| `onCount(count \| null)`             | function                                   | a renderer with `paging: false` reports what the toolbar's "Showing N of M" says (`RendererCount`)                                |
+| `onSchemaAction`                     | function (optional)                        | set when the schema may be edited and the renderer has `editMode`                                                                 |
+| `folder`                             | `FolderNav \| undefined` (optional)        | set when the view has `folder_options`                                                                                            |
+
+A renderer with `paging: true` draws `data` and needs nothing else; one with
+`paging: false` loads its own rows with `filter` (the hooks of
+`@jsudc/react/headless`, e.g. `useUdcAllRows`) and reports `onCount`. A message
+list of a mail client:
+
+```tsx
+import { createRendererRegistry, type RendererDefinition, type RendererProps } from "@jsudc/react";
+import { tableRenderer } from "@jsudc/react/table";
+import { Inbox } from "lucide-react";
+
+function MessageList({ data, filtered, onClearFilters, mode, page, limit, onPage }: RendererProps) {
+  if (data.isLoading) return <p>Loading…</p>;
+  if (data.rows.length === 0) {
+    return filtered ? <button onClick={onClearFilters}>Clear filters</button> : <p>No messages</p>;
+  }
+  return (
+    <div>
+      <ul>
+        {data.rows.map((row) => (
+          <li key={row.__meta.id}>
+            <b>{String(row.subject)}</b> · {String(row.from)}
+          </li>
+        ))}
+      </ul>
+      {mode === "infinite" && data.hasNextPage ? (
+        <button onClick={data.fetchNextPage}>More</button>
+      ) : null}
+      {mode === "pages" && data.total !== null && page * limit < data.total ? (
+        <button onClick={() => onPage(page + 1)}>Next</button>
+      ) : null}
+    </div>
+  );
+}
+
+export const messageList: RendererDefinition = {
+  name: "messages", // the name a view lists in available_renderers
+  component: MessageList,
+  icon: Inbox,
+  labelKey: "TAB_MESSAGES", // APP.TAB_MESSAGES, through `messages` of UdcI18nProvider
+  paging: true, // reads `data`: the list loads, the paging toggle shows
+  editMode: false,
+};
+
+const renderers = createRendererRegistry(tableRenderer, messageList);
+```
+
 ## Headless
 
 `@jsudc/react/headless` is the data layer under the renderers, with no JSX, no
@@ -162,7 +236,9 @@ URL state.
 - `applyTransforms`, `displayText`, `renderKind` and the cell formatters;
   the zone helpers and `useTimezone`;
 - the registry functions (`createRendererRegistry`, `resolveTab`) and the URL
-  state adapter, so its hooks behave exactly as inside `UdcDataView`.
+  state adapters (`windowLocationAdapter`, `prefixUrlStateAdapter`,
+  `createMemoryUrlStateAdapter`), so its hooks behave exactly as inside
+  `UdcDataView`.
 
 ## URL state
 
@@ -272,6 +348,136 @@ export function NextUrlState({ children }: { children: React.ReactNode }) {
 `useUrlSearchParams()` gives your own components the same
 `[params, setParams]` pair the view uses, over whichever adapter is in effect;
 a function passed to `setParams` receives the query string as it is now.
+
+Two views on one page, or a view inside a host route with parameters of its
+own: give each a prefix (`urlPrefix`) or keep its state in memory
+(`urlState="memory"`), see [Embedding a view](#embedding-a-view).
+
+## Embedding a view
+
+`UdcDataView` can be one pane of a host's screen rather than a page: the
+message list of a mail client between its folder list and its reading pane.
+Every prop below is optional; without them the view is what it always was.
+
+| Prop                         | What it does                                                                                                                                                                                    |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `filter`                     | a `FilterNode` of the host's (the open folder), ANDed into every list the view and its renderers load and counted in "of M"; not a chip or pill, not in the URL, not removed by "clear filters" |
+| `chrome`                     | which parts of the frame are drawn: `"full"` (default), `"embedded"`, or flags                                                                                                                  |
+| `pagingMode`                 | the paging mode to open in, instead of the view's `pagination`                                                                                                                                  |
+| `toolbarStart`, `toolbarEnd` | the host's own controls at the start (before the search) and at the end (after the count) of the toolbar                                                                                        |
+| `urlPrefix`                  | a prefix for every parameter the view and its renderers read and write                                                                                                                          |
+| `urlState`                   | `"url"` (default: the adapter in effect), `"memory"`, or any `UrlStateAdapter`                                                                                                                  |
+
+**The host's filter** is what the host decides and the user does not: the
+folder, the account, the project. The user still searches, picks chips and
+builds filters on top of it; "Clear" and "Clear filters" remove theirs and
+leave the host's; an empty folder shows "no rows", not "no rows match, clear
+filters". It reaches every renderer through `filter` / `baseFilter` (see
+[the contract](#writing-a-renderer-the-rendererprops-contract)), so the
+kanban, the calendar, the tree, the map and the chart load the folder's rows
+too. Change it and the view asks again; an equal object passed anew each
+render asks nothing.
+
+**Chrome.** `chrome` is a preset or flags, `true` drawing the part; a flag
+left out takes the preset's value (`full`: all on, `embedded`: all off):
+
+| Flag           | The part                                                                                                                                                |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `header`       | the title and the description                                                                                                                           |
+| `tabs`         | the renderer tabs (with Doc or Source still on, the renderer in use stays as the way back)                                                              |
+| `pagingToggle` | the pages / infinite switch; without it the mode is `pagingMode`, else the view's `pagination`, never a choice stored by an earlier session or `?mode=` |
+| `docTab`       | the Doc pseudo-tab (the collection's README)                                                                                                            |
+| `sourceTab`    | the Source pseudo-tab (the source file)                                                                                                                 |
+| `frame`        | the card around toolbar and rows: border, rounding, shadow and the outer margins                                                                        |
+
+`chrome="embedded"` leaves the toolbar and the rows only;
+`chrome={{ preset: "embedded", tabs: true }}` adds the tabs back. The parts
+keep their [stable classes](#stable-classes); `data-testid="data-view-frame"`
+carries `data-framed`.
+
+**URL state per view.** By default the view's parameters are the page's own
+(`?q=`, `?sort=`, …), which is right for a view that is the page. A pane
+shares the query string with its host and maybe with other views, so:
+
+- `urlPrefix="inbox."` makes the view and its renderers use `inbox.q`,
+  `inbox.sort`, `inbox.p`, `inbox.board`, `inbox.win`, … and leave every
+  other parameter alone: a host route with a `?q=` of its own is neither read
+  nor removed, and two views with different prefixes keep separate search,
+  sort and page on one page. End the prefix with a separator: every key that
+  starts with it is the view's.
+- `urlState="memory"` keeps the view's state in memory, its own store: the
+  address bar is never touched, and a reload starts afresh.
+- `urlState={adapter}` uses any `UrlStateAdapter` (a host store, a router
+  adapter); `urlPrefix` applies on top of it.
+
+Both are adapters, exported from the root and from `@jsudc/react/headless`
+for a host's own components and headless renderers:
+`prefixUrlStateAdapter(inner, prefix)` wraps any `UrlStateAdapter` (it reads
+and writes only its own keys; `subscribe` is the inner one's), and
+`createMemoryUrlStateAdapter(initial?)` is a store of its own (its `history`
+lists what was written). Because the prefix applies at the adapter, every
+parameter is covered, the kanban's, the chart's and the calendar's included:
+
+```tsx
+import { prefixUrlStateAdapter, UdcUrlStateProvider, useUrlStateAdapter } from "@jsudc/react";
+import { type ReactNode, useMemo } from "react";
+
+/** The host's own controls of the pane share the view's `inbox.` parameters. */
+function InboxPane({ children }: { children: ReactNode }) {
+  const inEffect = useUrlStateAdapter();
+  const adapter = useMemo(() => prefixUrlStateAdapter(inEffect, "inbox."), [inEffect]);
+  // Inside: useUrlSearchParams() sees `q` where the address bar has `inbox.q`.
+  return <UdcUrlStateProvider adapter={adapter}>{children}</UdcUrlStateProvider>;
+}
+```
+
+**A three-pane screen.** The folder list and the reading pane are the
+host's; the message list is a data view with the folder as its filter, no
+frame, the host's buttons in the toolbar and its state under `list.`:
+
+```tsx
+import type { FilterNode } from "@jsudc/core";
+import { UdcDataView } from "@jsudc/react";
+import { useState } from "react";
+import "@jsudc/react/styles.scoped.css";
+
+const FOLDERS = ["inbox", "sent", "archive"] as const;
+
+export function Mail() {
+  const [folder, setFolder] = useState<(typeof FOLDERS)[number]>("inbox");
+  const inFolder: FilterNode = { field: "folder", op: "eq", value: folder };
+
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "200px 1fr 1fr", height: "100vh" }}>
+      <nav>
+        {FOLDERS.map((f) => (
+          <button key={f} aria-current={f === folder} onClick={() => setFolder(f)}>
+            {f}
+          </button>
+        ))}
+      </nav>
+
+      <UdcDataView
+        collection="messages"
+        renderers={renderers} // createRendererRegistry(tableRenderer, messageList), see Renderers
+        filter={inFolder}
+        chrome={{ preset: "embedded", tabs: true }}
+        pagingMode="infinite"
+        urlPrefix="list."
+        toolbarStart={<button onClick={() => compose()}>Compose</button>}
+        toolbarEnd={<button onClick={() => syncMailbox()}>Sync</button>}
+      />
+
+      <article>{/* the host's reading pane */}</article>
+    </div>
+  );
+}
+```
+
+The address bar then reads `/mail?list.q=invoice&list.sort=date:desc`, and a
+parameter the host keeps for itself (`?folder=`, `?q=`) stays untouched.
+Opening a row in the reading pane is row activation, a later item of this
+release; until then a host renderer's rows can call a callback of the host's.
 
 ## Bring your own primitives
 
@@ -399,10 +605,57 @@ The stylesheet also carries the library's base rules (`border-color` on `*`,
 `body` font and colours, pointer cursor on buttons) in `@layer base`; any
 unlayered CSS of the host wins over them.
 
+### The scoped sheet: a stylesheet that leaves the host alone
+
+`styles.css` is made for a page that is the library's: its preflight resets
+every `h1`, `button` and list of the page, its `body` rule sets the page's
+font and colours, and its tokens sit on `:root`, where they overwrite a
+host's own `--background` or `--primary`. A host that embeds a view in pages
+of its own imports the scoped sheet instead (one of the two, not both):
+
+```ts
+import "@jsudc/react/styles.scoped.css";
+```
+
+It has the same utilities, tokens and resets, applied only inside the
+library's roots: `.udc-data-view`, and `.udc-scope` (`UDC_SCOPE_CLASS`), which
+the default UI kit puts on everything it portals out of the view (dialogs,
+popovers, menus, selects, tooltips, toasts). There is no rule on `*`, `html`,
+`body` or `:root`, no global preflight and no `@property` registration, so
+the host's elements compute exactly the styles they computed before; the
+build fails if a selector of the sheet could match an element outside a root
+(`scripts/check-scoped-css.mjs`), and a test compares the computed styles of a
+host's page with and without it in headless Chrome.
+
+| Situation                                                                | Sheet               |
+| ------------------------------------------------------------------------ | ------------------- |
+| the page is the library's (an admin, a back office), or a new app        | `styles.css`        |
+| the view is a pane of the host's own pages, with the host's own base CSS | `styles.scoped.css` |
+| the host's tokens share the generic names (`--background`, `--primary`)  | `styles.scoped.css` |
+
+What changes with it:
+
+- **Theming:** the tokens are declared on the roots, at zero specificity
+  (`:where(.udc-data-view, .udc-scope)`), so the host restyles the library on
+  the roots, not on `:root`: `.udc-data-view, .udc-scope { --primary: …; }`.
+  `.dark` on any ancestor (or on the root itself) switches both themes as
+  before.
+- **Components outside a view:** a `LookupCombobox` or a schema dialog
+  rendered by the host outside `<UdcDataView>` needs a root around it:
+  `<div className={UDC_SCOPE_CLASS}>…</div>`. A host-supplied UI kit that
+  portals its own content does the same if that content relies on the
+  library's sheet.
+- **The background:** a root paints none; the view sits on the host's pane.
+- **The cascade:** the resets are in `@layer base` and the utilities in
+  `@layer utilities`, as in `styles.css`, so an unlayered element rule of the
+  host (`button { background: … }`) still reaches inside the view. Put the
+  host's own base styles in a layer, or scope them, if they should not.
+
 ### Theming
 
 Every colour, radius and font comes from a CSS variable on `:root` and
-`.dark`. Restyling is redefining them after the stylesheet, no code:
+`.dark` (with the scoped sheet: on the library's roots, see above).
+Restyling is redefining them after the stylesheet, no code:
 
 ```css
 :root {
@@ -450,6 +703,7 @@ change with them, for plain-CSS overrides:
 | Class                | Element                                           |
 | -------------------- | ------------------------------------------------- |
 | `udc-data-view`      | the whole view (header, toolbar, the renderer)    |
+| `udc-scope`          | a portalled dialog, popover, menu, tooltip, toast |
 | `udc-toolbar`        | the toolbar: search, chips, filter builder, count |
 | `udc-search`         | the search box                                    |
 | `udc-filter-chip`    | one filter chip                                   |
@@ -645,8 +899,11 @@ registry and everything not tied to one renderer. Beyond the above:
 `EmptyState` / `ErrorState` / `NoRendererState`; the `UdcQueryClientOptions` type; `mergeMessages`, `makeT`,
 `lookup`, `schemaLabelTerms`, `tableSection`, `TRANSLATIONS`, `LOCALES`;
 `cn` (tailwind-merge set up for the `udc:` prefix), `storage`, `humanize`;
-`UdcUrlStateProvider`, `useUrlSearchParams`, `windowLocationAdapter` and the
-`UrlStateAdapter` type; `UdcUiProvider`, `useUiKit` and the `UiKit` type with
+`UdcUrlStateProvider`, `useUrlSearchParams`, `windowLocationAdapter`,
+`prefixUrlStateAdapter`, `createMemoryUrlStateAdapter` and the
+`UrlStateAdapter` / `MemoryUrlStateAdapter` types; the embedding types
+`UdcDataViewChrome` / `UdcDataViewChromePreset` with `resolveChrome`, and
+`UDC_SCOPE_CLASS` (also on `@jsudc/react/ui`); `UdcUiProvider`, `useUiKit` and the `UiKit` type with
 its props types; `resolveIcon` with the `lucide:<name>` icons the package
 bundles (`LUCIDE_ICONS`); and the zone helpers `allZones`, `offsetLabel`,
 `zoneCity`; the lookups: `useUdcLookup`, `useUdcLookups`, `useLookupBatch`,
@@ -659,7 +916,8 @@ The subpaths: one per renderer and `@jsudc/react/all` (see
 [Renderers](#renderers)), `@jsudc/react/headless` (see [Headless](#headless)),
 `@jsudc/react/ui` (`defaultUiKit` and its primitives: `Button`, `Dialog`,
 `Toaster`, `TooltipProvider`, …), `@jsudc/react/react-router`
-(`UdcReactRouterUrlState`), `@jsudc/react/styles.css` and
+(`UdcReactRouterUrlState`), `@jsudc/react/styles.css`,
+`@jsudc/react/styles.scoped.css` (see [Styling](#styling)) and
 `@jsudc/react/tokens.css`.
 
 The build is ESM only, one file per source module (tree-shakeable), one
