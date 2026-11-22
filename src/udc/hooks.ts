@@ -169,9 +169,9 @@ export function useUdcCollection(args: UseUdcCollectionArgs): UdcCollectionResul
     getNextPageParam: (last, all) => {
       if (byCursor) return last.next_cursor ?? undefined;
       const loaded = all.reduce((n, p) => n + p.rows.length, 0);
-      return last.rows.length > 0 && last.total !== null && loaded < last.total
-        ? loaded
-        : undefined;
+      // No total (`total_count: false`): a full page means there may be more.
+      const more = last.total !== null ? loaded < last.total : last.rows.length >= limit;
+      return last.rows.length > 0 && more ? loaded : undefined;
     },
     placeholderData: keepPreviousData,
     enabled: enabled && mode === "infinite",

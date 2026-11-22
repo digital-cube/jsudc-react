@@ -445,6 +445,12 @@ function DataViewBody({
   const fmt = (n: number) => new Intl.NumberFormat(intlLocale).format(n);
   const shown = paging ? data.rows.length : (ownCount?.shown ?? 0);
   const total = paging ? data.total : (ownCount?.total ?? null);
+  // A skeleton only until the first answer. A source that does not count (`total_count: false`,
+  // every list answers `total: null`) then shows what is loaded instead of a number it never gets.
+  const countPending = paging
+    ? data.isLoading
+    : ownCount === null || (ownCount.total === null && live?.capabilities.total_count !== false);
+  const pageFrom = (Math.max(1, state.page) - 1) * limit + 1;
   const fetchedAt = paging ? data.fetchedAt : (ownCount?.fetchedAt ?? null);
   const stale = paging ? data.stale : ownCount?.stale === true;
   // Without the renderer tabs, a Doc or Source tab still needs a way back: the renderer in use.
@@ -638,9 +644,23 @@ function DataViewBody({
                   data-testid="row-count"
                   data-shown={shown}
                   data-total={total ?? undefined}
+                  data-loading={total === null && countPending ? true : undefined}
                 >
                   {total === null ? (
-                    <Skeleton className="udc:h-3 udc:w-24" />
+                    countPending ? (
+                      <Skeleton className="udc:h-3 udc:w-24" />
+                    ) : paging && data.error && shown === 0 ? null : paging &&
+                      state.mode === "pages" &&
+                      shown > 0 ? (
+                      t("APP", "SHOWING_RANGE_OPEN", {
+                        from: fmt(pageFrom),
+                        to: fmt(pageFrom + shown - 1),
+                      })
+                    ) : paging && moreThanLoaded ? (
+                      t("APP", "SHOWING_MORE", { shown: fmt(shown) })
+                    ) : (
+                      t("APP", "SHOWING_LOADED", { shown: fmt(shown) })
+                    )
                   ) : ownCount?.unit === "nodes" && !paging ? (
                     shown === total ? (
                       t("APP", "TREE_NODES", { count: fmt(total) })

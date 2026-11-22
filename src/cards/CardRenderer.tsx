@@ -197,11 +197,14 @@ export function CardRenderer(props: CardRendererProps) {
         <div ref={sentinelRef} data-testid="infinite-sentinel" className="udc:h-px" />
       </div>
 
-      {mode === "pages" && !showError && (data.total ?? 0) > 0 ? (
+      {mode === "pages" &&
+      !showError &&
+      (data.total === null ? data.rows.length > 0 || props.page > 1 : data.total > 0) ? (
         <Pager
           page={props.page}
           limit={props.limit}
-          total={data.total ?? 0}
+          total={data.total}
+          shown={data.rows.length}
           onPage={props.onPage}
         />
       ) : null}

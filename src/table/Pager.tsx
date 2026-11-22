@@ -18,23 +18,34 @@ export function pageWindow(page: number, pages: number, radius = 1): (number | n
   return out;
 }
 
+/**
+ * Page navigation. `total: null` is a source that does not count
+ * (`capabilities.total_count: false`): there is no last page to show, so the
+ * pager offers the pages seen so far and the next one while `shown` (the rows
+ * on this page) fills the page.
+ */
 export function Pager({
   page,
   limit,
   total,
+  shown = 0,
   onPage,
 }: {
   page: number;
   limit: number;
-  total: number;
+  total: number | null;
+  /** Rows on the current page; read only when `total` is `null`. */
+  shown?: number;
   onPage: (page: number) => void;
 }) {
   const { Button, Tip } = useUiKit();
   const { t, intlLocale } = useI18n();
-  const pages = Math.max(1, Math.ceil(total / limit));
+  const counted = total !== null;
+  const hasMore = !counted && shown >= limit;
+  const pages = counted ? Math.max(1, Math.ceil(total / limit)) : hasMore ? page + 1 : page;
   const fmt = (n: number) => new Intl.NumberFormat(intlLocale).format(n);
-  const from = total === 0 ? 0 : (page - 1) * limit + 1;
-  const to = Math.min(total, page * limit);
+  const from = counted ? (total === 0 ? 0 : (page - 1) * limit + 1) : (page - 1) * limit + 1;
+  const to = counted ? Math.min(total, page * limit) : (page - 1) * limit + shown;
 
   const nav = (label: string, target: number, disabled: boolean, icon: ReactNode, id: string) => (
     <Tip label={label}>
@@ -58,8 +69,17 @@ export function Pager({
       className="udc-pager udc:flex udc:h-11 udc:shrink-0 udc:items-center udc:justify-between udc:gap-4 udc:border-t udc:border-border udc:bg-surface udc:px-3 udc:text-xs udc:text-muted-foreground"
     >
       <div className="udc:tabular-nums">
-        {t("APP", "SHOWING_RANGE", { from: fmt(from), to: fmt(to), total: fmt(total) })}
-        <span className="udc:mx-2 udc:text-border-strong">·</span>
+        {counted ? (
+          <>
+            {t("APP", "SHOWING_RANGE", { from: fmt(from), to: fmt(to), total: fmt(total) })}
+            <span className="udc:mx-2 udc:text-border-strong">·</span>
+          </>
+        ) : shown > 0 ? (
+          <>
+            {`${fmt(from)}–${fmt(to)}`}
+            <span className="udc:mx-2 udc:text-border-strong">·</span>
+          </>
+        ) : null}
         {t("APP", "PER_PAGE", { n: limit })}
       </div>
       <div className="udc:flex udc:items-center udc:gap-0.5">
@@ -91,10 +111,12 @@ export function Pager({
           ),
         )}
         {nav(t("APP", "PAGE_NEXT"), page + 1, page >= pages, <ChevronRight />, "next")}
-        {nav(t("APP", "PAGE_LAST"), pages, page >= pages, <ChevronsRight />, "last")}
+        {counted
+          ? nav(t("APP", "PAGE_LAST"), pages, page >= pages, <ChevronsRight />, "last")
+          : null}
       </div>
       <div className="udc:tabular-nums" data-testid="pager-status">
-        {t("APP", "PAGE_OF", { page, pages })}
+        {counted ? t("APP", "PAGE_OF", { page, pages }) : t("APP", "PAGE_N", { page })}
       </div>
     </nav>
   );
