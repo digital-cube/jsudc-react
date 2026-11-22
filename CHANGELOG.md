@@ -7,6 +7,13 @@ All notable changes to `@jsudc/react` are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-22
+
+Sessions (a signed-out state, `onUnauthenticated`), embedding a view in a
+host's screen with a scoped stylesheet, row activation and keyboard movement,
+and a cell registry, released together with `@jsudc/core` 0.4.0 and
+`@jsudc/server` 0.4.0. Needs `@jsudc/core` 0.4.0.
+
 ### Added
 
 - Sessions: `createUdcQueryClient(options?)` takes `UdcQueryClientOptions` —
@@ -105,6 +112,10 @@ All notable changes to `@jsudc/react` are recorded here. The format follows
   (`forbidden`), so it is no longer retried twice and shown as a transport
   failure with Retry: it shows at once, a 401 as signed out, a 403 as the
   generic failure. `shouldRetry` itself is unchanged.
+- The `@jsudc/core` peer range is `^0.4.0` (sessions import
+  `isUnauthenticated`, which only core 0.4.0 exports). The development
+  dependency is pinned to core's `release-0.4.0` commit until core 0.4.0 is on
+  npm.
 
 ## [0.3.1] - 2026-11-15
 
@@ -396,7 +407,8 @@ First tagged version, installed from the GitHub tag.
   Serbian), theme and time-zone providers, the UI primitives.
 - `styles.css`, compiled at build time, and `tokens.css`, its raw source.
 
-[Unreleased]: https://github.com/digital-cube/jsudc-react/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/digital-cube/jsudc-react/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/digital-cube/jsudc-react/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/digital-cube/jsudc-react/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/digital-cube/jsudc-react/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/digital-cube/jsudc-react/compare/v0.2.0...v0.2.1
