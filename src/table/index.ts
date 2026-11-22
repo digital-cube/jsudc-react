@@ -6,6 +6,7 @@ import { TableRenderer } from "./TableRenderer.js";
 export { CellValue, displayText, renderKind } from "./cells.js";
 export { Pager } from "./Pager.js";
 export { TableRenderer, type TableRendererProps } from "./TableRenderer.js";
+export type { TableVirtualization, TableVirtualizeProp } from "./useRowWindow.js";
 
 /** `createRendererRegistry(tableRenderer, …)`: the `table` tab, paged, with the schema editor. */
 export const tableRenderer: RendererDefinition = {

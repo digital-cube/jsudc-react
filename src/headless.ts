@@ -39,6 +39,8 @@ export * from "./rows/useRowSelection.js";
 export * from "./table/format.js";
 export * from "./table/style.js";
 export * from "./table/transforms.js";
+// Long lists (0.5.0): the arithmetic of the table's row window, for a host renderer.
+export * from "./table/useRowWindow.js";
 // Time zones: the display zone preference and the zoned formatting.
 export * from "./time/timezone.js";
 export * from "./time/zoned.js";

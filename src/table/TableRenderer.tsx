@@ -9,13 +9,22 @@ import {
   type SortKey,
   type UdcError,
 } from "@jsudc/core";
-import { type Column, type ColumnDef, getCoreRowModel, useReactTable } from "@tanstack/react-table";
+import {
+  type Column,
+  type ColumnDef,
+  getCoreRowModel,
+  type Row as TableRow,
+  useReactTable,
+} from "@tanstack/react-table";
 import { ArrowDown, ArrowUp, ChevronsUpDown, Plus } from "lucide-react";
 import {
   type CSSProperties,
+  type FocusEvent,
   type KeyboardEvent,
   type MouseEvent,
+  type ReactNode,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -56,6 +65,13 @@ import { SelectCheckbox } from "./SelectCheckbox.js";
 import { EmptyState, ErrorState } from "./states.js";
 import { BG_COLOR, resolveRowColor, TEXT_COLOR } from "./style.js";
 import { useInfiniteSentinel } from "./useInfiniteSentinel.js";
+import {
+  bodySlices,
+  resolveVirtualization,
+  type TableVirtualizeProp,
+  useRowWindow,
+  virtualizationApplies,
+} from "./useRowWindow.js";
 
 interface ColMeta {
   config: ColumnConfig;
@@ -108,6 +124,12 @@ export interface TableRendererProps extends RowActivationProps {
   selection?: RowSelection | undefined;
   /** Row actions (0.5.0): a trailing column pinned at the end, inline buttons or a "more" menu. */
   rowActions?: RowActions | undefined;
+  /**
+   * Long lists (0.5.0): infinite mode mounts only the rows near the viewport. Left out, or
+   * `{ enabled: "auto" }`: once more than `threshold` (200) rows are loaded. `true` / `false`
+   * force it on or off. Pages mode is never windowed. See README "Long lists".
+   */
+  virtualize?: TableVirtualizeProp | undefined;
 }
 
 type EditTarget = { rowId: string; colId: string };
@@ -129,6 +151,8 @@ export function TableRenderer(props: TableRendererProps) {
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLTableSectionElement>(null);
+  const bodyRef = useRef<HTMLTableSectionElement>(null);
   const [edges, setEdges] = useState({ left: false, right: false });
   const [edit, setEdit] = useState<EditTarget | null>(null);
   const [editError, setEditError] = useState<{ message: string; seq: number } | null>(null);
@@ -186,6 +210,30 @@ export function TableRenderer(props: TableRendererProps) {
     actionsWidth;
   const rowHeight = view.row_height ?? DEFAULT_ROW_HEIGHT;
 
+  // Long lists (0.5.0): infinite mode past the threshold mounts the rows near the viewport.
+  const showSkeleton = data.isLoading && data.rows.length === 0;
+  const virtual = !showSkeleton && virtualizationApplies(props.virtualize, mode, data.rows.length);
+  const virtualOpts = resolveVirtualization(props.virtualize);
+  // The height a row really takes (a border, a tall custom cell); the spacers use it.
+  const [measuredHeight, setMeasuredHeight] = useState<number | null>(null);
+  const windowRowHeight = virtual && measuredHeight ? measuredHeight : rowHeight;
+  const win = useRowWindow({
+    on: virtual,
+    count: data.rows.length,
+    rowHeight: windowRowHeight,
+    overscan: virtualOpts.overscan,
+    scrollRef,
+    headerRef,
+  });
+  useLayoutEffect(() => {
+    if (!virtual) return;
+    const tr = bodyRef.current?.querySelector<HTMLElement>("tr[data-row-id]");
+    const h = tr?.getBoundingClientRect().height ?? 0;
+    if (h > 0 && Math.abs(h - (measuredHeight ?? rowHeight)) > 0.5) setMeasuredHeight(h);
+  });
+  // The row holding the focus is kept mounted when it scrolls out of the window.
+  const [focusedRowId, setFocusedRowId] = useState<string | null>(null);
+
   const canEdit = (c: Column<Row, unknown>) =>
     capabilities.mutate && meta(c).config.editable === true && meta(c).def !== undefined;
   const editableIds = ordered.filter(canEdit).map((c) => c.id);
@@ -206,8 +254,12 @@ export function TableRenderer(props: TableRendererProps) {
     return () => window.removeEventListener("resize", measureEdges);
   });
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `resetKey` is the trigger
   useEffect(() => {
-    if (props.resetKey && scrollRef.current) scrollRef.current.scrollTop = 0;
+    if (props.resetKey && scrollRef.current) {
+      scrollRef.current.scrollTop = 0;
+      win.onScroll();
+    }
   }, [props.resetKey]);
 
   // Infinite mode: the sentinel under the last row asks for the next page.
@@ -223,6 +275,7 @@ export function TableRenderer(props: TableRendererProps) {
     hasNextPage: mode === "infinite" && hasNextPage,
     isFetchingNextPage,
     fetchNextPage: data.fetchNextPage,
+    ...(virtual ? { reveal: (_row: Row, index: number) => win.scrollToIndex(index) } : {}),
     ...(selection
       ? {
           isSelected: selection.isSelected,
@@ -366,7 +419,6 @@ export function TableRenderer(props: TableRendererProps) {
         : "";
   };
 
-  const showSkeleton = data.isLoading && data.rows.length === 0;
   const showError = data.error !== null && data.rows.length === 0;
   const showEmpty = !showSkeleton && !showError && data.rows.length === 0;
   const total = data.total ?? data.rows.length;
@@ -550,11 +602,213 @@ export function TableRenderer(props: TableRendererProps) {
       </td>
     ) : null;
 
+  const renderRow = (r: TableRow<Row>, index: number): ReactNode => {
+    const row = r.original;
+    const tone = resolveRowColor(row, view.row_color);
+    const active = activation.activeRowId === row.__meta.id;
+    const checked = selection?.isSelected(row.__meta.id) === true;
+    const rowProps = activation.rowProps(row);
+    const menuKeys = rowMenuHandlers(rowActions, rowMenu, row, {
+      contextMenu: rowActions?.display === "menu",
+    });
+    const cell = (c: Column<Row, unknown>) => {
+      const { config, def } = meta(c);
+      const editable = canEdit(c);
+      const id = `${row.__meta.id}:${c.id}`;
+      const editing = edit?.rowId === row.__meta.id && edit.colId === c.id;
+      const color = config.color ?? tone?.color;
+      const bg = config.bg ?? tone?.bg;
+      return (
+        <td
+          key={c.id}
+          data-cell={id}
+          data-testid={`cell-${config.field}`}
+          data-editable={editable || undefined}
+          tabIndex={editable ? 0 : undefined}
+          title={editable && !editing ? t("APP", "EDIT_HINT") : undefined}
+          onDoubleClick={
+            editable ? () => startEdit({ rowId: row.__meta.id, colId: c.id }) : undefined
+          }
+          onKeyDown={
+            editable && !editing
+              ? (e) => {
+                  if (e.key === "Enter" || e.key === "F2") {
+                    e.preventDefault();
+                    startEdit({ rowId: row.__meta.id, colId: c.id });
+                  }
+                }
+              : undefined
+          }
+          style={pinStyle(c)}
+          className={cn(
+            "udc-cell",
+            "udc:relative udc:border-b udc:border-border udc:px-3 udc:align-middle udc:outline-none",
+            active || checked
+              ? "udc:bg-selected"
+              : bg && bg !== "default"
+                ? BG_COLOR[bg]
+                : "udc:bg-surface udc:group-hover/row:bg-hover",
+            color ? TEXT_COLOR[color] : "",
+            color === "info" || color === "accent" ? "udc:font-medium" : "",
+            editable &&
+              "udc:cursor-text udc:focus-visible:ring-2 udc:focus-visible:ring-ring udc:focus-visible:ring-inset udc:hover:shadow-[inset_0_0_0_1px_var(--border-strong)]",
+            pinClass(c),
+            // Above the next rows, so the validation message under the cell shows.
+            editing && "udc:z-[25]",
+          )}
+        >
+          <div className={cn("udc:flex udc:min-w-0 udc:items-center", alignClass(c))}>
+            {props.folder && config.field === props.folder.options.label_field ? (
+              <FolderEntry row={row} nav={props.folder}>
+                <CellValue
+                  value={row[config.field]}
+                  column={config}
+                  def={def}
+                  locale={locale}
+                  intlLocale={intlLocale}
+                  cells={cells}
+                  row={row}
+                  collection={collection}
+                />
+              </FolderEntry>
+            ) : (
+              <CellValue
+                value={row[config.field]}
+                column={config}
+                def={def}
+                locale={locale}
+                intlLocale={intlLocale}
+                editable={editable}
+                cells={cells}
+                row={row}
+                collection={collection}
+              />
+            )}
+          </div>
+          {editing ? (
+            <CellEditor
+              def={def}
+              initial={row[config.field]}
+              saving={saving}
+              error={editError?.message ?? null}
+              errorSeq={editError?.seq ?? 0}
+              align={config.align}
+              onCommit={(raw, reason) => void commit(row, c, raw, reason)}
+              onCancel={() => {
+                setEdit(null);
+                setEditError(null);
+                focusCell({ rowId: row.__meta.id, colId: c.id });
+              }}
+            />
+          ) : null}
+        </td>
+      );
+    };
+    return (
+      <tr
+        key={r.id}
+        data-testid="row"
+        data-row-id={row.__meta.id}
+        aria-rowindex={virtual ? index + 1 : undefined}
+        data-row-link={rowLink ? rowLinkHref(row) : undefined}
+        data-selected={checked ? "true" : undefined}
+        {...rowProps}
+        {...(rowActions
+          ? {
+              onKeyDown: (e: KeyboardEvent<HTMLTableRowElement>) => {
+                if (!menuKeys.keyDown(e)) rowProps.onKeyDown?.(e);
+              },
+              onContextMenu: menuKeys.contextMenu,
+            }
+          : {})}
+        className={cn(
+          "udc-row udc:group/row",
+          (rowLink || activation.enabled) && "udc:cursor-pointer",
+          activation.enabled &&
+            "udc:outline-none udc:focus-visible:outline-2 udc:focus-visible:-outline-offset-2 udc:focus-visible:outline-ring",
+        )}
+        style={{ height: rowHeight }}
+        onClick={rowLink || activation.enabled ? (e) => onRowClick(e, row) : undefined}
+        onAuxClick={rowLink ? (e) => onRowLinkClick(e, row) : undefined}
+      >
+        {selectCell(
+          row,
+          active || checked ? "udc:bg-selected" : "udc:bg-surface udc:group-hover/row:bg-hover",
+        )}
+        {[...left, ...center].map(cell)}
+        {addColumnCell(
+          "a",
+          active || checked ? "udc:bg-selected" : "udc:bg-surface udc:group-hover/row:bg-hover",
+        )}
+        {filler(
+          "f",
+          active || checked
+            ? "udc:border-b udc:border-border udc:bg-selected"
+            : "udc:border-b udc:border-border udc:bg-surface udc:group-hover/row:bg-hover",
+        )}
+        {right.map(cell)}
+        {actionsCell(
+          row,
+          active || checked ? "udc:bg-selected" : "udc:bg-surface udc:group-hover/row:bg-hover",
+        )}
+      </tr>
+    );
+  };
+
+  // Long lists: the mounted rows (the window, and the rows kept mounted wherever they are:
+  // an open editor, an open row menu, the focus, the active row and the tab stop) between
+  // spacers that stand for the rest. Off, every row as before.
+  const modelRows = table.getRowModel().rows;
+  const columnCount =
+    (selection ? 1 : 0) +
+    left.length +
+    center.length +
+    (schemaEdit ? 1 : 0) +
+    1 +
+    right.length +
+    (rowActions ? 1 : 0);
+  let bodyRows: ReactNode;
+  if (!virtual) {
+    bodyRows = modelRows.map((r, i) => renderRow(r, i));
+  } else {
+    const indexOf = new Map<string, number>();
+    modelRows.forEach((r, i) => {
+      indexOf.set(r.id, i);
+    });
+    const pinned = [
+      edit?.rowId,
+      rowMenu.openId,
+      focusedRowId,
+      activation.activeRowId,
+      activation.tabStopId,
+    ]
+      .map((id) => (id == null ? -1 : (indexOf.get(id) ?? -1)))
+      .filter((i) => i >= 0);
+    // One flat list, so a row keeps its element (and an open editor) as spacers come and go.
+    bodyRows = bodySlices(modelRows.length, win.range, pinned).flatMap((slice) =>
+      slice.kind === "gap" ? (
+        <tr
+          key={`gap-${slice.from}`}
+          aria-hidden
+          data-testid="row-spacer"
+          style={{ height: slice.rows * windowRowHeight }}
+        >
+          <td colSpan={columnCount} className="udc:p-0" />
+        </tr>
+      ) : (
+        modelRows.slice(slice.from, slice.to).map((r, i) => renderRow(r, slice.from + i))
+      ),
+    );
+  }
+
   return (
     <div className="udc:flex udc:min-h-0 udc:flex-1 udc:flex-col">
       <div
         ref={scrollRef}
-        onScroll={measureEdges}
+        onScroll={() => {
+          measureEdges();
+          win.onScroll();
+        }}
         data-testid="table-scroll"
         className="udc-scroll-thin udc:relative udc:min-h-0 udc:flex-1 udc:overflow-auto"
       >
@@ -569,7 +823,7 @@ export function TableRenderer(props: TableRendererProps) {
         <table
           data-testid="udc-table"
           aria-busy={data.isFetching}
-          aria-rowcount={total}
+          aria-rowcount={virtual ? data.rows.length : total}
           role={activation.enabled ? "grid" : undefined}
           aria-multiselectable={activation.enabled && selection ? true : undefined}
           className="udc-table udc:border-separate udc:border-spacing-0 udc:text-[13px]"
@@ -587,7 +841,7 @@ export function TableRenderer(props: TableRendererProps) {
             ))}
             {rowActions ? <col style={{ width: actionsWidth }} /> : null}
           </colgroup>
-          <thead className="udc:sticky udc:top-0 udc:z-30">
+          <thead ref={headerRef} className="udc:sticky udc:top-0 udc:z-30">
             <tr>
               {selectHeader}
               {[...left, ...center].map(header)}
@@ -598,7 +852,21 @@ export function TableRenderer(props: TableRendererProps) {
             </tr>
           </thead>
           <UdcLookupBatch value={lookups}>
-            <tbody>
+            <tbody
+              ref={bodyRef}
+              {...(virtual
+                ? {
+                    onFocus: (e: FocusEvent<HTMLTableSectionElement>) => {
+                      const tr = (e.target as HTMLElement).closest?.("tr[data-row-id]");
+                      setFocusedRowId(tr?.getAttribute("data-row-id") ?? null);
+                    },
+                    onBlur: (e: FocusEvent<HTMLTableSectionElement>) => {
+                      const next = e.relatedTarget as Node | null;
+                      if (!next || !e.currentTarget.contains(next)) setFocusedRowId(null);
+                    },
+                  }
+                : {})}
+            >
               {showSkeleton
                 ? Array.from({ length: SKELETON_ROWS }, (_, i) => (
                     // biome-ignore lint/suspicious/noArrayIndexKey: placeholders
@@ -649,165 +917,7 @@ export function TableRenderer(props: TableRendererProps) {
                     </tr>
                   ))
                 : null}
-              {table.getRowModel().rows.map((r) => {
-                const row = r.original;
-                const tone = resolveRowColor(row, view.row_color);
-                const active = activation.activeRowId === row.__meta.id;
-                const checked = selection?.isSelected(row.__meta.id) === true;
-                const rowProps = activation.rowProps(row);
-                const menuKeys = rowMenuHandlers(rowActions, rowMenu, row, {
-                  contextMenu: rowActions?.display === "menu",
-                });
-                const cell = (c: Column<Row, unknown>) => {
-                  const { config, def } = meta(c);
-                  const editable = canEdit(c);
-                  const id = `${row.__meta.id}:${c.id}`;
-                  const editing = edit?.rowId === row.__meta.id && edit.colId === c.id;
-                  const color = config.color ?? tone?.color;
-                  const bg = config.bg ?? tone?.bg;
-                  return (
-                    <td
-                      key={c.id}
-                      data-cell={id}
-                      data-testid={`cell-${config.field}`}
-                      data-editable={editable || undefined}
-                      tabIndex={editable ? 0 : undefined}
-                      title={editable && !editing ? t("APP", "EDIT_HINT") : undefined}
-                      onDoubleClick={
-                        editable
-                          ? () => startEdit({ rowId: row.__meta.id, colId: c.id })
-                          : undefined
-                      }
-                      onKeyDown={
-                        editable && !editing
-                          ? (e) => {
-                              if (e.key === "Enter" || e.key === "F2") {
-                                e.preventDefault();
-                                startEdit({ rowId: row.__meta.id, colId: c.id });
-                              }
-                            }
-                          : undefined
-                      }
-                      style={pinStyle(c)}
-                      className={cn(
-                        "udc-cell",
-                        "udc:relative udc:border-b udc:border-border udc:px-3 udc:align-middle udc:outline-none",
-                        active || checked
-                          ? "udc:bg-selected"
-                          : bg && bg !== "default"
-                            ? BG_COLOR[bg]
-                            : "udc:bg-surface udc:group-hover/row:bg-hover",
-                        color ? TEXT_COLOR[color] : "",
-                        color === "info" || color === "accent" ? "udc:font-medium" : "",
-                        editable &&
-                          "udc:cursor-text udc:focus-visible:ring-2 udc:focus-visible:ring-ring udc:focus-visible:ring-inset udc:hover:shadow-[inset_0_0_0_1px_var(--border-strong)]",
-                        pinClass(c),
-                        // Above the next rows, so the validation message under the cell shows.
-                        editing && "udc:z-[25]",
-                      )}
-                    >
-                      <div className={cn("udc:flex udc:min-w-0 udc:items-center", alignClass(c))}>
-                        {props.folder && config.field === props.folder.options.label_field ? (
-                          <FolderEntry row={row} nav={props.folder}>
-                            <CellValue
-                              value={row[config.field]}
-                              column={config}
-                              def={def}
-                              locale={locale}
-                              intlLocale={intlLocale}
-                              cells={cells}
-                              row={row}
-                              collection={collection}
-                            />
-                          </FolderEntry>
-                        ) : (
-                          <CellValue
-                            value={row[config.field]}
-                            column={config}
-                            def={def}
-                            locale={locale}
-                            intlLocale={intlLocale}
-                            editable={editable}
-                            cells={cells}
-                            row={row}
-                            collection={collection}
-                          />
-                        )}
-                      </div>
-                      {editing ? (
-                        <CellEditor
-                          def={def}
-                          initial={row[config.field]}
-                          saving={saving}
-                          error={editError?.message ?? null}
-                          errorSeq={editError?.seq ?? 0}
-                          align={config.align}
-                          onCommit={(raw, reason) => void commit(row, c, raw, reason)}
-                          onCancel={() => {
-                            setEdit(null);
-                            setEditError(null);
-                            focusCell({ rowId: row.__meta.id, colId: c.id });
-                          }}
-                        />
-                      ) : null}
-                    </td>
-                  );
-                };
-                return (
-                  <tr
-                    key={r.id}
-                    data-testid="row"
-                    data-row-id={row.__meta.id}
-                    data-row-link={rowLink ? rowLinkHref(row) : undefined}
-                    data-selected={checked ? "true" : undefined}
-                    {...rowProps}
-                    {...(rowActions
-                      ? {
-                          onKeyDown: (e: KeyboardEvent<HTMLTableRowElement>) => {
-                            if (!menuKeys.keyDown(e)) rowProps.onKeyDown?.(e);
-                          },
-                          onContextMenu: menuKeys.contextMenu,
-                        }
-                      : {})}
-                    className={cn(
-                      "udc-row udc:group/row",
-                      (rowLink || activation.enabled) && "udc:cursor-pointer",
-                      activation.enabled &&
-                        "udc:outline-none udc:focus-visible:outline-2 udc:focus-visible:-outline-offset-2 udc:focus-visible:outline-ring",
-                    )}
-                    style={{ height: rowHeight }}
-                    onClick={rowLink || activation.enabled ? (e) => onRowClick(e, row) : undefined}
-                    onAuxClick={rowLink ? (e) => onRowLinkClick(e, row) : undefined}
-                  >
-                    {selectCell(
-                      row,
-                      active || checked
-                        ? "udc:bg-selected"
-                        : "udc:bg-surface udc:group-hover/row:bg-hover",
-                    )}
-                    {[...left, ...center].map(cell)}
-                    {addColumnCell(
-                      "a",
-                      active || checked
-                        ? "udc:bg-selected"
-                        : "udc:bg-surface udc:group-hover/row:bg-hover",
-                    )}
-                    {filler(
-                      "f",
-                      active || checked
-                        ? "udc:border-b udc:border-border udc:bg-selected"
-                        : "udc:border-b udc:border-border udc:bg-surface udc:group-hover/row:bg-hover",
-                    )}
-                    {right.map(cell)}
-                    {actionsCell(
-                      row,
-                      active || checked
-                        ? "udc:bg-selected"
-                        : "udc:bg-surface udc:group-hover/row:bg-hover",
-                    )}
-                  </tr>
-                );
-              })}
+              {bodyRows}
             </tbody>
           </UdcLookupBatch>
         </table>

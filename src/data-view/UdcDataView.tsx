@@ -17,6 +17,7 @@ import { rowActivationEnabled } from "../rows/useRowActivation.js";
 import { useRowSelection } from "../rows/useRowSelection.js";
 import { useSchemaEditor } from "../schema-editor/useSchemaEditor.js";
 import { ErrorState, NoRendererState } from "../table/states.js";
+import type { TableVirtualizeProp } from "../table/useRowWindow.js";
 import { useUdcChanges } from "../udc/changes.js";
 import { useUdcCollection, useUdcDescribe } from "../udc/hooks.js";
 import type { PagingMode } from "../udc/keys.js";
@@ -118,6 +119,13 @@ export interface UdcDataViewProps {
    * collection offers it. Default `true`; `false` hides it.
    */
   liveIndicator?: boolean | undefined;
+  /**
+   * Long lists (0.5.0): the table's infinite mode mounts only the rows near the viewport.
+   * Left out: once more than 200 rows are loaded. `true` / `false` force it on or off;
+   * `{ enabled, threshold, overscan }` sets each. Pages mode is never windowed. See README
+   * "Long lists".
+   */
+  virtualize?: TableVirtualizeProp | undefined;
 }
 
 /** `full`: today's view, every part drawn. `embedded`: one pane of a host's screen, no part drawn. */
@@ -206,6 +214,7 @@ function DataViewBody({
   selectable,
   actions,
   liveIndicator = true,
+  virtualize,
 }: UdcDataViewProps) {
   const chrome = resolveChrome(chromeProp);
   // Row activation: off unless the host passed one of its props. Uncontrolled, the view keeps
@@ -737,6 +746,7 @@ function DataViewBody({
             {...activation}
             {...(selecting ? { selection } : {})}
             {...(rowActions ? { rowActions } : {})}
+            {...(virtualize === undefined ? {} : { virtualize })}
           />
         ) : live ? (
           <NoRendererState name={state.tab} />

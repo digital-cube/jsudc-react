@@ -5,6 +5,7 @@ import type { RowActions } from "../actions/row.js";
 import type { ChartWindowState } from "../chart/useChartWindow.js";
 import type { RowSelection } from "../rows/useRowSelection.js";
 import type { SchemaAction } from "../schema-editor/fieldForm.js";
+import type { TableVirtualizeProp } from "../table/useRowWindow.js";
 import type { UdcCollectionResult } from "../udc/hooks.js";
 import type { PagingMode } from "../udc/keys.js";
 
@@ -108,6 +109,11 @@ export interface RendererProps {
    * `run(def, row)` (the host's handler, else the server, as the bulk bar).
    */
   rowActions?: RowActions | undefined;
+  /**
+   * Long lists (0.5.0): `UdcDataView`'s `virtualize`, passed only when the host set it. The
+   * table windows its rows in infinite mode by it; other renderers ignore it.
+   */
+  virtualize?: TableVirtualizeProp | undefined;
 }
 
 export interface RendererEntry {

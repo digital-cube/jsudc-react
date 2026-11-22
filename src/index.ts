@@ -181,6 +181,15 @@ export {
   useRowSelection,
 } from "./rows/useRowSelection.js";
 export { EmptyState, ErrorState, NoRendererState } from "./table/states.js";
+// Long lists (0.5.0): the table's row window, its options (also in `@jsudc/react/headless`).
+export {
+  DEFAULT_VIRTUAL_OVERSCAN,
+  DEFAULT_VIRTUAL_THRESHOLD,
+  resolveVirtualization,
+  type TableVirtualization,
+  type TableVirtualizeProp,
+  virtualizationApplies,
+} from "./table/useRowWindow.js";
 export {
   BROWSER_TZ,
   COMMON_ZONES,

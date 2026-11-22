@@ -62,6 +62,12 @@ export interface UseRowActivationOptions extends RowActivationProps {
   isSelected?: ((id: string) => boolean) | undefined;
   /** Space on a row toggles its selection (Shift+Space: a range from the last toggled row). */
   onToggleSelect?: ((row: Row, range: boolean) => void) | undefined;
+  /**
+   * A windowed list (0.5.0; the table's long lists) mounts only some rows: when the keys move
+   * to a row whose element is not mounted, this is called to scroll it in and mount it, and
+   * the row takes the focus the moment its element attaches. Absent: every row is mounted.
+   */
+  reveal?: ((row: Row, index: number) => void) | undefined;
 }
 
 /** What to spread on the element of one row (a `<tr>`, a card, an `<li>`). */
@@ -150,6 +156,8 @@ export function useRowActivation(options: UseRowActivationOptions): RowActivatio
   const paging = useRef(options);
   paging.current = options;
 
+  /** A windowed list: the row the keys moved to before it was mounted; focused when it attaches. */
+  const revealRef = useRef<string | null>(null);
   // One stable ref callback per row id, so React does not detach and reattach each render.
   const elements = useRef(new Map<string, HTMLElement>());
   const refs = useRef(new Map<string, (el: HTMLElement | null) => void>());
@@ -157,8 +165,14 @@ export function useRowActivation(options: UseRowActivationOptions): RowActivatio
     let cb = refs.current.get(id);
     if (!cb) {
       cb = (el) => {
-        if (el) elements.current.set(id, el);
-        else elements.current.delete(id);
+        if (el) {
+          elements.current.set(id, el);
+          // A windowed list mounted the row the keys moved to: it takes the focus now.
+          if (revealRef.current === id) {
+            revealRef.current = null;
+            el.focus({ preventScroll: true });
+          }
+        } else elements.current.delete(id);
       };
       refs.current.set(id, cb);
     }
@@ -172,7 +186,17 @@ export function useRowActivation(options: UseRowActivationOptions): RowActivatio
 
   const focusRow = useCallback((id: string) => {
     const el = elements.current.get(id);
-    if (!el) return;
+    if (!el) {
+      const reveal = paging.current.reveal;
+      const list = latest.current.rows;
+      const i = list.findIndex((r) => idOf(r) === id);
+      if (reveal && i >= 0) {
+        revealRef.current = id;
+        reveal(list[i] as Row, i);
+      }
+      return;
+    }
+    revealRef.current = null;
     el.focus({ preventScroll: true });
     if (typeof el.scrollIntoView === "function") el.scrollIntoView({ block: "nearest" });
   }, []);
@@ -265,6 +289,12 @@ export function useRowActivation(options: UseRowActivationOptions): RowActivatio
     if (activeRowId === null) return;
     const el = elements.current.get(activeRowId);
     if (el && typeof el.scrollIntoView === "function") el.scrollIntoView({ block: "nearest" });
+    else if (!el && paging.current.reveal) {
+      // A windowed list whose active row is not mounted: scroll it in (the focus stays put).
+      const list = latest.current.rows;
+      const i = list.findIndex((r) => idOf(r) === activeRowId);
+      if (i >= 0) paging.current.reveal(list[i] as Row, i);
+    }
   }, [activeRowId]);
 
   const onKeyDown = (e: KeyboardEvent<HTMLElement>, row: Row) => {

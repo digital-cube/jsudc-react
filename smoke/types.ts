@@ -19,6 +19,7 @@ import {
   RowActionsControls,
   type RowActivationProps,
   type RowSelection,
+  type TableVirtualizeProp,
   type UdcCollectionResult,
   UdcDataView,
   type UdcDataViewProps,
@@ -92,6 +93,7 @@ export const rendererContract: Equal<
     onActiveRowChange?: ((row: Row | null) => void) | undefined;
     selection?: RowSelection | undefined;
     rowActions?: RowActions | undefined;
+    virtualize?: TableVirtualizeProp | undefined;
   }
 > = true;
 
