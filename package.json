@@ -159,7 +159,7 @@
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
-    "@jsudc/core": "github:digital-cube/jsudc-core#b2555cdc64c72678dc2b64210f394fdded22dca4",
+    "@jsudc/core": "^0.5.0",
     "@tailwindcss/cli": "^4.3.3",
     "@tanstack/react-query": "^5.104.4",
     "@tanstack/react-table": "^8.21.3",
