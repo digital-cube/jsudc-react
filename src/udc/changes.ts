@@ -5,7 +5,13 @@ import type { UdcChangeFeed, UdcChangeFeedStatus } from "./changeFeed.js";
 import { UdcClientContext } from "./client.js";
 import { udcKeys } from "./keys.js";
 
-/** The provider's change feed; `null` when `UdcProvider changes` is off (the default). */
+/**
+ * The provider's change feed; `null` when `UdcProvider changes` is off (the
+ * default). A host may provide a `UdcChangeFeed` of its own here (one per
+ * user, say: `useMemo(() => new UdcChangeFeed(client, opts), [client, user])`,
+ * closed with `feed.close()` when replaced); a `UdcProvider` below it with
+ * the same client and without `changes` uses it.
+ */
 export const UdcChangeFeedContext = createContext<UdcChangeFeed | null>(null);
 
 /** The provider's change feed, or `null` without one. */

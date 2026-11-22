@@ -80,6 +80,7 @@ export {
   type UdcChangeFeedStatus,
 } from "./udc/changeFeed.js";
 export {
+  UdcChangeFeedContext,
   type UdcChangesResult,
   type UseUdcChangesOptions,
   useUdcChangeFeed,

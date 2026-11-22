@@ -213,6 +213,7 @@ export {
   type UdcChangeFeedStatus,
 } from "./udc/changeFeed.js";
 export {
+  UdcChangeFeedContext,
   type UdcChangesResult,
   type UseUdcChangesOptions,
   useUdcChangeFeed,
@@ -252,6 +253,7 @@ export {
   createUdcQueryClient,
   shouldRetry,
   UdcProvider,
+  type UdcProviderChangesOptions,
   type UdcQueryClientOptions,
   useUdcClient,
 } from "./udc/provider.js";
