@@ -55,6 +55,49 @@ All notable changes to `@jsudc/react` are recorded here. The format follows
   renderer: the `RendererProps` contract" and "The scoped sheet".
 - `lightningcss` is a devDependency (it was already installed through
   Tailwind and Vite); the build uses it to scope the sheet.
+- Row activation and keyboard movement (`UdcDataView`, every prop optional;
+  without them the rows are unchanged):
+  - `onRowActivate(row)`: Enter on a row, or a plain click of it.
+  - `activeRowId`: the row drawn as active (`aria-selected="true"`,
+    `data-active="true"`, the `--selected` background); controlled when
+    passed, kept by the view (across tab switches) when not.
+  - `onActiveRowChange(row | null)`: the active row moved by the keys (no
+    Enter needed) or by a click on another row, so a host can preview on move.
+  - In the table and the cards: ArrowDown / `j`, ArrowUp / `k`, Home, End
+    move, Enter activates; not while an input, the search box, a cell editor,
+    a menu, a list box or a dialog has the focus, nor with a modifier; Space
+    is not bound. One tab stop for the rows (roving `tabindex`), the table and
+    the card grid `role="grid"`, each row or card a `row`.
+  - The active row and the focus are kept by row id across a refetch, a sort
+    and infinite pages; ArrowDown on the last loaded row in infinite mode
+    loads the next page and moves onto it; the active row is scrolled into
+    view; a row that left the list stops being active.
+  - `row_link`: unchanged without `onRowActivate`; with it a plain click
+    activates and Cmd / Ctrl-click and the middle button follow the link.
+- `RendererProps` gains the optional `onRowActivate`, `activeRowId` and
+  `onActiveRowChange` (absent unless activation is on); a renderer written
+  against 0.3.1's props still compiles (`smoke/types.ts`).
+- `useRowActivation(options)` (with `rowActivationEnabled`, `ownsKeys` and the
+  `RowActivationProps`, `RowActivation`, `RowActivationRowProps`,
+  `UseRowActivationOptions` types), from `@jsudc/react/headless` and the
+  root: the table's activation and keys for a host renderer (`rowProps(row)`,
+  `handleClick`, `move`, `activate`).
+- Custom cells: `createCellRegistry(...{ name, component })` (a `CellRegistry`;
+  a plain object works too), `UdcProvider cells`, `UdcCellsProvider` (nested
+  ones add up), `useCellRegistry`, `cellComponent`, `mergeCellRegistries`, and
+  `UdcDataView cells` (added to the provider's, its names winning). A column's
+  `render` resolves from the host's registry first, then the built-in kinds; a
+  registered built-in name (`badge`, …) replaces that kind; an unregistered
+  name behaves as before. The cards' meta fields use the same registry; the
+  other renderers keep the built-in kinds. Root and `@jsudc/react/headless`.
+- `CellProps`, the documented contract of a cell component: `value`, `row`,
+  `column` (with `render_options`), `def`, `collection`, `locale`,
+  `intlLocale`, `editable`, `surface` (`"table"` or `"card"`).
+- `CellValue` takes the optional `cells`, `row`, `collection` and `surface`.
+- The cell editor's root carries `data-cell-editor`.
+- README sections "Row activation and keyboard" (a list and a reading pane,
+  the pane following the keyboard; a host renderer on `useRowActivation`) and
+  "Custom cells", linked from the `RendererProps` contract.
 
 ### Changed
 

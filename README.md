@@ -170,6 +170,15 @@ when this table drifts).
 | `onCount(count \| null)`             | function                                   | a renderer with `paging: false` reports what the toolbar's "Showing N of M" says (`RendererCount`)                                |
 | `onSchemaAction`                     | function (optional)                        | set when the schema may be edited and the renderer has `editMode`                                                                 |
 | `folder`                             | `FolderNav \| undefined` (optional)        | set when the view has `folder_options`                                                                                            |
+| `onRowActivate(row)`                 | function (optional)                        | Enter or a plain click on a row ([Row activation and keyboard](#row-activation-and-keyboard)); set only when the host passed one  |
+| `activeRowId`                        | `string \| null` (optional)                | the row to draw as active; set whenever activation is on (the view keeps it when the host does not)                               |
+| `onActiveRowChange(row \| null)`     | function (optional)                        | report the active row moving (keys, a click on another row); set whenever activation is on                                        |
+
+The three activation props are absent unless the host turned activation on;
+`useRowActivation` of `@jsudc/react/headless` does everything they describe
+(see [Row activation and keyboard](#row-activation-and-keyboard)). How one
+column's cells are drawn is not a renderer's business: see
+[Custom cells](#custom-cells).
 
 A renderer with `paging: true` draws `data` and needs nothing else; one with
 `paging: false` loads its own rows with `filter` (the hooks of
@@ -235,6 +244,10 @@ URL state.
   `TreeDropPlan`: the tree's names, prefixed), `useTreeExpand`;
 - `applyTransforms`, `displayText`, `renderKind` and the cell formatters;
   the zone helpers and `useTimezone`;
+- `useRowActivation` (the active row and the keys, see
+  [Row activation and keyboard](#row-activation-and-keyboard)) and the cell
+  registry (`createCellRegistry`, `UdcCellsProvider`, `useCellRegistry`, see
+  [Custom cells](#custom-cells));
 - the registry functions (`createRendererRegistry`, `resolveTab`) and the URL
   state adapters (`windowLocationAdapter`, `prefixUrlStateAdapter`,
   `createMemoryUrlStateAdapter`), so its hooks behave exactly as inside
@@ -476,8 +489,208 @@ export function Mail() {
 
 The address bar then reads `/mail?list.q=invoice&list.sort=date:desc`, and a
 parameter the host keeps for itself (`?folder=`, `?q=`) stays untouched.
-Opening a row in the reading pane is row activation, a later item of this
-release; until then a host renderer's rows can call a callback of the host's.
+Opening a row in the reading pane is
+[row activation](#row-activation-and-keyboard).
+
+## Row activation and keyboard
+
+A row can do something of the host's: open the message in the reading pane.
+`UdcDataView` takes three props, all optional; passing any of them turns
+activation on, and without them the rows are what they were (no tab stop, no
+keys, no active row, a `row_link` still followed on click):
+
+| Prop                     | What it does                                                                                                                                           |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `onRowActivate(row)`     | called on Enter on a row and on a plain click of it (the main button, no modifier, not on a link, button or input in it)                               |
+| `activeRowId`            | the row drawn as active. Passed: controlled (`null` for none), the host moves it in `onActiveRowChange`. Left out: the view keeps it itself            |
+| `onActiveRowChange(row)` | the active row changed by the user: moved by the keys (no Enter needed), or a click on another row (just before `onRowActivate`). Preview on move here |
+
+**Keys**, in the table and the cards, while the focus is on a row:
+ArrowDown / `j` and ArrowUp / `k` move the active row (and the focus) by one,
+Home / End jump to the first / last loaded row, Enter activates. They are
+left alone while an input, the search box, a cell editor, a menu, a list box
+or a dialog has the focus, and with Ctrl, Cmd, Alt or Shift held. Space is
+not bound (it is the selection's, in 0.5.0). Double-click and Enter still
+edit an editable cell when the focus is on the cell itself.
+
+**One tab stop.** The rows are a roving-`tabindex` list: Tab reaches the
+active row (else the one last focused, else the first) and leaves the list on
+the next Tab. The table is `role="grid"`; the card grid too, each card a
+`row`. The active row has `aria-selected="true"`, the attribute
+`data-active="true"` (`.udc-row[data-active]`, `.udc-card[data-active]` for
+your CSS) and the `--selected` background.
+
+**Kept by id.** The active row and the focus follow the row's id across a
+refetch, a sort and pages loading in infinite mode; ArrowDown on the last
+loaded row in infinite mode loads the next page and moves onto its first
+row; the active row is scrolled into view, also when the host sets
+`activeRowId`. A row that left the list (deleted, filtered out) stops being
+active without an error; when it comes back it is active again.
+
+**`row_link`.** Without `onRowActivate` a click follows the view's
+`row_link` as before. With it a plain click activates the row, and Cmd /
+Ctrl-click and the middle button still open the link (in a new tab).
+
+A list and a reading pane side by side, the pane following the keyboard: the
+arrows preview, Enter or a click opens (marks the message read):
+
+```tsx
+import type { Row } from "@jsudc/core";
+import { UdcDataView } from "@jsudc/react";
+import { useState } from "react";
+
+export function Mailbox() {
+  const [open, setOpen] = useState<Row | null>(null);
+
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", height: "100vh" }}>
+      <UdcDataView
+        collection="messages"
+        chrome="embedded"
+        pagingMode="infinite"
+        // Controlled: the open message is the active row, so the pane and the list agree.
+        activeRowId={open?.__meta.id ?? null}
+        onActiveRowChange={setOpen} // ArrowDown / j: the pane previews the next message
+        onRowActivate={(row) => {
+          setOpen(row);
+          void markRead(row.__meta.id); // Enter or a click: the host's own action
+        }}
+      />
+      <article aria-live="polite">
+        {open ? (
+          <>
+            <h2>{String(open.subject)}</h2>
+            <p>{String(open.from)}</p>
+          </>
+        ) : (
+          <p>No message selected</p>
+        )}
+      </article>
+    </div>
+  );
+}
+```
+
+Leave `activeRowId` out and the view keeps the active row itself (across
+tab switches too); pass only `onRowActivate` when moving should not open
+anything.
+
+**In a host renderer.** `UdcDataView` hands a renderer the same three props
+(see [the contract](#writing-a-renderer-the-rendererprops-contract)), and
+`useRowActivation` of `@jsudc/react/headless` (also on the root) gives it the
+table's behaviour: spread `rowProps(row)` on each row's element (ref,
+`tabIndex`, `aria-selected`, `data-active`, the key and focus handlers) and
+call `handleClick(e, row)` from its `onClick`:
+
+```tsx
+import type { RendererProps } from "@jsudc/react";
+import { useRowActivation } from "@jsudc/react/headless";
+
+function MessageList({ data, onRowActivate, activeRowId, onActiveRowChange }: RendererProps) {
+  const nav = useRowActivation({
+    rows: data.rows,
+    onRowActivate,
+    activeRowId,
+    onActiveRowChange,
+    // Infinite mode: moving past the last row loads the next page.
+    hasNextPage: data.hasNextPage,
+    isFetchingNextPage: data.isFetchingNextPage,
+    fetchNextPage: data.fetchNextPage,
+  });
+  return (
+    <ul role={nav.enabled ? "grid" : undefined}>
+      {data.rows.map((row) => (
+        <li
+          key={row.__meta.id}
+          role={nav.enabled ? "row" : undefined}
+          {...nav.rowProps(row)}
+          onClick={(e) => nav.handleClick(e, row)}
+        >
+          {String(row.subject)}
+        </li>
+      ))}
+    </ul>
+  );
+}
+```
+
+`nav.activeRowId` is the active row (when it is loaded), `nav.move("next")`
+and `nav.activate(row)` drive it from the host's own buttons, and `ownsKeys`
+says whether a key belongs to the element it was pressed on.
+
+## Custom cells
+
+A column of the table can be drawn by a component of the host's. Register
+cell components by name, the way renderers are registered, and name one in
+the column's `render`:
+
+```yaml
+view:
+  columns:
+    - field: from
+      render: sender # the host's component
+      render_options: { avatar: true }
+    - field: label
+      render: badge # built in, unless the host registered "badge"
+```
+
+`render: "<name>"` resolves from the host's registry first, then from the
+built-in kinds (`bool`, `badge`, `sparkline`, `heading_glyph`, `icon`,
+`date`, `datetime`, `number_format`, `bytes`, `text`); a name nobody
+registered behaves as before (the field type's kind). Registering a built-in
+name replaces that kind for every column that names it in `render` (a
+column that only inherits a kind from its field type keeps the built-in).
+The cards draw their meta fields through the same registry; the other
+renderers (the kanban's, the calendar's, the map's and the chart's details)
+keep the built-in kinds.
+
+A cell component receives `CellProps`, a public contract like
+`RendererProps`:
+
+| Prop                   | Type                    | What it is                                                                                |
+| ---------------------- | ----------------------- | ----------------------------------------------------------------------------------------- |
+| `value`                | `unknown`               | `row[column.field]` as the server sent it; blank values too (draw your own empty)         |
+| `row`                  | `Row`                   | the whole row, `__meta` (id, version) included                                            |
+| `column`               | `ColumnConfig`          | the column from `view.columns[]` (or the card's meta field): `render_options`, `align`, … |
+| `def`                  | `FieldDef \| undefined` | the field's definition in the schema                                                      |
+| `collection`           | `string`                | the collection's name                                                                     |
+| `locale`, `intlLocale` | `string`                | the UI's language and its `Intl` locale                                                   |
+| `editable`             | `boolean`               | the cell edits on double-click (the inline editor draws over your component)              |
+| `surface`              | `"table" \| "card"`     | a table cell or a card's meta field                                                       |
+
+```tsx
+import { type CellProps, createCellRegistry, UdcDataView, UdcProvider } from "@jsudc/react";
+
+/** The sender as an avatar and a name, the unread ones bold. */
+function SenderCell({ value, row, column }: CellProps) {
+  const name = String(value ?? "");
+  return (
+    <span style={{ display: "flex", gap: 6, fontWeight: row.unread ? 600 : 400 }}>
+      {column.render_options?.avatar ? (
+        <img src={`/avatars/${name}.png`} alt="" width={20} />
+      ) : null}
+      {name || "—"}
+    </span>
+  );
+}
+
+// A module constant, like the renderer registry.
+const cells = createCellRegistry({ name: "sender", component: SenderCell });
+
+<UdcProvider client={client} renderers={renderers} cells={cells}>
+  …
+</UdcProvider>;
+
+// Or for one view, added to the provider's (this view's names win):
+<UdcDataView collection="messages" cells={cells} />;
+```
+
+`createCellRegistry` takes `{ name, component }` definitions, a later one
+replacing an earlier name; a plain `{ sender: SenderCell }` object is a
+registry too. `UdcCellsProvider cells={…}` sets one anywhere in the tree
+(nested providers add up, the inner names winning) and `useCellRegistry()`
+reads the one in effect; `CellValue` of `@jsudc/react/table` draws with it
+when passed `cells`, `row` and `collection`.
 
 ## Bring your own primitives
 
@@ -736,6 +949,9 @@ change with them, for plain-CSS overrides:
 }
 ```
 
+With row activation on, the active row and card also carry
+`data-active="true"` (`.udc-row[data-active] .udc-cell { … }`).
+
 A rule of the host's own (unlayered) CSS wins over the library's utilities,
 which sit in Tailwind's `@layer utilities`, without `!important`; only inline
 styles (row height, column widths, pinned offsets) need it.
@@ -896,7 +1112,13 @@ registry and everything not tied to one renderer. Beyond the above:
 `createRendererRegistry`, `rendererEntry`, `rendererTabs`, `resolveTab`,
 `UdcRenderersProvider`, `useRendererRegistry` and the `RendererProps` /
 `RendererEntry` / `RendererDefinition` / `RendererRegistry` types;
-`EmptyState` / `ErrorState` / `NoRendererState`; the `UdcQueryClientOptions` type; `mergeMessages`, `makeT`,
+`EmptyState` / `ErrorState` / `NoRendererState`; the `UdcQueryClientOptions` type;
+the row activation `useRowActivation`, `rowActivationEnabled`, `ownsKeys`
+and the `RowActivationProps` / `RowActivation` / `RowActivationRowProps` /
+`UseRowActivationOptions` types; the cells `createCellRegistry`,
+`cellComponent`, `mergeCellRegistries`, `UdcCellsProvider`, `useCellRegistry`
+and the `CellProps` / `CellComponent` / `CellDefinition` / `CellRegistry`
+types; `mergeMessages`, `makeT`,
 `lookup`, `schemaLabelTerms`, `tableSection`, `TRANSLATIONS`, `LOCALES`;
 `cn` (tailwind-merge set up for the `udc:` prefix), `storage`, `humanize`;
 `UdcUrlStateProvider`, `useUrlSearchParams`, `windowLocationAdapter`,

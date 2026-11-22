@@ -1,6 +1,7 @@
 import type { FilterChipConfig, FilterNode, Row } from "@jsudc/core";
 import { BookOpen, FileCode2, InfinityIcon, Rows3 } from "lucide-react";
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
+import { type CellRegistry, UdcCellsProvider } from "../cells/registry.js";
 import { ChartWindowControl } from "../chart/ChartWindowControl.js";
 import { useChartWindow } from "../chart/useChartWindow.js";
 import { andWindow } from "../chart/window.js";
@@ -9,6 +10,7 @@ import { cn, humanize } from "../lib/utils.js";
 import { useRendererRegistry } from "../renderers/context.js";
 import { rendererEntry, rendererTabs, resolveTab } from "../renderers/registry.js";
 import type { FolderNav, RendererCount, RendererRegistry } from "../renderers/types.js";
+import { rowActivationEnabled } from "../rows/useRowActivation.js";
 import { useSchemaEditor } from "../schema-editor/useSchemaEditor.js";
 import { ErrorState, NoRendererState } from "../table/states.js";
 import { useUdcCollection, useUdcDescribe } from "../udc/hooks.js";
@@ -70,6 +72,27 @@ export interface UdcDataViewProps {
    * own, share one query string. End it with a separator.
    */
   urlPrefix?: string | undefined;
+  /**
+   * The cell components a column's `render` may name, for this view: added to
+   * the provider's (`UdcProvider cells`), a name of this registry winning.
+   */
+  cells?: CellRegistry | undefined;
+  /**
+   * A row was activated: Enter on it, or a plain click. With a `row_link` view
+   * a plain click then activates, and Cmd / Ctrl-click or the middle button
+   * follow the link. Passing this, `activeRowId` or `onActiveRowChange` turns
+   * on row activation: one tab stop for the rows, ArrowUp / ArrowDown, `j` /
+   * `k`, Home / End move the active row, Enter activates it.
+   */
+  onRowActivate?: ((row: Row) => void) | undefined;
+  /**
+   * The row drawn as active (`aria-selected`, `data-active`, `--selected`).
+   * Passed: controlled (`null` for none; follow `onActiveRowChange`). Left out
+   * while activation is on: the view keeps it itself.
+   */
+  activeRowId?: string | null | undefined;
+  /** The active row changed by the user: the keys (no Enter needed) or a click on another row. */
+  onActiveRowChange?: ((row: Row | null) => void) | undefined;
 }
 
 /** `full`: today's view, every part drawn. `embedded`: one pane of a host's screen, no part drawn. */
@@ -132,13 +155,16 @@ export function UdcDataView(props: UdcDataViewProps) {
     () => (urlPrefix ? prefixUrlStateAdapter(base, urlPrefix) : base),
     [base, urlPrefix],
   );
-  // Without either prop the tree is exactly today's: no provider of its own.
-  if (adapter === inEffect) return <DataViewBody {...props} />;
-  return (
-    <UdcUrlStateProvider adapter={adapter}>
+  // Without these props the tree is exactly today's: no provider of its own.
+  const body = props.cells ? (
+    <UdcCellsProvider cells={props.cells}>
       <DataViewBody {...props} />
-    </UdcUrlStateProvider>
+    </UdcCellsProvider>
+  ) : (
+    <DataViewBody {...props} />
   );
+  if (adapter === inEffect) return body;
+  return <UdcUrlStateProvider adapter={adapter}>{body}</UdcUrlStateProvider>;
 }
 
 function DataViewBody({
@@ -149,8 +175,34 @@ function DataViewBody({
   pagingMode,
   toolbarStart,
   toolbarEnd,
+  onRowActivate,
+  activeRowId: activeRowIdProp,
+  onActiveRowChange: onActiveRowChangeProp,
 }: UdcDataViewProps) {
   const chrome = resolveChrome(chromeProp);
+  // Row activation: off unless the host passed one of its props. Uncontrolled, the view keeps
+  // the active row (across tab switches); the renderer always gets it controlled.
+  const activationOn = rowActivationEnabled({
+    onRowActivate,
+    activeRowId: activeRowIdProp,
+    onActiveRowChange: onActiveRowChangeProp,
+  });
+  const activeControlled = activeRowIdProp !== undefined;
+  const [ownActiveRowId, setOwnActiveRowId] = useState<string | null>(null);
+  const onActiveRowChange = useCallback(
+    (row: Row | null) => {
+      if (!activeControlled) setOwnActiveRowId(row ? row.__meta.id : null);
+      onActiveRowChangeProp?.(row);
+    },
+    [activeControlled, onActiveRowChangeProp],
+  );
+  const activation = activationOn
+    ? {
+        onRowActivate,
+        activeRowId: activeControlled ? activeRowIdProp : ownActiveRowId,
+        onActiveRowChange,
+      }
+    : {};
   // A host passing a new but equal filter object each render keeps the same filter.
   const hostKey = JSON.stringify(hostFilterProp ?? null);
   const hostFilter = useMemo<FilterNode | undefined>(
@@ -589,6 +641,7 @@ function DataViewBody({
             }
             onCount={setOwnCount}
             folder={folderNav}
+            {...activation}
           />
         ) : live ? (
           <NoRendererState name={state.tab} />

@@ -149,7 +149,7 @@ export function CellEditor({
   );
 
   return (
-    <div className={shell} data-testid="cell-editor">
+    <div className={shell} data-testid="cell-editor" data-cell-editor="">
       {kind === "lookup" && def && lookup ? (
         <LookupCombobox
           def={def}

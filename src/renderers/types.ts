@@ -71,6 +71,18 @@ export interface RendererProps {
   onCount: (count: RendererCount | null) => void;
   /** Set when the view has `folder_options`. */
   folder?: FolderNav | undefined;
+  /**
+   * Row activation (0.4.0; `useRowActivation` of `@jsudc/react/headless` does
+   * all of it): Enter or a plain click on a row. Absent unless the host asked.
+   */
+  onRowActivate?: ((row: Row) => void) | undefined;
+  /**
+   * The row to draw as active; `null` for none. Set (kept by the view when the
+   * host does not control it) whenever activation is on, else absent.
+   */
+  activeRowId?: string | null | undefined;
+  /** Report the active row moving (keys, a click on another row); set whenever activation is on. */
+  onActiveRowChange?: ((row: Row | null) => void) | undefined;
 }
 
 export interface RendererEntry {

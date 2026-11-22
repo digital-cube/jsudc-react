@@ -2,8 +2,11 @@
 // `exports` (a self-reference to dist/, so run it after `npm run build`), compiled once under
 // moduleResolution NodeNext and once under Bundler (smoke/tsconfig.*.json). An import the
 // declarations cannot resolve turns its types into `any`; the @ts-expect-error lines fail then.
-import type { DescribeResponse, FilterNode, SortKey } from "@jsudc/core";
+import type { DescribeResponse, FilterNode, Row, SortKey } from "@jsudc/core";
 import {
+  type CellProps,
+  type CellRegistry,
+  createCellRegistry,
   createMemoryUrlStateAdapter,
   createRendererRegistry,
   type FolderNav,
@@ -12,6 +15,7 @@ import {
   type RendererCount,
   type RendererDefinition,
   type RendererProps,
+  type RowActivationProps,
   type UdcCollectionResult,
   UdcDataView,
   type UdcDataViewProps,
@@ -21,15 +25,17 @@ import {
 import { RENDERERS } from "@jsudc/react/all";
 import { cardsRenderer } from "@jsudc/react/cards";
 import {
+  createCellRegistry as headlessCells,
   createMemoryUrlStateAdapter as headlessMemory,
   prefixUrlStateAdapter as headlessPrefix,
   type useDataViewState,
+  useRowActivation,
 } from "@jsudc/react/headless";
 import { UdcReactRouterUrlState } from "@jsudc/react/react-router";
 import { tableRenderer } from "@jsudc/react/table";
 import { defaultUiKit, Toaster } from "@jsudc/react/ui";
 import { Inbox } from "lucide-react";
-import { createElement } from "react";
+import { type ComponentType, createElement } from "react";
 
 const registry = createRendererRegistry(tableRenderer, cardsRenderer);
 
@@ -67,8 +73,87 @@ export const rendererContract: Equal<
     onSchemaAction?: RendererProps["onSchemaAction"];
     onCount: (count: RendererCount | null) => void;
     folder?: FolderNav | undefined;
+    onRowActivate?: ((row: Row) => void) | undefined;
+    activeRowId?: string | null | undefined;
+    onActiveRowChange?: ((row: Row | null) => void) | undefined;
   }
 > = true;
+
+// RendererProps exactly as 0.3.1 published it: a host renderer written against it still is a
+// renderer of 0.4.0 (every prop added since is optional).
+interface RendererProps031 {
+  collection: string;
+  describe: DescribeResponse;
+  data: UdcCollectionResult;
+  filter: FilterNode | undefined;
+  baseFilter: FilterNode | undefined;
+  chartWindow?: RendererProps["chartWindow"];
+  unwindowedFilter?: FilterNode | undefined;
+  search: string;
+  sort: SortKey[];
+  onSort: (field: string, multi: boolean) => void;
+  mode: PagingMode;
+  page: number;
+  limit: number;
+  onPage: (page: number) => void;
+  filtered: boolean;
+  onClearFilters: () => void;
+  resetKey: string;
+  onSchemaAction?: RendererProps["onSchemaAction"];
+  onCount: (count: RendererCount | null) => void;
+  folder?: FolderNav | undefined;
+}
+function OldList({ data }: RendererProps031) {
+  return createElement("ol", null, String(data.rows.length));
+}
+export const oldRenderer: RendererDefinition = {
+  name: "old",
+  component: OldList,
+  icon: Inbox,
+  labelKey: "TAB_OLD",
+  paging: true,
+  editMode: false,
+};
+// …and the props a 0.4.0 view hands it still satisfy 0.3.1's shape.
+export const narrowed: ComponentType<RendererProps> = OldList;
+export const widened = (p: RendererProps): RendererProps031 => p;
+
+// Row activation (README "Row activation and keyboard"): on the view, and through the headless
+// hook in a host renderer.
+function ActiveList({ data, onRowActivate, activeRowId, onActiveRowChange }: RendererProps) {
+  const nav = useRowActivation({ rows: data.rows, onRowActivate, activeRowId, onActiveRowChange });
+  const items = data.rows.map((row) =>
+    createElement(
+      "li",
+      { key: row.__meta.id, ...nav.rowProps(row), onClick: (e) => nav.handleClick(e, row) },
+      String(row.subject),
+    ),
+  );
+  return createElement("ul", { role: nav.enabled ? "grid" : undefined }, items);
+}
+export const activation: RowActivationProps = {
+  onRowActivate: (row: Row) => row.__meta.id,
+  activeRowId: null,
+  onActiveRowChange: (row: Row | null) => row?.__meta.id,
+};
+export const activeView: UdcDataViewProps = { collection: "messages", ...activation };
+// @ts-expect-error activeRowId is a row id, not a row
+export const badActive: UdcDataViewProps = { collection: "x", activeRowId: { id: "m1" } };
+
+// Custom cells (README "Custom cells"): registered on the provider or per view.
+function Sender({ value, row, column, def, collection, surface }: CellProps) {
+  const size = column.render_options?.size;
+  return createElement(
+    "span",
+    { title: `${collection}/${row.__meta.id}/${def?.type}/${surface}/${String(size)}` },
+    String(value),
+  );
+}
+export const cells: CellRegistry = createCellRegistry({ name: "sender", component: Sender });
+export const cellsHeadless: CellRegistry = headlessCells({ name: "sender", component: Sender });
+export const withCells: UdcDataViewProps = { collection: "messages", cells };
+// @ts-expect-error a cell definition needs a component
+createCellRegistry({ name: "sender" });
 
 /** A message list drawn by the host: one line per row, subject and sender. */
 function MessageList({ data, filtered, onClearFilters, mode, page, limit, onPage }: RendererProps) {
@@ -120,6 +205,7 @@ export const fromHeadless = [headlessMemory(), headlessPrefix(createMemoryUrlSta
 export const badChrome: UdcDataViewProps = { collection: "x", chrome: "minimal" };
 
 export const used = [
+  ActiveList,
   RENDERERS,
   UdcDataView,
   UdcProvider,
