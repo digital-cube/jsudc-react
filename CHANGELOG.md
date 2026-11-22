@@ -8,8 +8,8 @@ All notable changes to `@jsudc/react` are recorded here. The format follows
 ## [Unreleased]
 
 Selection and bulk actions, row actions (R1 + S3, the React part), host
-actions in the browser (S4), search answered by the source (S6) and live
-updates over the change feed (S5). Builds on `@jsudc/core` 0.5.0's
+actions in the browser (S4), search answered by the source (S6), live
+updates over the change feed (S5) and long lists in the table (R5). Builds on `@jsudc/core` 0.5.0's
 `mutate_many`, typed host actions, eligibility helpers, the `set` / `action` /
 `confirm` keys of `ActionDef`, `ListRequest.search` with the capability
 `search`, and `UdcClient.changes` with the capability `changes`.
@@ -163,6 +163,37 @@ updates over the change feed (S5). Builds on `@jsudc/core` 0.5.0's
 - `capabilities` of `useUdcCollection` and `useUdcAllRows` accept
   `changes` next to `paging` (a wider `Pick`; what compiled still compiles).
 - README section "Live updates".
+- Long lists: in infinite mode the table mounts only the rows in and near
+  its viewport (an overscan of 10 rows on each side), spacer rows standing
+  for the rest so the scrollbar and the scroll position are those of every
+  loaded row. Automatic once more than 200 rows are loaded; a list at or
+  under that draws the markup it drew before. Pages mode is never windowed.
+  No new dependency: rows have one height, so the window is arithmetic.
+- `UdcDataView virtualize` and `TableRenderer virtualize`
+  (`TableVirtualizeProp`: `boolean` or `TableVirtualization`
+  `{ enabled?: boolean | "auto", threshold?, overscan? }`) force it on or
+  off and set the threshold and the overscan; `RendererProps.virtualize`
+  carries it to a renderer when the host set it.
+- Across the window: the keys of row activation scroll a row outside it in,
+  mount it and focus it (Home / End to the first / last loaded row); the
+  active row, the tab stop, the focused row, a row with an open cell editor
+  and a row whose menu is open stay mounted wherever they are; selection
+  ranges and "the page" are computed over the loaded rows; the sentinel,
+  pinned columns, row actions, custom cells and lookup batching (one fetch
+  for every loaded row) are unchanged; a refetch keeps the scroll position.
+  A windowed table's `aria-rowcount` is the loaded count and each row has
+  its `aria-rowindex`.
+- `useRowActivation` takes an optional `reveal(row, index)`: a windowed list
+  is asked to mount a row the keys moved to, which then takes the focus as
+  it attaches.
+- `@jsudc/react/headless` (and, the options, the root): `useRowWindow`,
+  `virtualizationApplies`, `resolveVirtualization`, `visibleRange`,
+  `withOverscan`, `keepRange`, `bodySlices`, `DEFAULT_VIRTUAL_THRESHOLD`,
+  `DEFAULT_VIRTUAL_OVERSCAN`, the types `TableVirtualization`,
+  `TableVirtualizeProp`, `RowRange`, `BodySlice`, `UseRowWindowOptions`,
+  `RowWindow`.
+- README section "Long lists" (its limits: find-in-page sees only the
+  mounted rows, printing prints the window).
 
 ### Changed
 

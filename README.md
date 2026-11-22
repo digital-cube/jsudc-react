@@ -177,6 +177,7 @@ when this table drifts).
 | `onActiveRowChange(row \| null)`     | function (optional)                        | report the active row moving (keys, a click on another row); set whenever activation is on                                        |
 | `selection`                          | `RowSelection` (optional)                  | the row selection ([Selection and bulk actions](#selection-and-bulk-actions)); set while the view selects and the renderer pages  |
 | `rowActions`                         | `RowActions` (optional)                    | the actions of each row ([Row actions](#row-actions)); set when the view declares `row_action_defs` or `row_actions`              |
+| `virtualize`                         | `TableVirtualizeProp` (optional)           | the table's long-list windowing ([Long lists](#long-lists)); passed only when the host set `UdcDataView virtualize`               |
 
 The three activation props are absent unless the host turned activation on;
 `useRowActivation` of `@jsudc/react/headless` does everything they describe
@@ -1094,6 +1095,93 @@ row)`, `isRowMenuKey(e)` — are in `@jsudc/react/headless`. A UI kit's
 `DropdownMenu` may take the optional `open` / `onOpenChange` and its content
 `onCloseAutoFocus` (the default kit does); a kit that ignores them still
 opens the menu from its trigger, but not from the keys or a right-click.
+
+## Long lists
+
+In infinite mode the table mounts only the rows in and near its viewport,
+however many pages are loaded: a mailbox scrolled through for thousands of
+messages keeps a few dozen `<tr>` in the page, not thousands. The rows
+outside the window are stood in for by spacer rows of their height, so the
+scrollbar, the scroll position and the sticky header behave as if every row
+were there. Rows have one height (the view's `row_height`, default 40 px),
+so the window is arithmetic: no dependency, no measuring of each row.
+
+**When it applies.** Only in infinite mode (pages mode is never windowed)
+and, by default, only once **more than 200 rows** are loaded: a list at or
+under that draws exactly the markup it drew before 0.5.0. The `virtualize`
+prop of `UdcDataView` (and of `TableRenderer`) changes that:
+
+| `virtualize`                       | Infinite mode windows its rows…                    |
+| ---------------------------------- | -------------------------------------------------- |
+| left out, or `{ enabled: "auto" }` | once more than `threshold` (200) rows are loaded   |
+| `true` / `{ enabled: true }`       | always, however few                                |
+| `false` / `{ enabled: false }`     | never: every loaded row is mounted, as before      |
+| `{ threshold: 500 }`               | once more than 500 are loaded                      |
+| `{ overscan: 20 }`                 | with 20 rows mounted beyond each edge (default 10) |
+
+```tsx
+import { UdcDataView } from "@jsudc/react";
+
+// The mailbox: always infinite, always windowed (even a short folder), with a deeper overscan
+// for fast keyboard scrolling.
+export function Mailbox({ folder }: { folder: string }) {
+  return (
+    <UdcDataView
+      collection="messages"
+      filter={{ field: "folder", op: "eq", value: folder }}
+      pagingMode="infinite"
+      virtualize={{ enabled: true, overscan: 20 }}
+      onRowActivate={(row) => openMessage(row.__meta.id)}
+    />
+  );
+}
+```
+
+With 5 000 messages loaded this mounts about 40 rows (the ~10 that show, 20
+above and 20 below); scrolling moves the window, and reaching the end of the
+loaded rows loads the next page as before.
+
+**What keeps working across the window.**
+
+- The sticky header, pinned columns and their shadows, column widths and
+  horizontal scroll: the spacers span every column.
+- The infinite sentinel: it sits under the full height of the rows, so it
+  comes into view at the end of the loaded rows and asks for the next page.
+- The keys of row activation: ArrowDown / ArrowUp / `j` / `k` onto a row
+  outside the window scroll it in (to the nearest edge), mount it and focus
+  it; Home and End go to the first and the last loaded row. A row is kept
+  mounted, wherever it is, while it is the active row, holds the list's tab
+  stop or has the focus, so it keeps the focus when it is scrolled away and
+  back.
+- Selection: a shift-range and "select the page" are computed over the
+  loaded rows, never the mounted ones, so a range spanning rows that were
+  never drawn selects them all.
+- An open cell editor: its row stays mounted while the editor is open (the
+  edit is neither committed nor cancelled by scrolling), and a row whose
+  "more" menu is open stays mounted too.
+- Row actions, custom cells and lookups: a lookup column still makes one
+  fetch for every loaded row, not one per window.
+- A refetch from the change feed keeps the scroll position: the window
+  follows `scrollTop`, which a refetch of the same pages does not change.
+- `aria-rowcount` on the table is the loaded count and every mounted row
+  carries its `aria-rowindex` (1-based, over the loaded rows), so a screen
+  reader hears "row 2 501 of 5 000" for a row it could not otherwise place.
+
+**Limits.** The browser's find-in-page (Ctrl / Cmd+F) sees only the mounted
+rows; search the list with the view's search box instead. Printing prints
+the window, not the list. Rows of variable height are not supported (a row
+taller than `row_height` is measured once and its height used for all), and
+the cards, kanban and tree renderers are not windowed.
+
+**In a host renderer.** The arithmetic is in `@jsudc/react/headless`:
+`virtualizationApplies(virtualize, mode, count)`,
+`resolveVirtualization(virtualize)` (with `DEFAULT_VIRTUAL_THRESHOLD`,
+`DEFAULT_VIRTUAL_OVERSCAN`), `visibleRange`, `withOverscan`, `keepRange`,
+`bodySlices(count, range, pinned)` and the hook `useRowWindow`. A windowed
+list of your own passes `reveal(row, index)` to `useRowActivation`: the keys
+call it for a row that is not mounted, and the row takes the focus the
+moment its element attaches. `RendererProps.virtualize` carries the view's
+prop when the host set it.
 
 ## Custom cells
 
