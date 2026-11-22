@@ -1,6 +1,7 @@
 import { AlertTriangle, CheckCircle2, Info, X } from "lucide-react";
 import { Toast as T } from "radix-ui";
 import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from "react";
+import { UDC_SCOPE_CLASS } from "../../lib/scope.js";
 import { cn } from "../../lib/utils.js";
 import type { ToastInput, ToastVariant } from "../../ui-kit/types.js";
 
@@ -62,7 +63,9 @@ export function Toaster({ children }: { children: ReactNode }) {
             </T.Close>
           </T.Root>
         ))}
-        <T.Viewport className="udc:fixed udc:right-0 udc:bottom-0 udc:z-[100] udc:m-0 udc:flex udc:w-[380px] udc:max-w-[100vw] udc:list-none udc:flex-col udc:gap-2 udc:p-4 udc:outline-none" />
+        <T.Viewport
+          className={`${UDC_SCOPE_CLASS} udc:fixed udc:right-0 udc:bottom-0 udc:z-[100] udc:m-0 udc:flex udc:w-[380px] udc:max-w-[100vw] udc:list-none udc:flex-col udc:gap-2 udc:p-4 udc:outline-none`}
+        />
       </T.Provider>
     </ToastContext.Provider>
   );

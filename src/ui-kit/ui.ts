@@ -34,4 +34,5 @@ export { Segmented, type SegmentedOption } from "../components/ui/segmented.js";
 export { Select, type SelectOption } from "../components/ui/select.js";
 export { Toaster, type ToastInput, type ToastVariant, useToast } from "../components/ui/toast.js";
 export { Tip, TooltipProvider } from "../components/ui/tooltip.js";
+export { UDC_SCOPE_CLASS } from "../lib/scope.js";
 export { defaultUiKit } from "./default.js";

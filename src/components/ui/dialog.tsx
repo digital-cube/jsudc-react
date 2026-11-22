@@ -1,6 +1,7 @@
 import { X } from "lucide-react";
 import { Dialog as D } from "radix-ui";
 import { type ComponentProps, forwardRef, type ReactNode } from "react";
+import { UDC_SCOPE_CLASS } from "../../lib/scope.js";
 import { cn } from "../../lib/utils.js";
 
 export const Dialog = D.Root;
@@ -15,10 +16,16 @@ export const DialogContent = forwardRef<
 >(function DialogContent({ className, title, description, children, ...props }, ref) {
   return (
     <D.Portal>
-      <D.Overlay className="udc:fixed udc:inset-0 udc:z-50 udc:bg-black/35 udc:data-[state=open]:animate-[overlay-in_140ms_ease-out] udc:dark:bg-black/55" />
+      <D.Overlay
+        className={cn(
+          UDC_SCOPE_CLASS,
+          "udc:fixed udc:inset-0 udc:z-50 udc:bg-black/35 udc:data-[state=open]:animate-[overlay-in_140ms_ease-out] udc:dark:bg-black/55",
+        )}
+      />
       <D.Content
         ref={ref}
         className={cn(
+          UDC_SCOPE_CLASS,
           "udc:fixed udc:top-[12vh] udc:left-1/2 udc:z-50 udc:flex udc:max-h-[80vh] udc:w-[calc(100vw-2rem)] udc:max-w-md udc:-translate-x-1/2 udc:flex-col udc:rounded-xl udc:border udc:border-border udc:bg-surface-raised udc:text-foreground udc:shadow-2xl udc:shadow-black/15 udc:outline-none",
           "udc:data-[state=open]:animate-in udc:dark:shadow-black/50",
           className,

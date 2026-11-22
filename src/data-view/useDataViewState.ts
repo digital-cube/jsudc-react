@@ -68,6 +68,14 @@ export function useDataViewState(
     source?: boolean;
     /** The renderers a tab may resolve to; the provider's registry when absent. */
     renderers?: RendererRegistry;
+    /** The paging mode to open in, instead of the view's `pagination`. */
+    mode?: PagingMode;
+    /**
+     * The user cannot choose the paging mode (the toggle is not drawn): `mode`,
+     * else the view's `pagination`, is the mode; `?mode=` and the choice
+     * remembered from an earlier session are ignored.
+     */
+    fixedMode?: boolean;
   } = {},
 ): DataViewState {
   const [params, setParams] = useUrlSearchParams();
@@ -113,11 +121,14 @@ export function useDataViewState(
       : opts.source && raw.tab === SOURCE_TAB
         ? SOURCE_TAB
         : resolveTab(registry, raw.tab ?? "", renderers, view?.default_renderer ?? "table");
-  const mode = resolvePagingMode(
-    decodeModeParam(raw.mode),
-    storage.get(pagingStorageKey(collection)),
-    view?.pagination ?? "infinite",
-  );
+  const defaultMode = opts.mode ?? view?.pagination ?? "infinite";
+  const mode = opts.fixedMode
+    ? defaultMode
+    : resolvePagingMode(
+        decodeModeParam(raw.mode),
+        storage.get(pagingStorageKey(collection)),
+        defaultMode,
+      );
 
   return {
     tab,

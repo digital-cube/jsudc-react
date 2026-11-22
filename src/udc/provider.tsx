@@ -1,5 +1,6 @@
 import type { UdcClient } from "@jsudc/core/client";
 import type { ReactNode } from "react";
+import { type CellRegistry, UdcCellsProvider } from "../cells/registry.js";
 import { type UdcLinks, UdcLinksProvider } from "../lookup/links.js";
 import { UdcRenderersProvider } from "../renderers/context.js";
 import type { RendererRegistry } from "../renderers/types.js";
@@ -7,7 +8,12 @@ import { UdcUiProvider } from "../ui-kit/context.js";
 import type { UiKit } from "../ui-kit/types.js";
 import { UdcClientContext } from "./client.js";
 
-export { createUdcQueryClient, shouldRetry, useUdcClient } from "./client.js";
+export {
+  createUdcQueryClient,
+  shouldRetry,
+  type UdcQueryClientOptions,
+  useUdcClient,
+} from "./client.js";
 
 /**
  * The root provider: the client, the renderers `UdcDataView` draws its tabs
@@ -21,6 +27,7 @@ export function UdcProvider({
   kit,
   renderers,
   links,
+  cells,
   children,
 }: {
   client: UdcClient;
@@ -33,10 +40,13 @@ export function UdcProvider({
   kit?: UiKit;
   /** `createRendererRegistry(tableRenderer, …)`, or `RENDERERS` from `@jsudc/react/all`. */
   renderers?: RendererRegistry;
+  /** `createCellRegistry(...)`: the cell components a column's `render` may name (README "Custom cells"). */
+  cells?: CellRegistry;
   children: ReactNode;
 }) {
   let inner = <UdcClientContext.Provider value={client}>{children}</UdcClientContext.Provider>;
   if (links) inner = <UdcLinksProvider links={links}>{inner}</UdcLinksProvider>;
+  if (cells) inner = <UdcCellsProvider cells={cells}>{inner}</UdcCellsProvider>;
   if (renderers) inner = <UdcRenderersProvider renderers={renderers}>{inner}</UdcRenderersProvider>;
   return kit ? <UdcUiProvider kit={kit}>{inner}</UdcUiProvider> : inner;
 }

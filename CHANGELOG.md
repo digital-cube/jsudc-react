@@ -7,6 +7,116 @@ All notable changes to `@jsudc/react` are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-22
+
+Sessions (a signed-out state, `onUnauthenticated`), embedding a view in a
+host's screen with a scoped stylesheet, row activation and keyboard movement,
+and a cell registry, released together with `@jsudc/core` 0.4.0 and
+`@jsudc/server` 0.4.0. Needs `@jsudc/core` 0.4.0.
+
+### Added
+
+- Sessions: `createUdcQueryClient(options?)` takes `UdcQueryClientOptions` —
+  `onUnauthenticated(error)`, called when a query or a mutation fails with
+  `isUnauthenticated` (an HTTP 401, or the server's in-protocol "not signed
+  in"), once per burst; `unauthenticatedQuietMs` (default 2000) ends a burst.
+  Without arguments it is what it was.
+- `ErrorState` shows "You are signed out" (`APP.SIGNED_OUT_TITLE`,
+  `APP.SIGNED_OUT_BODY`, `en` and `sr`, overridable) without Retry for an
+  unauthenticated error, in every view.
+- README section "Sessions": a cookie session, a CSRF header read per call,
+  `onUnauthenticated` sending the user to the host's login.
+- Embedding a view (`UdcDataView`, every prop optional; without them the view
+  is unchanged):
+  - `filter`: a `FilterNode` of the host's, ANDed into every list the view and
+    its renderers load (`filter`, `baseFilter`, `unwindowedFilter` of
+    `RendererProps`) and counted in "of M"; not a chip or pill, not in the
+    URL, not removed by "clear filters", not "the user filtered".
+  - `chrome`: `"full"` (default), `"embedded"`, or `UdcDataViewChrome` flags
+    `header`, `tabs`, `pagingToggle`, `docTab`, `sourceTab`, `frame` over a
+    `preset`; `resolveChrome` resolves them. Without the paging toggle the mode
+    is `pagingMode`, else the view's `pagination`, not a stored choice.
+  - `pagingMode`: the mode to open in instead of the view's `pagination`.
+  - `toolbarStart`, `toolbarEnd`: host content in the toolbar.
+  - `urlPrefix` and `urlState` (`"url"`, `"memory"` or a `UrlStateAdapter`):
+    the view's parameters, its renderers' (`board`, `win`, `from`, `to`,
+    `preset`, `date`) included, under a prefix or in memory.
+- `prefixUrlStateAdapter(inner, prefix)` (reads and writes only its own keys
+  of any `UrlStateAdapter`) and `createMemoryUrlStateAdapter(initial?)` (a
+  query string in memory, `MemoryUrlStateAdapter`), from the root and
+  `@jsudc/react/headless`.
+- `useDataViewState` options `mode` (instead of the view's `pagination`) and
+  `fixedMode` (ignore `?mode=` and the stored choice).
+- `@jsudc/react/styles.scoped.css`: the same utilities, tokens and resets as
+  `styles.css`, applied only inside `.udc-data-view` and `.udc-scope`; no rule
+  on `*`, `html`, `body` or `:root`, no global preflight, no `@property`.
+  Built by `build:css` (`scripts/scope-css.mjs`) and guarded by
+  `scripts/check-scoped-css.mjs`. `styles.css` is unchanged.
+- The default UI kit's portalled content (dialogs and their overlay, popovers,
+  dropdown menus, selects, tooltips, the toast viewport) carries the class
+  `udc-scope`; `UDC_SCOPE_CLASS` from the root and `@jsudc/react/ui`.
+- `RendererProps` is a documented public contract (README "Renderers", with a
+  host-written renderer); `smoke/types.ts` compiles one against the published
+  declarations, so `npm run check:types` fails when the contract changes.
+- README sections "Embedding a view" (with a three-pane screen), "Writing a
+  renderer: the `RendererProps` contract" and "The scoped sheet".
+- `lightningcss` is a devDependency (it was already installed through
+  Tailwind and Vite); the build uses it to scope the sheet.
+- Row activation and keyboard movement (`UdcDataView`, every prop optional;
+  without them the rows are unchanged):
+  - `onRowActivate(row)`: Enter on a row, or a plain click of it.
+  - `activeRowId`: the row drawn as active (`aria-selected="true"`,
+    `data-active="true"`, the `--selected` background); controlled when
+    passed, kept by the view (across tab switches) when not.
+  - `onActiveRowChange(row | null)`: the active row moved by the keys (no
+    Enter needed) or by a click on another row, so a host can preview on move.
+  - In the table and the cards: ArrowDown / `j`, ArrowUp / `k`, Home, End
+    move, Enter activates; not while an input, the search box, a cell editor,
+    a menu, a list box or a dialog has the focus, nor with a modifier; Space
+    is not bound. One tab stop for the rows (roving `tabindex`), the table and
+    the card grid `role="grid"`, each row or card a `row`.
+  - The active row and the focus are kept by row id across a refetch, a sort
+    and infinite pages; ArrowDown on the last loaded row in infinite mode
+    loads the next page and moves onto it; the active row is scrolled into
+    view; a row that left the list stops being active.
+  - `row_link`: unchanged without `onRowActivate`; with it a plain click
+    activates and Cmd / Ctrl-click and the middle button follow the link.
+- `RendererProps` gains the optional `onRowActivate`, `activeRowId` and
+  `onActiveRowChange` (absent unless activation is on); a renderer written
+  against 0.3.1's props still compiles (`smoke/types.ts`).
+- `useRowActivation(options)` (with `rowActivationEnabled`, `ownsKeys` and the
+  `RowActivationProps`, `RowActivation`, `RowActivationRowProps`,
+  `UseRowActivationOptions` types), from `@jsudc/react/headless` and the
+  root: the table's activation and keys for a host renderer (`rowProps(row)`,
+  `handleClick`, `move`, `activate`).
+- Custom cells: `createCellRegistry(...{ name, component })` (a `CellRegistry`;
+  a plain object works too), `UdcProvider cells`, `UdcCellsProvider` (nested
+  ones add up), `useCellRegistry`, `cellComponent`, `mergeCellRegistries`, and
+  `UdcDataView cells` (added to the provider's, its names winning). A column's
+  `render` resolves from the host's registry first, then the built-in kinds; a
+  registered built-in name (`badge`, …) replaces that kind; an unregistered
+  name behaves as before. The cards' meta fields use the same registry; the
+  other renderers keep the built-in kinds. Root and `@jsudc/react/headless`.
+- `CellProps`, the documented contract of a cell component: `value`, `row`,
+  `column` (with `render_options`), `def`, `collection`, `locale`,
+  `intlLocale`, `editable`, `surface` (`"table"` or `"card"`).
+- `CellValue` takes the optional `cells`, `row`, `collection` and `surface`.
+- The cell editor's root carries `data-cell-editor`.
+- README sections "Row activation and keyboard" (a list and a reading pane,
+  the pane following the keyboard; a host renderer on `useRowActivation`) and
+  "Custom cells", linked from the `RendererProps` contract.
+
+### Changed
+
+- With `@jsudc/core` 0.4.0 an HTTP 401 / 403 in front of `/udc` is a `UdcError`
+  (`forbidden`), so it is no longer retried twice and shown as a transport
+  failure with Retry: it shows at once, a 401 as signed out, a 403 as the
+  generic failure. `shouldRetry` itself is unchanged.
+- The `@jsudc/core` peer range is `^0.4.0` (sessions import
+  `isUnauthenticated`, which only core 0.4.0 exports). The development
+  dependency is pinned to core's `release-0.4.0` commit until core 0.4.0 is on
+  npm.
+
 ## [0.3.1] - 2026-11-15
 
 Patch release of `@jsudc/react` alone; `@jsudc/core` and `@jsudc/server` stay
@@ -297,7 +407,8 @@ First tagged version, installed from the GitHub tag.
   Serbian), theme and time-zone providers, the UI primitives.
 - `styles.css`, compiled at build time, and `tokens.css`, its raw source.
 
-[Unreleased]: https://github.com/digital-cube/jsudc-react/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/digital-cube/jsudc-react/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/digital-cube/jsudc-react/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/digital-cube/jsudc-react/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/digital-cube/jsudc-react/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/digital-cube/jsudc-react/compare/v0.2.0...v0.2.1

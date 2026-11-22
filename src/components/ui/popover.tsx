@@ -1,5 +1,6 @@
 import { Popover as P } from "radix-ui";
 import { type ComponentProps, forwardRef } from "react";
+import { UDC_SCOPE_CLASS } from "../../lib/scope.js";
 import { cn } from "../../lib/utils.js";
 
 export const Popover = P.Root;
@@ -16,6 +17,7 @@ export const PopoverContent = forwardRef<HTMLDivElement, ComponentProps<typeof P
           align={align}
           sideOffset={sideOffset}
           className={cn(
+            UDC_SCOPE_CLASS,
             "udc:z-50 udc:rounded-lg udc:border udc:border-border udc:bg-surface-raised udc:p-3 udc:text-foreground udc:shadow-lg udc:shadow-black/5 udc:outline-none",
             "udc:data-[state=open]:animate-in udc:dark:shadow-black/40",
             className,

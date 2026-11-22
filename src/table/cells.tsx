@@ -1,6 +1,13 @@
-import { type ColumnColor, type ColumnConfig, type FieldDef, lookupOf } from "@jsudc/core";
+import {
+  type ColumnColor,
+  type ColumnConfig,
+  type FieldDef,
+  lookupOf,
+  type Row,
+} from "@jsudc/core";
 import { Check, X } from "lucide-react";
 import type { ReactNode } from "react";
+import { type CellRegistry, cellComponent } from "../cells/registry.js";
 import { resolveIcon } from "../icons/resolve.js";
 import { cn } from "../lib/utils.js";
 import { LookupValue } from "../lookup/LookupValue.js";
@@ -100,6 +107,10 @@ export function CellValue({
   locale,
   intlLocale,
   editable = false,
+  cells,
+  row,
+  collection,
+  surface = "table",
 }: {
   value: unknown;
   column: ColumnConfig;
@@ -108,8 +119,34 @@ export function CellValue({
   intlLocale: string;
   /** The cell edits on double-click: a lookup link then follows only on Cmd / Ctrl-click. */
   editable?: boolean;
+  /**
+   * The host's cell components (`useCellRegistry()`): a column whose `render`
+   * names one is drawn by it, before the built-in kinds. Used only with `row`
+   * and `collection`, which it receives.
+   */
+  cells?: CellRegistry | undefined;
+  row?: Row | undefined;
+  collection?: string | undefined;
+  /** Where the cell is drawn, as the registered component sees it. */
+  surface?: "table" | "card";
 }): ReactNode {
   const { timeZone } = useTimezone();
+  const Custom = row && collection !== undefined ? cellComponent(cells, column.render) : undefined;
+  if (Custom && row && collection !== undefined) {
+    return (
+      <Custom
+        value={value}
+        row={row}
+        column={column}
+        def={def}
+        collection={collection}
+        locale={locale}
+        intlLocale={intlLocale}
+        editable={editable}
+        surface={surface}
+      />
+    );
+  }
   const kind = renderKind(column, def);
   if (kind === "bool" && !isBlank(value)) {
     return <BoolValue value={value} style={column.render_options?.style} />;

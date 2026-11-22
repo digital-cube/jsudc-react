@@ -7,6 +7,7 @@
 export * from "./calendar/model.js";
 export * from "./calendar/useCalendarUrl.js";
 export * from "./cards/cardModel.js";
+export * from "./cells/registry.js";
 export * from "./chart/model.js";
 export * from "./chart/useChartWindow.js";
 export * from "./chart/window.js";
@@ -28,6 +29,8 @@ export * from "./renderers/context.js";
 export * from "./renderers/registry.js";
 export type * from "./renderers/types.js";
 export { isFolderRow } from "./renderers/types.js";
+// Row activation and keyboard movement over a list of rows.
+export * from "./rows/useRowActivation.js";
 export * from "./table/format.js";
 export * from "./table/style.js";
 export * from "./table/transforms.js";
@@ -68,4 +71,5 @@ export * from "./udc/client.js";
 export * from "./udc/hooks.js";
 export * from "./udc/keys.js";
 export * from "./url-state/adapter.js";
+export * from "./url-state/adapters.js";
 export * from "./url-state/UrlState.js";

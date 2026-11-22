@@ -1,9 +1,15 @@
 import type { ColumnColor, DescribeResponse, Row } from "@jsudc/core";
-import { useEffect, useMemo, useRef } from "react";
+import { type ReactNode, useEffect, useMemo, useRef } from "react";
+import { useCellRegistry } from "../cells/registry.js";
 import { FolderEntry } from "../data-view/FolderEntry.js";
 import { tableSection, useI18n } from "../i18n/i18n.js";
 import { cn } from "../lib/utils.js";
 import type { FolderNav } from "../renderers/types.js";
+import {
+  type RowActivation,
+  type RowActivationProps,
+  useRowActivation,
+} from "../rows/useRowActivation.js";
 import { CellValue } from "../table/cells.js";
 import { displayText, isBlank, renderKind } from "../table/format.js";
 import { Pager } from "../table/Pager.js";
@@ -47,7 +53,7 @@ const AVATAR: Record<ColumnColor, string> = {
 
 const SKELETON_CARDS = 12;
 
-export interface CardRendererProps {
+export interface CardRendererProps extends RowActivationProps {
   collection: string;
   describe: DescribeResponse;
   data: UdcCollectionResult;
@@ -78,6 +84,16 @@ export function CardRenderer(props: CardRendererProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
   useInfiniteSentinel(mode === "infinite", scrollRef, sentinelRef, data);
+  // Row activation: the cards in reading order, one tab stop, the same keys as the table.
+  const activation = useRowActivation({
+    rows: data.rows,
+    activeRowId: props.activeRowId,
+    onRowActivate: props.onRowActivate,
+    onActiveRowChange: props.onActiveRowChange,
+    hasNextPage: mode === "infinite" && data.hasNextPage,
+    isFetchingNextPage: data.isFetchingNextPage,
+    fetchNextPage: data.fetchNextPage,
+  });
 
   useEffect(() => {
     if (props.resetKey && scrollRef.current) scrollRef.current.scrollTop = 0;
@@ -111,6 +127,7 @@ export function CardRenderer(props: CardRendererProps) {
             data-testid="card-grid"
             data-size={slots.size}
             aria-busy={data.isFetching}
+            role={activation.enabled ? "grid" : undefined}
             className="udc:grid udc:gap-3 udc:p-4"
             style={grid}
           >
@@ -128,6 +145,7 @@ export function CardRenderer(props: CardRendererProps) {
                     section={section}
                     accent={resolveRowColor(row, view.row_color)}
                     folder={props.folder}
+                    activation={activation}
                   />
                 ))}
           </div>
@@ -173,6 +191,7 @@ function Card({
   section,
   accent,
   folder,
+  activation,
 }: {
   row: Row;
   slots: CardSlots;
@@ -180,9 +199,11 @@ function Card({
   section: string;
   accent: ReturnType<typeof resolveRowColor>;
   folder?: FolderNav | undefined;
+  activation: RowActivation;
 }) {
   const { t, locale, intlLocale } = useI18n();
   const { timeZone } = useTimezone();
+  const cells = useCellRegistry();
   const { schema } = describe;
   const text = (col: CardSlots["title"]) => {
     const v = row[col.field];
@@ -196,148 +217,176 @@ function Card({
   const hasImage = typeof image === "string" && image !== "";
   const cover = hasImage && slots.imageStyle === "cover";
   const tone = accent?.color ?? accent?.bg;
+  const on = activation.enabled;
+  const active = activation.activeRowId === row.__meta.id;
 
   return (
+    // biome-ignore lint/a11y/useKeyWithClickEvents: the keys come with rowProps (onKeyDown)
     <article
       data-testid="card"
       data-row-id={row.__meta.id}
       data-accent={tone ?? undefined}
+      {...activation.rowProps(row)}
+      role={on ? "row" : undefined}
+      onClick={on ? (e) => activation.handleClick(e, row) : undefined}
       className={cn(
         "udc-card",
         "udc:group/card udc:relative udc:flex udc:min-w-0 udc:flex-col udc:overflow-hidden udc:rounded-xl udc:border udc:border-border udc:bg-surface udc:shadow-xs udc:shadow-black/[0.03]",
         "udc:transition-[transform,box-shadow,border-color] udc:duration-150 udc:ease-out udc:hover:-translate-y-0.5 udc:hover:border-border-strong udc:hover:shadow-md udc:hover:shadow-black/[0.06] udc:dark:hover:shadow-black/40",
+        on &&
+          "udc:cursor-pointer udc:outline-none udc:focus-visible:ring-2 udc:focus-visible:ring-ring",
+        active && "udc:border-primary/60 udc:bg-selected udc:hover:border-primary/60",
       )}
     >
-      {tone && tone !== "default" ? (
-        <span
-          aria-hidden
-          data-testid="card-accent"
-          className={cn("udc:absolute udc:inset-y-0 udc:left-0 udc:w-[3px]", ACCENT_BAR[tone])}
-        />
-      ) : null}
-      {cover ? (
-        <img
-          src={image as string}
-          alt=""
-          loading="lazy"
-          data-testid="card-cover"
-          className="udc:aspect-[16/9] udc:w-full udc:border-b udc:border-border udc:bg-muted udc:object-cover"
-        />
-      ) : null}
-      <div className="udc:flex udc:items-center udc:gap-3 udc:px-4 udc:pt-3.5 udc:pb-3">
-        {hasImage && !cover ? (
+      <CardCell on={on}>
+        {tone && tone !== "default" ? (
+          <span
+            aria-hidden
+            data-testid="card-accent"
+            className={cn("udc:absolute udc:inset-y-0 udc:left-0 udc:w-[3px]", ACCENT_BAR[tone])}
+          />
+        ) : null}
+        {cover ? (
           <img
             src={image as string}
             alt=""
             loading="lazy"
-            data-testid="card-image-avatar"
-            className="udc:size-9 udc:shrink-0 udc:rounded-full udc:border udc:border-border udc:bg-muted udc:object-cover"
+            data-testid="card-cover"
+            className="udc:aspect-[16/9] udc:w-full udc:border-b udc:border-border udc:bg-muted udc:object-cover"
           />
         ) : null}
-        {hasImage ? null : (
-          <span
-            aria-hidden
-            data-testid="card-avatar"
-            className={cn(
-              "udc:grid udc:size-9 udc:shrink-0 udc:place-items-center udc:rounded-lg udc:text-[13px] udc:font-semibold udc:tracking-tight",
-              AVATAR[avatarTone(title)],
-            )}
-          >
-            {initials(title)}
-          </span>
-        )}
-        <div className="udc:min-w-0 udc:flex-1">
-          <h3
-            data-testid="card-title"
-            className="udc:truncate udc:text-sm udc:leading-5 udc:font-semibold udc:tracking-tight"
-            title={title}
-          >
-            {folder ? (
-              <FolderEntry row={row} nav={folder}>
-                <span className="udc:truncate">{title}</span>
-              </FolderEntry>
-            ) : (
-              title || <span className="udc:text-muted-foreground/60">—</span>
-            )}
-          </h3>
-          {slots.subtitle ? (
-            <p
-              data-testid="card-subtitle"
-              className="udc:truncate udc:text-xs udc:leading-4 udc:text-muted-foreground udc:tabular-nums"
-            >
-              {subtitle ? (
-                <>
-                  <span className="udc:text-muted-foreground/70">
-                    {t(section, slots.subtitle.field)}
-                  </span>{" "}
-                  {subtitle}
-                </>
-              ) : (
-                "—"
-              )}
-            </p>
+        <div className="udc:flex udc:items-center udc:gap-3 udc:px-4 udc:pt-3.5 udc:pb-3">
+          {hasImage && !cover ? (
+            <img
+              src={image as string}
+              alt=""
+              loading="lazy"
+              data-testid="card-image-avatar"
+              className="udc:size-9 udc:shrink-0 udc:rounded-full udc:border udc:border-border udc:bg-muted udc:object-cover"
+            />
           ) : null}
-        </div>
-      </div>
-      {slots.metric ? (
-        <div
-          data-testid="card-metric"
-          className="udc:flex udc:items-baseline udc:justify-between udc:gap-3 udc:border-t udc:border-border/70 udc:px-4 udc:py-2.5"
-        >
-          <span className="udc:text-xs udc:text-muted-foreground">
-            {slots.metric.label ?? t(section, slots.metric.field)}
-          </span>
-          <span
-            data-testid="card-metric-value"
-            className="udc:text-xl udc:leading-7 udc:font-semibold udc:tracking-tight udc:tabular-nums"
-          >
-            {metricText(row[slots.metric.field], slots.metric, intlLocale) ?? (
-              <span className="udc:text-muted-foreground/50">—</span>
-            )}
-          </span>
-        </div>
-      ) : null}
-      {slots.meta.length ? (
-        <dl className="udc:mt-auto udc:flex udc:flex-col udc:border-t udc:border-border/70 udc:px-4 udc:py-2">
-          {slots.meta.map((col) => (
-            <div
-              key={col.field}
-              data-testid={`card-meta-${col.field}`}
-              className="udc:flex udc:min-h-7 udc:min-w-0 udc:items-center udc:justify-between udc:gap-3 udc:border-b udc:border-dashed udc:border-border/80 udc:py-1 udc:last:border-b-0"
+          {hasImage ? null : (
+            <span
+              aria-hidden
+              data-testid="card-avatar"
+              className={cn(
+                "udc:grid udc:size-9 udc:shrink-0 udc:place-items-center udc:rounded-lg udc:text-[13px] udc:font-semibold udc:tracking-tight",
+                AVATAR[avatarTone(title)],
+              )}
             >
-              <dt className="udc:shrink-0 udc:text-xs udc:text-muted-foreground">
-                {t(section, col.field)}
-              </dt>
-              <dd className="udc:flex udc:min-w-0 udc:items-center udc:justify-end udc:text-right udc:text-[13px] udc:font-medium">
-                <CellValue
-                  value={row[col.field]}
-                  column={col}
-                  def={schema.fields[col.field]}
-                  locale={locale}
-                  intlLocale={intlLocale}
-                />
-              </dd>
-            </div>
-          ))}
-        </dl>
-      ) : null}
-      {slots.sparkline ? (
-        <div
-          data-testid="card-sparkline"
-          className="udc:border-t udc:border-border/70 udc:px-4 udc:py-2.5"
-        >
-          <Sparkline
-            value={row[slots.sparkline.field]}
-            width={slots.sparkline.width}
-            height={slots.sparkline.height}
-            format={(n) =>
-              slots.metric ? (metricText(n, slots.metric, intlLocale) ?? "") : String(n)
-            }
-            className="udc:h-auto udc:max-w-full"
-          />
+              {initials(title)}
+            </span>
+          )}
+          <div className="udc:min-w-0 udc:flex-1">
+            <h3
+              data-testid="card-title"
+              className="udc:truncate udc:text-sm udc:leading-5 udc:font-semibold udc:tracking-tight"
+              title={title}
+            >
+              {folder ? (
+                <FolderEntry row={row} nav={folder}>
+                  <span className="udc:truncate">{title}</span>
+                </FolderEntry>
+              ) : (
+                title || <span className="udc:text-muted-foreground/60">—</span>
+              )}
+            </h3>
+            {slots.subtitle ? (
+              <p
+                data-testid="card-subtitle"
+                className="udc:truncate udc:text-xs udc:leading-4 udc:text-muted-foreground udc:tabular-nums"
+              >
+                {subtitle ? (
+                  <>
+                    <span className="udc:text-muted-foreground/70">
+                      {t(section, slots.subtitle.field)}
+                    </span>{" "}
+                    {subtitle}
+                  </>
+                ) : (
+                  "—"
+                )}
+              </p>
+            ) : null}
+          </div>
         </div>
-      ) : null}
+        {slots.metric ? (
+          <div
+            data-testid="card-metric"
+            className="udc:flex udc:items-baseline udc:justify-between udc:gap-3 udc:border-t udc:border-border/70 udc:px-4 udc:py-2.5"
+          >
+            <span className="udc:text-xs udc:text-muted-foreground">
+              {slots.metric.label ?? t(section, slots.metric.field)}
+            </span>
+            <span
+              data-testid="card-metric-value"
+              className="udc:text-xl udc:leading-7 udc:font-semibold udc:tracking-tight udc:tabular-nums"
+            >
+              {metricText(row[slots.metric.field], slots.metric, intlLocale) ?? (
+                <span className="udc:text-muted-foreground/50">—</span>
+              )}
+            </span>
+          </div>
+        ) : null}
+        {slots.meta.length ? (
+          <dl className="udc:mt-auto udc:flex udc:flex-col udc:border-t udc:border-border/70 udc:px-4 udc:py-2">
+            {slots.meta.map((col) => (
+              <div
+                key={col.field}
+                data-testid={`card-meta-${col.field}`}
+                className="udc:flex udc:min-h-7 udc:min-w-0 udc:items-center udc:justify-between udc:gap-3 udc:border-b udc:border-dashed udc:border-border/80 udc:py-1 udc:last:border-b-0"
+              >
+                <dt className="udc:shrink-0 udc:text-xs udc:text-muted-foreground">
+                  {t(section, col.field)}
+                </dt>
+                <dd className="udc:flex udc:min-w-0 udc:items-center udc:justify-end udc:text-right udc:text-[13px] udc:font-medium">
+                  <CellValue
+                    value={row[col.field]}
+                    column={col}
+                    def={schema.fields[col.field]}
+                    locale={locale}
+                    intlLocale={intlLocale}
+                    cells={cells}
+                    row={row}
+                    collection={describe.collection}
+                    surface="card"
+                  />
+                </dd>
+              </div>
+            ))}
+          </dl>
+        ) : null}
+        {slots.sparkline ? (
+          <div
+            data-testid="card-sparkline"
+            className="udc:border-t udc:border-border/70 udc:px-4 udc:py-2.5"
+          >
+            <Sparkline
+              value={row[slots.sparkline.field]}
+              width={slots.sparkline.width}
+              height={slots.sparkline.height}
+              format={(n) =>
+                slots.metric ? (metricText(n, slots.metric, intlLocale) ?? "") : String(n)
+              }
+              className="udc:h-auto udc:max-w-full"
+            />
+          </div>
+        ) : null}
+      </CardCell>
     </article>
+  );
+}
+
+/** With activation on, a card is a grid row whose content is one cell (no box of its own). */
+function CardCell({ on, children }: { on: boolean; children: ReactNode }) {
+  return on ? (
+    // biome-ignore lint/a11y/useFocusableInteractive: the row holds the focus (roving tabindex)
+    // biome-ignore lint/a11y/useSemanticElements: a card is no table; the grid is ARIA's
+    <div role="gridcell" className="udc:contents">
+      {children}
+    </div>
+  ) : (
+    children
   );
 }
 

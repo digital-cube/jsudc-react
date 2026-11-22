@@ -5,8 +5,27 @@
 // none of their peers. Hooks and models without markup: `@jsudc/react/headless`. The UI
 // primitives (Radix + Tailwind) and the default kit: `@jsudc/react/ui`.
 
+// Custom cells: components a column's `render` names, registered like the renderers.
+export {
+  type CellComponent,
+  type CellDefinition,
+  type CellProps,
+  type CellRegistry,
+  cellComponent,
+  createCellRegistry,
+  mergeCellRegistries,
+  UdcCellsProvider,
+  type UdcCellsProviderProps,
+  useCellRegistry,
+} from "./cells/registry.js";
 // One collection: the tabs its view declares, each drawn by a registered renderer.
-export { UdcDataView, type UdcDataViewProps } from "./data-view/UdcDataView.js";
+export {
+  resolveChrome,
+  UdcDataView,
+  type UdcDataViewChrome,
+  type UdcDataViewChromePreset,
+  type UdcDataViewProps,
+} from "./data-view/UdcDataView.js";
 // Strings: the provider, the library dictionary and the helpers over it.
 export {
   INTL_LOCALE,
@@ -37,6 +56,7 @@ export {
 // Icons, theme, helpers, renderer registry and types, the time zone.
 export { LUCIDE_ICONS } from "./icons/lucide.generated.js";
 export { FALLBACK_ICON, resolveIcon } from "./icons/resolve.js";
+export { UDC_SCOPE_CLASS } from "./lib/scope.js";
 export { THEME_STORAGE_KEY, type Theme, ThemeProvider, useTheme } from "./lib/theme.js";
 export { cn, humanize, storage } from "./lib/utils.js";
 export {
@@ -100,6 +120,16 @@ export {
   type RendererProps,
   type RendererRegistry,
 } from "./renderers/types.js";
+// Row activation and keyboard movement, for a host renderer (also in `@jsudc/react/headless`).
+export {
+  ownsKeys,
+  type RowActivation,
+  type RowActivationProps,
+  type RowActivationRowProps,
+  rowActivationEnabled,
+  type UseRowActivationOptions,
+  useRowActivation,
+} from "./rows/useRowActivation.js";
 export { EmptyState, ErrorState, NoRendererState } from "./table/states.js";
 export {
   BROWSER_TZ,
@@ -141,7 +171,13 @@ export {
   useUdcSource,
 } from "./udc/hooks.js";
 export { type ListKeyParams, type PagingMode, udcKeys } from "./udc/keys.js";
-export { createUdcQueryClient, shouldRetry, UdcProvider, useUdcClient } from "./udc/provider.js";
+export {
+  createUdcQueryClient,
+  shouldRetry,
+  UdcProvider,
+  type UdcQueryClientOptions,
+  useUdcClient,
+} from "./udc/provider.js";
 // The UI kit: the primitives every renderer draws with, from context. The default kit and the
 // primitives themselves are `@jsudc/react/ui`; a host brings its own through the provider.
 export {
@@ -180,6 +216,9 @@ export {
 // URL state: where the data view keeps filters, sort and page. `window.location` by default;
 // a router's adapter through the provider (the package ships one on a subpath, see README).
 export {
+  createMemoryUrlStateAdapter,
+  type MemoryUrlStateAdapter,
+  prefixUrlStateAdapter,
   type SetUrlSearchParams,
   UdcUrlStateProvider,
   type UdcUrlStateProviderProps,

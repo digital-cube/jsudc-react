@@ -12,12 +12,14 @@ import {
 import { type Column, type ColumnDef, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { ArrowDown, ArrowUp, ChevronsUpDown, Plus } from "lucide-react";
 import { type CSSProperties, type MouseEvent, useEffect, useMemo, useRef, useState } from "react";
+import { useCellRegistry } from "../cells/registry.js";
 import { FolderEntry } from "../data-view/FolderEntry.js";
 import { tableSection, useI18n } from "../i18n/i18n.js";
 import { cn } from "../lib/utils.js";
 import { UdcLookupBatch, useLookupBatch } from "../lookup/batch.js";
 import { filterHref, followLink, useUdcLinks } from "../lookup/links.js";
 import type { FolderNav } from "../renderers/types.js";
+import { type RowActivationProps, useRowActivation } from "../rows/useRowActivation.js";
 import { ColumnHeaderMenu } from "../schema-editor/ColumnHeaderMenu.js";
 import type { SchemaAction } from "../schema-editor/fieldForm.js";
 import type { UdcCollectionResult } from "../udc/hooks.js";
@@ -65,7 +67,7 @@ export function fieldProblem(err: UdcError, field: string): string {
 
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
-export interface TableRendererProps {
+export interface TableRendererProps extends RowActivationProps {
   collection: string;
   describe: DescribeResponse;
   data: UdcCollectionResult;
@@ -96,6 +98,7 @@ export function TableRenderer(props: TableRendererProps) {
   const mutate = useUdcMutate(collection);
   const section = tableSection(collection);
   const links = useUdcLinks();
+  const cells = useCellRegistry();
   const rowLink = view.row_link;
   // One lookup batch per lookup column for the rows on screen, not one call per cell.
   const lookupFields = useMemo(() => view.columns.map((c) => c.field), [view.columns]);
@@ -179,6 +182,17 @@ export function TableRenderer(props: TableRendererProps) {
   const { hasNextPage, isFetchingNextPage } = data;
   useInfiniteSentinel(mode === "infinite", scrollRef, sentinelRef, data);
 
+  // Row activation and the keys (off unless the host passed one of its props).
+  const activation = useRowActivation({
+    rows: data.rows,
+    activeRowId: props.activeRowId,
+    onRowActivate: props.onRowActivate,
+    onActiveRowChange: props.onActiveRowChange,
+    hasNextPage: mode === "infinite" && hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage: data.fetchNextPage,
+  });
+
   const rowLinkHref = (row: Row) =>
     rowLink ? filterHref(links, rowLink.collection, rowLinkCondition(row, rowLink)) : "";
   /**
@@ -192,6 +206,18 @@ export function TableRenderer(props: TableRendererProps) {
     const target = e.target as HTMLElement;
     if (target.closest("a,button,input,select,textarea,label,[data-editable]")) return;
     followLink(e, rowLinkHref(row), links);
+  };
+  /**
+   * With `onRowActivate` a plain click activates the row; Cmd / Ctrl-click and
+   * the middle button (`onAuxClick`) still follow a `row_link`. Without it a
+   * `row_link` view navigates as before.
+   */
+  const onRowClick = (e: MouseEvent<HTMLElement>, row: Row) => {
+    if (rowLink && (!props.onRowActivate || e.metaKey || e.ctrlKey || e.shiftKey)) {
+      onRowLinkClick(e, row);
+      return;
+    }
+    activation.handleClick(e, row);
   };
 
   const focusCell = (target: EditTarget) =>
@@ -432,6 +458,7 @@ export function TableRenderer(props: TableRendererProps) {
           data-testid="udc-table"
           aria-busy={data.isFetching}
           aria-rowcount={total}
+          role={activation.enabled ? "grid" : undefined}
           className="udc-table udc:border-separate udc:border-spacing-0 udc:text-[13px]"
           style={{ width: totalWidth, minWidth: "100%", tableLayout: "fixed" }}
         >
@@ -494,6 +521,7 @@ export function TableRenderer(props: TableRendererProps) {
               {table.getRowModel().rows.map((r) => {
                 const row = r.original;
                 const tone = resolveRowColor(row, view.row_color);
+                const active = activation.activeRowId === row.__meta.id;
                 const cell = (c: Column<Row, unknown>) => {
                   const { config, def } = meta(c);
                   const editable = canEdit(c);
@@ -528,9 +556,11 @@ export function TableRenderer(props: TableRendererProps) {
                       className={cn(
                         "udc-cell",
                         "udc:relative udc:border-b udc:border-border udc:px-3 udc:align-middle udc:outline-none",
-                        bg && bg !== "default"
-                          ? BG_COLOR[bg]
-                          : "udc:bg-surface udc:group-hover/row:bg-hover",
+                        active
+                          ? "udc:bg-selected"
+                          : bg && bg !== "default"
+                            ? BG_COLOR[bg]
+                            : "udc:bg-surface udc:group-hover/row:bg-hover",
                         color ? TEXT_COLOR[color] : "",
                         color === "info" || color === "accent" ? "udc:font-medium" : "",
                         editable &&
@@ -549,6 +579,9 @@ export function TableRenderer(props: TableRendererProps) {
                               def={def}
                               locale={locale}
                               intlLocale={intlLocale}
+                              cells={cells}
+                              row={row}
+                              collection={collection}
                             />
                           </FolderEntry>
                         ) : (
@@ -559,6 +592,9 @@ export function TableRenderer(props: TableRendererProps) {
                             locale={locale}
                             intlLocale={intlLocale}
                             editable={editable}
+                            cells={cells}
+                            row={row}
+                            collection={collection}
                           />
                         )}
                       </div>
@@ -587,16 +623,27 @@ export function TableRenderer(props: TableRendererProps) {
                     data-testid="row"
                     data-row-id={row.__meta.id}
                     data-row-link={rowLink ? rowLinkHref(row) : undefined}
-                    className={cn("udc-row udc:group/row", rowLink && "udc:cursor-pointer")}
+                    {...activation.rowProps(row)}
+                    className={cn(
+                      "udc-row udc:group/row",
+                      (rowLink || activation.enabled) && "udc:cursor-pointer",
+                      activation.enabled &&
+                        "udc:outline-none udc:focus-visible:outline-2 udc:focus-visible:-outline-offset-2 udc:focus-visible:outline-ring",
+                    )}
                     style={{ height: rowHeight }}
-                    onClick={rowLink ? (e) => onRowLinkClick(e, row) : undefined}
+                    onClick={rowLink || activation.enabled ? (e) => onRowClick(e, row) : undefined}
                     onAuxClick={rowLink ? (e) => onRowLinkClick(e, row) : undefined}
                   >
                     {[...left, ...center].map(cell)}
-                    {addColumnCell("a", "udc:bg-surface udc:group-hover/row:bg-hover")}
+                    {addColumnCell(
+                      "a",
+                      active ? "udc:bg-selected" : "udc:bg-surface udc:group-hover/row:bg-hover",
+                    )}
                     {filler(
                       "f",
-                      "udc:border-b udc:border-border udc:bg-surface udc:group-hover/row:bg-hover",
+                      active
+                        ? "udc:border-b udc:border-border udc:bg-selected"
+                        : "udc:border-b udc:border-border udc:bg-surface udc:group-hover/row:bg-hover",
                     )}
                     {right.map(cell)}
                   </tr>

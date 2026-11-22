@@ -1,5 +1,6 @@
 import { Check, ChevronDown } from "lucide-react";
 import { Select as S } from "radix-ui";
+import { UDC_SCOPE_CLASS } from "../../lib/scope.js";
 import { cn } from "../../lib/utils.js";
 import type { SelectOption } from "../../ui-kit/types.js";
 
@@ -46,7 +47,7 @@ export function Select({
         <S.Content
           position="popper"
           sideOffset={4}
-          className="udc:z-[60] udc:max-h-72 udc:min-w-[var(--radix-select-trigger-width)] udc:overflow-hidden udc:rounded-lg udc:border udc:border-border udc:bg-surface-raised udc:shadow-lg udc:shadow-black/5 udc:data-[state=open]:animate-in udc:dark:shadow-black/40"
+          className={`${UDC_SCOPE_CLASS} udc:z-[60] udc:max-h-72 udc:min-w-[var(--radix-select-trigger-width)] udc:overflow-hidden udc:rounded-lg udc:border udc:border-border udc:bg-surface-raised udc:shadow-lg udc:shadow-black/5 udc:data-[state=open]:animate-in udc:dark:shadow-black/40`}
         >
           <S.Viewport className="udc-scroll-thin udc:p-1">
             {options.map((o) => (
