@@ -3,6 +3,10 @@
 // CSS and no renderer peer is reachable from here (test/entries.test.ts walks the imports):
 // it needs only `react`, `@tanstack/react-query` and `@jsudc/core`.
 
+// Row selection (ids, or all that match except some) and what runs a bulk action (0.5.0).
+export * from "./actions/bulk.js";
+// The actions one row offers (`row_action_defs` / `row_actions`, filtered by `when`) (0.5.0).
+export * from "./actions/row.js";
 // Each renderer's model and state hook.
 export * from "./calendar/model.js";
 export * from "./calendar/useCalendarUrl.js";
@@ -31,9 +35,12 @@ export type * from "./renderers/types.js";
 export { isFolderRow } from "./renderers/types.js";
 // Row activation and keyboard movement over a list of rows.
 export * from "./rows/useRowActivation.js";
+export * from "./rows/useRowSelection.js";
 export * from "./table/format.js";
 export * from "./table/style.js";
 export * from "./table/transforms.js";
+// Long lists (0.5.0): the arithmetic of the table's row window, for a host renderer.
+export * from "./table/useRowWindow.js";
 // Time zones: the display zone preference and the zoned formatting.
 export * from "./time/timezone.js";
 export * from "./time/zoned.js";
@@ -67,6 +74,17 @@ export {
   sortSiblings,
 } from "./tree/model.js";
 // The client context and the hooks over @jsudc/core's client.
+export {
+  UdcChangeFeed,
+  type UdcChangeFeedOptions,
+  type UdcChangeFeedStatus,
+} from "./udc/changeFeed.js";
+export {
+  type UdcChangesResult,
+  type UseUdcChangesOptions,
+  useUdcChangeFeed,
+  useUdcChanges,
+} from "./udc/changes.js";
 export * from "./udc/client.js";
 export * from "./udc/hooks.js";
 export * from "./udc/keys.js";

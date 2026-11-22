@@ -1,5 +1,6 @@
 import { type FilterNode, type LookupDef, lookupKeyOf, type Row } from "@jsudc/core";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { useUdcChangesMany } from "../udc/changes.js";
 import { useUdcClient } from "../udc/client.js";
 import { udcKeys } from "../udc/keys.js";
 import { lookupLabel } from "./label.js";
@@ -46,6 +47,8 @@ export function useLookupOptions(
   const client = useUdcClient();
   const target = lookup ?? { collection: "", label_field: "" };
   const filter = optionsFilter(target, search);
+  const enabled = (opts.enabled ?? true) && lookup !== undefined;
+  useUdcChangesMany([target.collection], { enabled });
   const q = useQuery({
     queryKey: udcKeys.lookupOptions(target.collection, target.label_field, search.trim()),
     queryFn: ({ signal }) =>
@@ -58,7 +61,7 @@ export function useLookupOptions(
         },
         { signal },
       ),
-    enabled: (opts.enabled ?? true) && lookup !== undefined,
+    enabled,
     staleTime: 60_000,
     placeholderData: keepPreviousData,
   });

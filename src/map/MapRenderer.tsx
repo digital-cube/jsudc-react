@@ -93,6 +93,7 @@ function MapView({
   collection,
   describe,
   filter,
+  listSearch,
   sort,
   filtered,
   onClearFilters,
@@ -108,6 +109,7 @@ function MapView({
     capabilities: describe.capabilities,
     max: opts.max_rows,
     refetchInterval: describe.view.refresh_interval_ms,
+    search: listSearch,
   });
   const rowColor = describe.view.row_color;
   const markers = useMemo(() => toMarkers(q.rows, opts, rowColor), [q.rows, opts, rowColor]);

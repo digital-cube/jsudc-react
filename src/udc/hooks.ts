@@ -1,7 +1,11 @@
 import {
   type ActionRequest,
   type Capabilities,
+  evaluateFilter,
   type FilterNode,
+  type HostAction,
+  type HostActionPayload,
+  type HostActionResponse,
   isVersionConflict,
   type ListResponse,
   type Row,
@@ -9,17 +13,22 @@ import {
 } from "@jsudc/core";
 import type { UdcClient } from "@jsudc/core/client";
 import {
-  type InfiniteData,
   keepPreviousData,
   type QueryClient,
+  type UseMutationOptions,
+  type UseMutationResult,
   useInfiniteQuery,
   useMutation,
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
 import { useState } from "react";
+import { useUdcChanges } from "./changes.js";
 import { useUdcClient } from "./client.js";
 import { type ListKeyParams, type PagingMode, udcKeys } from "./keys.js";
+import { applyToListRows, isInfinite, type ListCache } from "./listCache.js";
+
+export { applyToListRows };
 
 export function useUdcCollections() {
   const client = useUdcClient();
@@ -56,10 +65,22 @@ export interface UseUdcCollectionArgs {
   /** 1-based; pages mode only. */
   page?: number;
   enabled?: boolean;
-  /** From `describe`: a source without `cursor` paging is walked by offset in infinite mode too. */
-  capabilities?: Pick<Capabilities, "paging"> | undefined;
-  /** Poll: refetch the loaded rows this often (the view's `refresh_interval_ms`). */
+  /**
+   * From `describe`: a source without `cursor` paging is walked by offset in
+   * infinite mode too; `changes` says whether it offers the change feed.
+   */
+  capabilities?: Pick<Capabilities, "paging" | "changes"> | undefined;
+  /**
+   * Poll: refetch the loaded rows this often (the view's `refresh_interval_ms`).
+   * Suspended while the provider's change feed carries the collection.
+   */
   refetchInterval?: number | undefined;
+  /**
+   * The search box's text, sent as `ListRequest.search` for a source that
+   * answers search itself (`capabilities.search === "source"`); blank or
+   * absent: no `search` in the request, nor in the query key.
+   */
+  search?: string | undefined;
 }
 
 export interface UdcCollectionResult {
@@ -91,6 +112,12 @@ export function freshnessOf(res: Pick<ListResponse, "fetched_at" | "stale"> | un
   return { fetchedAt: res?.fetched_at ?? null, stale: res?.stale === true };
 }
 
+/** `{ search }` for a non-blank text, else nothing: spread into a list request and its query key. */
+export function searchPart(search: string | undefined): { search?: string } {
+  const text = search?.trim();
+  return text ? { search: text } : {};
+}
+
 /** The `offset` a 1-based page asks for. */
 export function pageOffset(page: number, limit: number): number {
   return Math.max(0, Math.floor(page) - 1) * limit;
@@ -111,9 +138,15 @@ export function useUdcCollection(args: UseUdcCollectionArgs): UdcCollectionResul
   const page = Math.max(1, args.page ?? 1);
   const enabled = args.enabled ?? true;
   const byCursor = args.capabilities?.paging?.includes("cursor") ?? true;
-  const refetchInterval = pollInterval(args.refetchInterval);
+  // The change feed (when the provider has one) refetches on events; the timer covers the rest.
+  const feed = useUdcChanges(collection, undefined, {
+    capabilities: args.capabilities,
+    enabled,
+  });
+  const refetchInterval = feed.live ? false : pollInterval(args.refetchInterval);
+  const searched = searchPart(args.search);
 
-  const infiniteParams: ListKeyParams = { filter, sort, limit, mode: "infinite" };
+  const infiniteParams: ListKeyParams = { filter, sort, limit, mode: "infinite", ...searched };
   const infinite = useInfiniteQuery({
     queryKey: udcKeys.list(collection, infiniteParams),
     queryFn: ({ pageParam, signal }) =>
@@ -122,6 +155,7 @@ export function useUdcCollection(args: UseUdcCollectionArgs): UdcCollectionResul
           collection,
           ...(filter ? { filter } : {}),
           sort,
+          ...searched,
           page:
             typeof pageParam === "number"
               ? { limit, offset: pageParam }
@@ -144,7 +178,7 @@ export function useUdcCollection(args: UseUdcCollectionArgs): UdcCollectionResul
     refetchInterval,
   });
 
-  const pagesParams: ListKeyParams = { filter, sort, limit, mode: "pages", page };
+  const pagesParams: ListKeyParams = { filter, sort, limit, mode: "pages", page, ...searched };
   const paged = useQuery({
     queryKey: udcKeys.list(collection, pagesParams),
     queryFn: ({ signal }) =>
@@ -153,6 +187,7 @@ export function useUdcCollection(args: UseUdcCollectionArgs): UdcCollectionResul
           collection,
           ...(filter ? { filter } : {}),
           sort,
+          ...searched,
           page: { limit, offset: pageOffset(page, limit) },
         },
         { signal },
@@ -204,6 +239,8 @@ export interface FetchAllRowsArgs {
   pageLimit?: number;
   /** Keyset paging unless the source pages by offset only. */
   cursor: boolean;
+  /** Sent as `ListRequest.search` when not blank (a source that answers search). */
+  search?: string | undefined;
   signal?: AbortSignal;
   onProgress?: (loaded: number, total: number | null) => void;
 }
@@ -235,7 +272,7 @@ export async function fetchAllRows(
         : { limit }
       : { limit, offset: rows.length };
     const res = await client.list(
-      { collection, ...(filter ? { filter } : {}), sort, page },
+      { collection, ...(filter ? { filter } : {}), sort, ...searchPart(args.search), page },
       args.signal ? { signal: args.signal } : undefined,
     );
     if (rows.length === 0) {
@@ -265,11 +302,16 @@ export interface UseUdcAllRowsArgs {
   sort?: SortKey[];
   /** Default 2,000. */
   max?: number;
-  /** From `describe`: whether the source pages by cursor. */
-  capabilities?: Pick<Capabilities, "paging"> | undefined;
+  /** From `describe`: whether the source pages by cursor, and offers the change feed. */
+  capabilities?: Pick<Capabilities, "paging" | "changes"> | undefined;
   enabled?: boolean;
-  /** Poll: refetch every row this often (the view's `refresh_interval_ms`). */
+  /**
+   * Poll: refetch every row this often (the view's `refresh_interval_ms`).
+   * Suspended while the provider's change feed carries the collection.
+   */
   refetchInterval?: number | undefined;
+  /** Sent as `ListRequest.search` when not blank (`capabilities.search === "source"`). */
+  search?: string | undefined;
 }
 
 export interface UdcAllRowsResult {
@@ -300,8 +342,13 @@ export function useUdcAllRows(args: UseUdcAllRowsArgs): UdcAllRowsResult {
   const max = args.max ?? ALL_ROWS_MAX;
   const cursor = args.capabilities?.paging?.includes("cursor") ?? true;
   const [progress, setProgress] = useState<UdcAllRowsResult["progress"]>(null);
+  const feed = useUdcChanges(collection, undefined, {
+    capabilities: args.capabilities,
+    enabled: args.enabled ?? true,
+  });
 
-  const key: ListKeyParams = { filter, sort, limit: max, mode: "all" };
+  const searched = searchPart(args.search);
+  const key: ListKeyParams = { filter, sort, limit: max, mode: "all", ...searched };
   const query = useQuery({
     queryKey: udcKeys.list(collection, key),
     queryFn: async ({ signal }) => {
@@ -313,6 +360,7 @@ export function useUdcAllRows(args: UseUdcAllRowsArgs): UdcAllRowsResult {
           sort,
           max,
           cursor,
+          ...searched,
           signal,
           onProgress: (loaded, total) => setProgress({ loaded, total }),
         });
@@ -322,7 +370,7 @@ export function useUdcAllRows(args: UseUdcAllRowsArgs): UdcAllRowsResult {
     },
     placeholderData: keepPreviousData,
     enabled: args.enabled ?? true,
-    refetchInterval: pollInterval(args.refetchInterval),
+    refetchInterval: feed.live ? false : pollInterval(args.refetchInterval),
   });
 
   const rows = query.data?.rows ?? [];
@@ -338,12 +386,6 @@ export function useUdcAllRows(args: UseUdcAllRowsArgs): UdcAllRowsResult {
     progress,
     ...freshnessOf(query.data),
   };
-}
-
-type ListCache = ListResponse | InfiniteData<ListResponse, unknown>;
-
-function isInfinite(data: ListCache): data is InfiniteData<ListResponse, unknown> {
-  return "pages" in data;
 }
 
 /** `data` with every row whose id is `id` passed through `patch`. */
@@ -446,4 +488,128 @@ export function useUdcSchema(collection: string) {
     onSuccess,
   });
   return { addField, updateField, softDeleteField };
+}
+
+// mutate_many and host actions (0.5.0) --------------------------------------
+
+export type UdcMutateManyVars = Omit<ActionRequest<"mutate_many">, "collection">;
+
+/**
+ * Which cached row a `mutate_many` request touches: one of its `ids`, or a row
+ * its `filter` matches (evaluated in the browser, `evaluateFilter`) that is
+ * not among `except_ids`. A filter the browser cannot evaluate touches no
+ * cached row: the invalidation after the call brings the server's answer.
+ */
+export function mutateManyTouches(vars: UdcMutateManyVars): (row: Row) => boolean {
+  if (vars.ids) {
+    const ids = new Set(vars.ids);
+    return (row) => ids.has(row.__meta.id);
+  }
+  const except = new Set(vars.except_ids ?? []);
+  const filter = vars.filter;
+  return (row) => {
+    if (except.has(row.__meta.id)) return false;
+    try {
+      return evaluateFilter(filter, row);
+    } catch {
+      return false;
+    }
+  };
+}
+
+/**
+ * Change (`update`, the patch in `row`) or delete many rows of a collection in
+ * one `mutate_many` request: by `ids`, or by `filter` with `except_ids` ("all
+ * that match, except these"). Like `useUdcMutate` for one row, the loaded
+ * rows are patched (or removed) in every cached list at once, put back if the
+ * call fails, and the collection's lists and lookups are invalidated once it
+ * settles. Resolves to the server's `{ updated, failed }`: `failed` names the
+ * ids that were not changed, and why.
+ */
+export function useUdcMutateMany(collection: string) {
+  const client = useUdcClient();
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: (vars: UdcMutateManyVars) => client.mutateMany({ collection, ...vars }),
+    onMutate: async (vars) => {
+      await qc.cancelQueries({ queryKey: udcKeys.lists(collection) });
+      const snapshot = qc.getQueriesData<ListCache>({ queryKey: udcKeys.lists(collection) });
+      const touches = mutateManyTouches(vars);
+      const set = vars.row;
+      const patch =
+        vars.op === "update" && set
+          ? (r: Row): Row => ({ ...r, ...set, __meta: r.__meta })
+          : undefined;
+      if (vars.op === "delete" || patch) {
+        qc.setQueriesData<ListCache>({ queryKey: udcKeys.lists(collection) }, (data) =>
+          applyToListRows(data, touches, patch),
+        );
+      }
+      return { snapshot };
+    },
+    onError: (_err, _vars, ctx) => {
+      for (const [key, data] of ctx?.snapshot ?? []) qc.setQueryData(key, data);
+    },
+    onSettled: () =>
+      Promise.all([
+        qc.invalidateQueries({ queryKey: udcKeys.lists(collection) }),
+        qc.invalidateQueries({ queryKey: udcKeys.lookups(collection) }),
+        qc.invalidateQueries({ queryKey: ["udc", "lookup-options", collection] }),
+      ]),
+  });
+}
+
+/** What `useUdcAction` takes besides TanStack's mutation options. */
+export interface UseUdcActionOptions<Res, Req>
+  extends Omit<UseMutationOptions<Res, Error, Req>, "mutationFn"> {
+  /** Collections whose lists and lookups to invalidate once the call settles (the rows it changed). */
+  invalidates?: readonly string[] | undefined;
+}
+
+/**
+ * A mutation over the client's typed `call`, for any host action: pass the
+ * action's definition (`defineHostAction`, shared with the server) and the
+ * payload and the result are typed from its schemas; or pass a name and type
+ * it yourself (`useUdcAction<Res, Req>("mail.snooze")`). `invalidates` names
+ * the collections whose lists to refetch afterwards.
+ */
+export function useUdcAction<H extends HostAction>(
+  action: H,
+  options?: UseUdcActionOptions<HostActionResponse<H>, HostActionPayload<H>>,
+): UseMutationResult<HostActionResponse<H>, Error, HostActionPayload<H>>;
+export function useUdcAction<Res = unknown, Req = Record<string, unknown>>(
+  action: string,
+  options?: UseUdcActionOptions<Res, Req>,
+): UseMutationResult<Res, Error, Req>;
+export function useUdcAction(
+  action: string | HostAction,
+  options: UseUdcActionOptions<unknown, unknown> = {},
+): UseMutationResult<unknown, Error, unknown> {
+  const client = useUdcClient();
+  const qc = useQueryClient();
+  const { invalidates, onSettled, ...rest } = options;
+  return useMutation<unknown, Error, unknown>({
+    ...rest,
+    mutationFn: (payload) => callAction(client, action, payload),
+    onSettled: async (...args) => {
+      await Promise.all(
+        (invalidates ?? []).flatMap((c) => [
+          qc.invalidateQueries({ queryKey: udcKeys.lists(c) }),
+          qc.invalidateQueries({ queryKey: udcKeys.lookups(c) }),
+        ]),
+      );
+      return onSettled?.(...args);
+    },
+  });
+}
+
+/** `client.call` for a host action given by definition or by name (the answer unchecked by name). */
+export function callAction(
+  client: UdcClient,
+  action: string | HostAction,
+  payload: unknown,
+): Promise<unknown> {
+  const call = client.call.bind(client) as (a: string | HostAction, p: unknown) => Promise<unknown>;
+  return call(action, payload);
 }

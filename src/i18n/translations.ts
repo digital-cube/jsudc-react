@@ -43,6 +43,16 @@ export const TRANSLATIONS: Translations = {
     },
     FRESH_NO_CACHE: { en: "Server cache: none", sr: "Keš servera: nema" },
     STALE: { en: "stale", sr: "zastarelo" },
+    FEED_LIVE: { en: "live", sr: "uživo" },
+    FEED_LIVE_HINT: {
+      en: "Rows refresh as soon as they change on the server",
+      sr: "Redovi se osvežavaju čim se promene na serveru",
+    },
+    FEED_RECONNECTING: { en: "reconnecting", sr: "ponovo se povezuje" },
+    FEED_RECONNECTING_HINT: {
+      en: "The live connection dropped; rows refresh on the timer until it is back",
+      sr: "Veza uživo je prekinuta; redovi se osvežavaju periodično dok se ne vrati",
+    },
     STALE_HINT: {
       en: "The source could not be reached; this is the last copy it sent",
       sr: "Izvor nije dostupan; ovo je poslednja kopija koju je poslao",
@@ -387,5 +397,64 @@ export const TRANSLATIONS: Translations = {
     TYPE_DATETIME: { en: "Date and time", sr: "Datum i vreme" },
     TYPE_JSON: { en: "JSON", sr: "JSON" },
     TYPE_ENUM: { en: "Choice", sr: "Izbor" },
+    // Selection and bulk actions (0.5.0).
+    SELECT_ROW: { en: "Select row", sr: "Izaberi red" },
+    SELECT_PAGE: { en: "Select all rows shown", sr: "Izaberi sve prikazane redove" },
+    SELECTED_COUNT: { en: "{count} selected", sr: "Izabrano: {count}" },
+    SELECTED_ALL_COUNT: { en: "All {count} are selected", sr: "Izabrani su svi ({count})" },
+    SELECTED_ALL_MATCHING: {
+      en: "All matching rows are selected",
+      sr: "Izabrani su svi redovi koji odgovaraju",
+    },
+    SELECT_ALL_MATCHING_COUNT: {
+      en: "Select all {count} that match",
+      sr: "Izaberi sve koji odgovaraju ({count})",
+    },
+    SELECT_ALL_MATCHING: { en: "Select all that match", sr: "Izaberi sve koji odgovaraju" },
+    SELECT_ALL_MATCHING_SEARCH: {
+      en: "Only the loaded rows can be selected while searching",
+      sr: "Dok je pretraga aktivna, mogu se izabrati samo učitani redovi",
+    },
+    SELECTION_CLEAR: { en: "Clear selection", sr: "Poništi izbor" },
+    BULK_ACTIONS: { en: "Actions on the selected rows", sr: "Akcije nad izabranim redovima" },
+    BULK_DELETE: { en: "Delete", sr: "Obriši" },
+    BULK_NOT_ELIGIBLE: {
+      en: "Not available for every selected row",
+      sr: "Nije dostupno za sve izabrane redove",
+    },
+    BULK_CONFIRM: { en: "Confirm", sr: "Potvrdi" },
+    BULK_CONFIRM_DELETE_COUNT: {
+      en: "Delete {count} selected rows?",
+      sr: "Obrisati izabrane redove ({count})?",
+    },
+    BULK_CONFIRM_DELETE_MATCHING: {
+      en: "Delete all matching rows?",
+      sr: "Obrisati sve redove koji odgovaraju?",
+    },
+    BULK_CONFIRM_DELETE_BODY: { en: "This cannot be undone.", sr: "Ovo ne može da se poništi." },
+    BULK_CONFIRM_ACTION_COUNT: {
+      en: "{action}: {count} selected rows?",
+      sr: "{action}: izabrani redovi ({count})?",
+    },
+    BULK_CONFIRM_ACTION_MATCHING: {
+      en: "{action}: all matching rows?",
+      sr: "{action}: svi redovi koji odgovaraju?",
+    },
+    BULK_DONE_COUNT: { en: "{action}: {count} rows", sr: "{action}: redova {count}" },
+    BULK_DONE: { en: "{action}: done", sr: "{action}: gotovo" },
+    BULK_DELETED_COUNT: { en: "{count} rows deleted", sr: "Obrisano redova: {count}" },
+    BULK_FAILED_COUNT: {
+      en: "{count} rows could not be changed",
+      sr: "Nije izmenjeno redova: {count}",
+    },
+    BULK_FAILED: { en: "{action} failed", sr: "{action}: nije uspelo" },
+    BULK_UNSUPPORTED: {
+      en: "The server does not support “{action}”",
+      sr: "Server ne podržava „{action}”",
+    },
+    ROW_ACTIONS: { en: "Row actions", sr: "Akcije nad redom" },
+    ROW_ACTIONS_MORE: { en: "More actions", sr: "Još akcija" },
+    ROW_CONFIRM_DELETE: { en: "Delete this row?", sr: "Obrisati ovaj red?" },
+    ROW_CONFIRM_ACTION: { en: "{action}: this row?", sr: "{action}: ovaj red?" },
   },
 };

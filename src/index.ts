@@ -5,6 +5,39 @@
 // none of their peers. Hooks and models without markup: `@jsudc/react/headless`. The UI
 // primitives (Radix + Tailwind) and the default kit: `@jsudc/react/ui`.
 
+export {
+  type BulkActionContext,
+  type BulkActionHandler,
+  type BulkActionHandlers,
+  type BulkActionPlan,
+  bulkActionEligible,
+  MATCH_ALL,
+  planBulkAction,
+  selectionTarget,
+  UdcActionsProvider,
+  type UdcActionsProviderProps,
+  useBulkActionHandlers,
+} from "./actions/bulk.js";
+export {
+  RowActionsControls,
+  type RowActionsControlsProps,
+  type RowMenuState,
+  type RowMenuVia,
+  rowActionsColumnWidth,
+  rowMenuHandlers,
+  useRowMenu,
+} from "./actions/RowActionsMenu.js";
+// Row actions (0.5.0): what a row offers and how it runs (also in `@jsudc/react/headless`),
+// and the buttons and menu the table and the cards draw them with.
+export {
+  eligibleRowActions,
+  isRowMenuKey,
+  type RowActions,
+  type RowActionsDisplay,
+  type RowMenuKeyEvent,
+  rowActionDefs,
+  rowActionsDisplay,
+} from "./actions/row.js";
 // Custom cells: components a column's `render` names, registered like the renderers.
 export {
   type CellComponent,
@@ -18,6 +51,7 @@ export {
   type UdcCellsProviderProps,
   useCellRegistry,
 } from "./cells/registry.js";
+export { LiveIndicator } from "./data-view/LiveIndicator.js";
 // One collection: the tabs its view declares, each drawn by a registered renderer.
 export {
   resolveChrome,
@@ -130,7 +164,32 @@ export {
   type UseRowActivationOptions,
   useRowActivation,
 } from "./rows/useRowActivation.js";
+// Row selection and bulk actions (0.5.0; also in `@jsudc/react/headless`).
+export {
+  EMPTY_SELECTION,
+  pageSelectionState,
+  type RowSelection,
+  type RowSelectionState,
+  selectAllMatching,
+  selectionCount,
+  selectionHas,
+  selectionIsEmpty,
+  selectRange,
+  setPageSelection,
+  toggleSelection,
+  type UseRowSelectionOptions,
+  useRowSelection,
+} from "./rows/useRowSelection.js";
 export { EmptyState, ErrorState, NoRendererState } from "./table/states.js";
+// Long lists (0.5.0): the table's row window, its options (also in `@jsudc/react/headless`).
+export {
+  DEFAULT_VIRTUAL_OVERSCAN,
+  DEFAULT_VIRTUAL_THRESHOLD,
+  resolveVirtualization,
+  type TableVirtualization,
+  type TableVirtualizeProp,
+  virtualizationApplies,
+} from "./table/useRowWindow.js";
 export {
   BROWSER_TZ,
   COMMON_ZONES,
@@ -148,25 +207,43 @@ export {
   zoneCity,
 } from "./time/zoned.js";
 export { i18nKey } from "./tree/model.js";
+export {
+  UdcChangeFeed,
+  type UdcChangeFeedOptions,
+  type UdcChangeFeedStatus,
+} from "./udc/changeFeed.js";
+export {
+  type UdcChangesResult,
+  type UseUdcChangesOptions,
+  useUdcChangeFeed,
+  useUdcChanges,
+} from "./udc/changes.js";
 // The hooks over @jsudc/core's client, the client context and the TanStack Query client.
 export {
   ALL_ROWS_MAX,
+  applyToListRows,
+  callAction,
   type FetchAllRowsArgs,
   fetchAllRows,
   freshnessOf,
+  mutateManyTouches,
   pageOffset,
   patchRowInList,
   pollInterval,
   type UdcAllRowsResult,
   type UdcCollectionResult,
+  type UdcMutateManyVars,
   type UdcMutateVars,
+  type UseUdcActionOptions,
   type UseUdcAllRowsArgs,
   type UseUdcCollectionArgs,
+  useUdcAction,
   useUdcAllRows,
   useUdcCollection,
   useUdcCollections,
   useUdcDescribe,
   useUdcMutate,
+  useUdcMutateMany,
   useUdcSchema,
   useUdcSource,
 } from "./udc/hooks.js";

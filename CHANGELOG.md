@@ -7,6 +7,213 @@ All notable changes to `@jsudc/react` are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-22
+
+Row selection and the bulk bar, row actions, host actions from the browser
+(`useUdcAction`, `useUdcMutateMany`), search answered by the source, live
+updates from the change feed and windowed rows for long lists, released
+together with `@jsudc/core` 0.5.0 and `@jsudc/server` 0.5.0. Needs
+`@jsudc/core` 0.5.0. A host that changes nothing keeps 0.4.0's behaviour.
+
+Selection and bulk actions, row actions (R1 + S3, the React part), host
+actions in the browser (S4), search answered by the source (S6), live
+updates over the change feed (S5) and long lists in the table (R5). Builds on `@jsudc/core` 0.5.0's
+`mutate_many`, typed host actions, eligibility helpers, the `set` / `action` /
+`confirm` keys of `ActionDef`, `ListRequest.search` with the capability
+`search`, and `UdcClient.changes` with the capability `changes`.
+
+### Added
+
+- Row selection in the data view: on when the view says `multiselect: true`
+  or declares `bulk_actions`, forced on or off by the new `selectable` prop of
+  `UdcDataView`. The table draws a checkbox column pinned at the start, a
+  header checkbox for the loaded rows (with the indeterminate state) and
+  selects a range on shift-click; the cards a checkbox per card; with row
+  activation on, Space toggles the active row (Shift+Space a range). The
+  selection is cleared by a new filter (search, chips, filter tree, the
+  host's `filter`) or collection, kept across a sort, a refetch and more
+  pages. Kanban, tree, calendar, map and chart do not select.
+- "Select all that match": with the loaded rows all selected and more
+  matching, the bar offers "Select all N that match" (no number when the
+  list's `total` is `null`), switching to "every row the filter matches,
+  except these" — the action then goes by filter and the message reports the
+  server's `updated`.
+- The bulk bar: the count (or "all matching"), a button per
+  `view.bulk_actions` entry (label from `ACTION_<KIND>` of the collection's
+  section, `ACTIONS.<kind>`, else the def's `label`; `icon`; `variant`),
+  disabled unless `when` holds for every selected row (offered unless
+  `when: false` in "all that match" mode), and a clear button.
+- Handlers by `kind`: `UdcDataView actions` and `UdcProvider actions` (also
+  `UdcActionsProvider`, `useBulkActionHandlers`) take
+  `{ archive: ({ ids, filter, exceptIds, rows, collection, clearSelection, def, kind }) => … }`
+  (`BulkActionHandlers`, `BulkActionContext`). Without a handler: `delete`
+  asks, then `mutate_many` `delete`; a def with `set` sends `mutate_many`
+  `update`; any other kind calls the server action its `action` names
+  (default `kind`) with `{ collection, ids | filter, except_ids }`. An
+  `unsupported_op` answer is shown naming the action; `failed` ids are
+  reported by count and stay selected (`planBulkAction`,
+  `bulkActionEligible`, `selectionTarget`, `MATCH_ALL`).
+- `RendererProps.selection` (optional `RowSelection`): set while the view
+  selects and the renderer reads the paged list. A renderer written against
+  0.4.0's `RendererProps` still compiles.
+- `@jsudc/react/headless` (and the root): `useRowSelection` and its pure
+  operations `toggleSelection`, `selectRange`, `setPageSelection`,
+  `selectAllMatching`, `pageSelectionState`, `selectionCount`,
+  `selectionHas`, `selectionIsEmpty`, `EMPTY_SELECTION` (types
+  `RowSelection`, `RowSelectionState`, `UseRowSelectionOptions`).
+- `useUdcMutateMany(collection)`: `mutate_many` with the optimistic update
+  `useUdcMutate` does for one row — loaded rows patched or removed (the total
+  counted down) in every cached list at once, rolled back on an error, lists
+  and lookups invalidated when settled; resolves to `{ updated, failed }`.
+  Helpers `applyToListRows`, `mutateManyTouches`; type `UdcMutateManyVars`.
+- `useUdcAction(definitionOrName, options?)` (S4): a mutation over the
+  client's typed `call` for a host action — typed from a `defineHostAction`
+  definition (the answer checked against its schema) or by the caller for a
+  name; `invalidates` refetches collections' lists afterwards
+  (`UseUdcActionOptions`, `callAction`).
+- `useRowActivation` takes `isSelected` and `onToggleSelect(row, range)`;
+  `RowActivationRowProps` gains the optional `aria-current`.
+- i18n terms in `en` and `sr`: `SELECT_ROW`, `SELECT_PAGE`,
+  `SELECTED_COUNT`, `SELECTED_ALL_COUNT`, `SELECTED_ALL_MATCHING`,
+  `SELECT_ALL_MATCHING_COUNT`, `SELECT_ALL_MATCHING`, `SELECTION_CLEAR`,
+  `BULK_ACTIONS`, `BULK_DELETE`, `BULK_NOT_ELIGIBLE`, `BULK_CONFIRM`,
+  `BULK_CONFIRM_DELETE_COUNT`, `BULK_CONFIRM_DELETE_MATCHING`,
+  `BULK_CONFIRM_DELETE_BODY`, `BULK_CONFIRM_ACTION_COUNT`,
+  `BULK_CONFIRM_ACTION_MATCHING`, `BULK_DONE_COUNT`, `BULK_DONE`,
+  `BULK_DELETED_COUNT`, `BULK_FAILED_COUNT`, `BULK_FAILED`,
+  `BULK_UNSUPPORTED`.
+- README section "Selection and bulk actions" (a worked mailbox example,
+  the behaviour without a total, the accessibility of selection next to the
+  active row, `useUdcMutateMany` and `useUdcAction` with a worked example).
+- Row actions: each row offers its view's `row_action_defs` (else the kinds
+  of `row_actions`, as udc-js reads them), each only where its `when` holds
+  for that row. `row_actions_display: inline` (the default) draws icon
+  buttons in a trailing table column pinned at the end; `menu` one "more"
+  button per row and the same dropdown on right-click of the row. The cards
+  draw them as a menu on each card. With row activation on, the focused row
+  opens its menu from the context-menu key, Shift+F10 or `.`, and the focus
+  returns to the row when it closes. A click on an action neither activates
+  the row, nor follows its `row_link`, nor toggles its selection. A view with
+  no row actions draws what it drew before.
+- Running a row action is the bulk path on one row: the host's
+  `actions[kind]` handler (its context gains the optional `row`, with
+  `ids: [id]`, `rows: [row]`); else `delete` after a confirmation
+  (`mutate_many` when the source has it, else `mutate`), a `set` patch
+  (optimistic, rolled back on an error), or the server action the def names
+  with `{ collection, ids: [id] }`. `BulkActionContext.row` is optional and
+  absent for the bulk bar.
+- `RendererProps.rowActions` (optional `RowActions`: `display`, `defs`,
+  `eligible(row)`, `label(def)`, `run(def, row)`, `runningOn(id)`), set when
+  the view declares row actions. `RowActionsControls`, `useRowMenu`,
+  `rowMenuHandlers`, `rowActionsColumnWidth` draw the built-in ones in a
+  host renderer; `rowActionDefs`, `rowActionsDisplay`, `eligibleRowActions`
+  and `isRowMenuKey` are also in `@jsudc/react/headless`.
+- The `UiKit` contract: `DropdownMenu` takes the optional `open` and
+  `onOpenChange`, `DropdownMenuContent` the optional `onCloseAutoFocus` (the
+  default kit passes them to Radix). A kit that ignores them still opens a
+  row's menu from its trigger.
+- i18n terms in `en` and `sr`: `ROW_ACTIONS`, `ROW_ACTIONS_MORE`,
+  `ROW_CONFIRM_DELETE`, `ROW_CONFIRM_ACTION`.
+- README section "Row actions" (a worked mailbox example: "mark read"
+  through `set`, "archive" through a host handler, both hidden where `when`
+  fails).
+- Search answered by the source (S6): when `describe.capabilities.search`
+  is `"source"`, the search box's text is sent as `ListRequest.search` and
+  not composed into the filter — in the paged list, in the renderers that
+  load their own rows (kanban, calendar, map, chart, a tree that does not
+  highlight in the browser) and in the query keys. A collection without the
+  capability sends exactly today's requests. With a search and no sort the
+  table shows no sort indicator (relevance order); a chosen sort is sent with
+  the search.
+- `search?` on `useUdcCollection`, `useUdcAllRows` and `fetchAllRows`
+  (blank: not sent, not in the key); `ListKeyParams.search?`;
+  `RendererProps.listSearch?`, the text a renderer that loads its own rows
+  passes on.
+- The selection is cleared by a new source search text; "select all that
+  match" is not offered while a source search is active (`mutate_many` by
+  filter cannot carry the text), with a hint instead. i18n term
+  `SELECT_ALL_MATCHING_SEARCH` in `en` and `sr`.
+- README section "Search answered by the source".
+- Live updates (S5): `UdcProvider changes` (`true` or `UdcChangeFeedOptions`
+  `{ debounceMs, batchMs, removeDeleted, minDelayMs, maxDelayMs,
+  idleTimeoutMs }`; off by default, no connection) opens one change-feed
+  stream (`UdcClient.changes`) for the collections the views and hooks below
+  show, each one that offers `capabilities.changes`. Collections are
+  reference-counted: added when the first view of one mounts, dropped when
+  the last one unmounts; the stream is reopened with the new list, the old
+  one closed only once the new one is subscribed. A provider without
+  `changes` under another one with the same client uses the outer feed.
+- On an event the collection's lists, the lookup batches into it and its
+  lookup picker options are invalidated, a burst debounced into one
+  invalidation (and held back while a mutation is in flight); a `delete`
+  with `ids` takes those rows out of the cached lists at once. "Reconnected"
+  invalidates every collection of the stream; a collection that joins it is
+  refetched when its data predates the subscription.
+- Polling is the fallback: `refresh_interval_ms` (`refetchInterval` of
+  `useUdcCollection` / `useUdcAllRows`) is suspended while the stream carries
+  the collection and resumes while it reconnects, when it is refused, or
+  without a feed. An unauthenticated stream goes to `createUdcQueryClient`'s
+  `onUnauthenticated`, in the same burst as the queries, and is not reopened
+  until the set of collections changes.
+- `useUdcChanges(collection, onEvent?, options?)` → `{ status, live }`
+  (`UdcChangeFeedStatus`: `off`, `connecting`, `live`, `reconnecting`,
+  `down`; `UseUdcChangesOptions` `{ capabilities, enabled }`,
+  `UdcChangesResult`): subscribes for a host (a badge counter) and is what
+  the data view, `useUdcCollection`, `useUdcAllRows`, `useUdcLookup`,
+  `useUdcLookups` and `useLookupOptions` subscribe through.
+  `useUdcChangeFeed()` and the class `UdcChangeFeed` are exported too (also
+  from `@jsudc/react/headless`).
+- `UdcDataView liveIndicator` (default `true`): "live" / "reconnecting"
+  beside the freshness pill while a feed carries the collection
+  (`LiveIndicator`); nothing without a feed. i18n terms `FEED_LIVE`,
+  `FEED_LIVE_HINT`, `FEED_RECONNECTING`, `FEED_RECONNECTING_HINT` in `en` and
+  `sr`.
+- `capabilities` of `useUdcCollection` and `useUdcAllRows` accept
+  `changes` next to `paging` (a wider `Pick`; what compiled still compiles).
+- README section "Live updates".
+- Long lists: in infinite mode the table mounts only the rows in and near
+  its viewport (an overscan of 10 rows on each side), spacer rows standing
+  for the rest so the scrollbar and the scroll position are those of every
+  loaded row. Automatic once more than 200 rows are loaded; a list at or
+  under that draws the markup it drew before. Pages mode is never windowed.
+  No new dependency: rows have one height, so the window is arithmetic.
+- `UdcDataView virtualize` and `TableRenderer virtualize`
+  (`TableVirtualizeProp`: `boolean` or `TableVirtualization`
+  `{ enabled?: boolean | "auto", threshold?, overscan? }`) force it on or
+  off and set the threshold and the overscan; `RendererProps.virtualize`
+  carries it to a renderer when the host set it.
+- Across the window: the keys of row activation scroll a row outside it in,
+  mount it and focus it (Home / End to the first / last loaded row); the
+  active row, the tab stop, the focused row, a row with an open cell editor
+  and a row whose menu is open stay mounted wherever they are; selection
+  ranges and "the page" are computed over the loaded rows; the sentinel,
+  pinned columns, row actions, custom cells and lookup batching (one fetch
+  for every loaded row) are unchanged; a refetch keeps the scroll position.
+  A windowed table's `aria-rowcount` is the loaded count and each row has
+  its `aria-rowindex`.
+- `useRowActivation` takes an optional `reveal(row, index)`: a windowed list
+  is asked to mount a row the keys moved to, which then takes the focus as
+  it attaches.
+- `@jsudc/react/headless` (and, the options, the root): `useRowWindow`,
+  `virtualizationApplies`, `resolveVirtualization`, `visibleRange`,
+  `withOverscan`, `keepRange`, `bodySlices`, `DEFAULT_VIRTUAL_THRESHOLD`,
+  `DEFAULT_VIRTUAL_OVERSCAN`, the types `TableVirtualization`,
+  `TableVirtualizeProp`, `RowRange`, `BodySlice`, `UseRowWindowOptions`,
+  `RowWindow`.
+- README section "Long lists" (its limits: find-in-page sees only the
+  mounted rows, printing prints the window).
+
+### Changed
+
+- The `@jsudc/core` peer range is `^0.5.0` (`mutate_many`, host actions, action eligibility, `ListRequest.search` and
+  `UdcClient.changes` come from core 0.5.0). The development
+  dependency is pinned to core's `release-0.5.0` commit until core 0.5.0 is on
+  npm.
+- With selection on and row activation on, `aria-selected` on a row is its
+  selection (the grid is `aria-multiselectable`) and the active row is marked
+  `aria-current="true"`. With selection off nothing changes: `aria-selected`
+  marks the active row as in 0.4.0.
+
 ## [0.4.0] - 2026-11-22
 
 Sessions (a signed-out state, `onUnauthenticated`), embedding a view in a
@@ -407,7 +614,8 @@ First tagged version, installed from the GitHub tag.
   Serbian), theme and time-zone providers, the UI primitives.
 - `styles.css`, compiled at build time, and `tokens.css`, its raw source.
 
-[Unreleased]: https://github.com/digital-cube/jsudc-react/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/digital-cube/jsudc-react/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/digital-cube/jsudc-react/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/digital-cube/jsudc-react/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/digital-cube/jsudc-react/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/digital-cube/jsudc-react/compare/v0.2.1...v0.3.0

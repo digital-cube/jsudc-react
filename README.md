@@ -14,7 +14,8 @@ What is in the package:
 - **`UdcProvider`** and **`createUdcQueryClient`**, and TanStack Query hooks over
   the transport client of [`@jsudc/core`](https://github.com/digital-cube/jsudc-core)
   (`useUdcCollections`, `useUdcDescribe`, `useUdcCollection`, `useUdcAllRows`,
-  `useUdcMutate`, `useUdcSchema`, `useUdcSource`);
+  `useUdcMutate`, `useUdcMutateMany`, `useUdcAction`, `useUdcSchema`,
+  `useUdcSource`);
 - **`UdcDataView`** and **`createRendererRegistry`**; each renderer is a
   subpath of its own (`@jsudc/react/table`, `/cards`, `/kanban`, `/calendar`,
   `/tree`, `/map`, `/chart`), so a page bundles, and a host installs the peers
@@ -40,7 +41,7 @@ npm install @jsudc/react @jsudc/core \
 # then the peers of the renderers you register (see Renderers), all of them:
 npm install @tanstack/react-table leaflet recharts @dnd-kit/core @dnd-kit/sortable @dnd-kit/utilities
 # or straight from a GitHub tag:
-npm install github:digital-cube/jsudc-core#v0.4.0 github:digital-cube/jsudc-react#v0.4.0
+npm install github:digital-cube/jsudc-core#v0.5.0 github:digital-cube/jsudc-react#v0.5.0
 ```
 
 ## Quick start
@@ -163,6 +164,7 @@ when this table drifts).
 | `unwindowedFilter`                   | `FilterNode \| undefined` (optional)       | `filter` without the chart window: what "of M" counts                                                                             |
 | `chartWindow`                        | `ChartWindowState \| undefined` (optional) | the chart window when one applies (already in `filter`)                                                                           |
 | `search`                             | `string`                                   | the search box as typed (for highlighting)                                                                                        |
+| `listSearch`                         | `string \| undefined` (optional)           | the text to send as `search` with every list, when the source answers search itself ([Search](#search-answered-by-the-source))    |
 | `sort`, `onSort(field, multi)`       | `SortKey[]`, function                      | the sort and the header click that cycles it                                                                                      |
 | `mode`, `page`, `limit`, `onPage(n)` | `"pages" \| "infinite"`, numbers, function | the paging mode, the 1-based page, the page size, go to a page                                                                    |
 | `filtered`, `onClearFilters()`       | `boolean`, function                        | did the user filter (the host's `filter` does not count), and "clear filters" for the empty state                                 |
@@ -173,6 +175,9 @@ when this table drifts).
 | `onRowActivate(row)`                 | function (optional)                        | Enter or a plain click on a row ([Row activation and keyboard](#row-activation-and-keyboard)); set only when the host passed one  |
 | `activeRowId`                        | `string \| null` (optional)                | the row to draw as active; set whenever activation is on (the view keeps it when the host does not)                               |
 | `onActiveRowChange(row \| null)`     | function (optional)                        | report the active row moving (keys, a click on another row); set whenever activation is on                                        |
+| `selection`                          | `RowSelection` (optional)                  | the row selection ([Selection and bulk actions](#selection-and-bulk-actions)); set while the view selects and the renderer pages  |
+| `rowActions`                         | `RowActions` (optional)                    | the actions of each row ([Row actions](#row-actions)); set when the view declares `row_action_defs` or `row_actions`              |
+| `virtualize`                         | `TableVirtualizeProp` (optional)           | the table's long-list windowing ([Long lists](#long-lists)); passed only when the host set `UdcDataView virtualize`               |
 
 The three activation props are absent unless the host turned activation on;
 `useRowActivation` of `@jsudc/react/headless` does everything they describe
@@ -181,8 +186,9 @@ column's cells are drawn is not a renderer's business: see
 [Custom cells](#custom-cells).
 
 A renderer with `paging: true` draws `data` and needs nothing else; one with
-`paging: false` loads its own rows with `filter` (the hooks of
-`@jsudc/react/headless`, e.g. `useUdcAllRows`) and reports `onCount`. A message
+`paging: false` loads its own rows with `filter` and `listSearch` (the hooks
+of `@jsudc/react/headless`, e.g. `useUdcAllRows({ filter, search: listSearch })`)
+and reports `onCount`. A message
 list of a mail client:
 
 ```tsx
@@ -234,7 +240,8 @@ plain HTML builds its own renderer on it and gets the same queries, filters and
 URL state.
 
 - the client context and the hooks: `useUdcClient`, `useUdcDescribe`,
-  `useUdcCollection`, `useUdcAllRows`, `useUdcMutate`, `useUdcSchema`, `udcKeys`;
+  `useUdcCollection`, `useUdcAllRows`, `useUdcMutate`, `useUdcSchema`, `udcKeys`,
+  and the change feed's `useUdcChanges` (see [Live updates](#live-updates));
 - the data view's state: `useDataViewState` (tab, search, chips, filter tree,
   sort, paging in the URL), `composeFilter`, the URL codecs of `urlState.ts`,
   `liveDescribe` / `liveSort`, the folder helpers;
@@ -245,7 +252,9 @@ URL state.
 - `applyTransforms`, `displayText`, `renderKind` and the cell formatters;
   the zone helpers and `useTimezone`;
 - `useRowActivation` (the active row and the keys, see
-  [Row activation and keyboard](#row-activation-and-keyboard)) and the cell
+  [Row activation and keyboard](#row-activation-and-keyboard)), `useRowSelection`
+  and what runs a bulk action (`planBulkAction`, `bulkActionEligible`, see
+  [Selection and bulk actions](#selection-and-bulk-actions)) and the cell
   registry (`createCellRegistry`, `UdcCellsProvider`, `useCellRegistry`, see
   [Custom cells](#custom-cells));
 - the registry functions (`createRendererRegistry`, `resolveTab`) and the URL
@@ -510,13 +519,15 @@ ArrowDown / `j` and ArrowUp / `k` move the active row (and the focus) by one,
 Home / End jump to the first / last loaded row, Enter activates. They are
 left alone while an input, the search box, a cell editor, a menu, a list box
 or a dialog has the focus, and with Ctrl, Cmd, Alt or Shift held. Space is
-not bound (it is the selection's, in 0.5.0). Double-click and Enter still
+not bound unless the view selects; then it toggles the active row (0.5.0). Double-click and Enter still
 edit an editable cell when the focus is on the cell itself.
 
 **One tab stop.** The rows are a roving-`tabindex` list: Tab reaches the
 active row (else the one last focused, else the first) and leaves the list on
 the next Tab. The table is `role="grid"`; the card grid too, each card a
-`row`. The active row has `aria-selected="true"`, the attribute
+`row`. The active row has `aria-selected="true"` (while the view selects,
+`aria-selected` is the selection and the active row has `aria-current`: see
+[Selection and bulk actions](#selection-and-bulk-actions)), the attribute
 `data-active="true"` (`.udc-row[data-active]`, `.udc-card[data-active]` for
 your CSS) and the `--selected` background.
 
@@ -617,6 +628,560 @@ function MessageList({ data, onRowActivate, activeRowId, onActiveRowChange }: Re
 `nav.activeRowId` is the active row (when it is loaded), `nav.move("next")`
 and `nav.activate(row)` drive it from the host's own buttons, and `ownsKeys`
 says whether a key belongs to the element it was pressed on.
+
+## Search answered by the source
+
+The search box filters in the browser's terms by default: its text becomes
+`contains` over the view's `search.fields`, or-ed, and is ANDed with the chips
+and the filter tree. When a collection's `describe` says
+`capabilities.search: "source"` (a `postgres_table` with a `tsvector`, a
+collection backed by OpenSearch; see `@jsudc/server`'s "Search answered by the
+source"), the data view sends the text as `search` in `list` instead and
+composes nothing for it:
+
+- **The paged list** carries `search` next to the filter (the host's filter,
+  the chips, the tree), and so does its query key, so every text is its own
+  cache entry. A blank box sends no `search`.
+- **Renderers that load their own rows** get the text as `listSearch` (and a
+  `filter` / `baseFilter` without it). Kanban, calendar, map, chart and tree
+  pass it on; a tree that highlights what it loaded
+  (`on_search: highlight_and_expand`) keeps searching in the browser. A renderer of your
+  own passes it as `search` to `useUdcAllRows` or `useUdcCollection`.
+- **Relevance order.** With a search and no sort chosen, the request has no
+  sort and the source answers by relevance, so no column shows a sort
+  indicator. Clicking a header still sorts, and the sort is sent with the
+  search.
+- **The selection** is cleared by a new search text, as by a new filter.
+  "Select all that match" is not offered while a source search is active:
+  `mutate_many` by filter cannot carry the search, so it could not name the
+  same rows. The bar says so instead ("Only the loaded rows can be selected
+  while searching"); the loaded rows can still be selected and acted on.
+- The rest of the box is unchanged: the debounce, `?q=` in the URL, and the
+  clear button.
+
+Nothing changes for a host: the capability comes from the server, and a
+collection without it sends exactly the requests it sent before.
+
+```tsx
+import { useUdcAllRows, type RendererProps } from "@jsudc/react";
+
+// A renderer of your own that loads its rows: pass the source's search on.
+function Timeline({ collection, describe, filter, listSearch }: RendererProps) {
+  const { rows } = useUdcAllRows({
+    collection,
+    filter, // no `contains` for the box under the capability
+    search: listSearch, // undefined without it, or with an empty box
+    capabilities: describe.capabilities,
+  });
+  return (
+    <ol>
+      {rows.map((r) => (
+        <li key={r.__meta.id}>{String(r.subject)}</li>
+      ))}
+    </ol>
+  );
+}
+```
+
+## Live updates
+
+By default a view refreshes on a timer: the view's `refresh_interval_ms`
+becomes the list's polling interval, and nothing at all without it. A server
+with the change feed (`@jsudc/server`'s "Change feed": `createChangeFeed()`
+passed as `changes` to `createDispatcher`) says `capabilities.changes: true`
+on its collections and serves one Server-Sent Events stream for a list of
+collections (`UdcClient.changes` in `@jsudc/core`). Turn it on in the
+provider and the views refetch when the server says their rows changed:
+
+```tsx
+import { UdcClient } from "@jsudc/core/client";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { createUdcQueryClient, UdcDataView, UdcProvider, useUdcChanges } from "@jsudc/react";
+import { RENDERERS } from "@jsudc/react/all";
+import { useState } from "react";
+
+const client = new UdcClient({ httpUrl: "" });
+const queryClient = createUdcQueryClient({ onUnauthenticated: () => location.assign("/login") });
+
+export function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      {/* `changes`: one stream for the collections on screen. Off by default. */}
+      <UdcProvider client={client} renderers={RENDERERS} changes>
+        <InboxBadge />
+        {/* Mark a message read in another tab: this list refetches within a moment. */}
+        <UdcDataView collection="messages" />
+      </UdcProvider>
+    </QueryClientProvider>
+  );
+}
+
+// A host's own counter: every insert the feed reports, as it arrives.
+function InboxBadge() {
+  const [unseen, setUnseen] = useState(0);
+  const { status } = useUdcChanges("messages", (event) => {
+    if (event.op === "insert") setUnseen((n) => n + (event.ids?.length ?? 1));
+  });
+  return (
+    <button type="button" onClick={() => setUnseen(0)} title={status}>
+      Inbox {unseen > 0 ? `(${unseen})` : null}
+    </button>
+  );
+}
+```
+
+What happens:
+
+- **One stream per provider.** A collection joins the stream when the first
+  view or hook that shows it mounts (the data view, `useUdcCollection`,
+  `useUdcAllRows`, `useUdcLookup` / `useUdcLookups` and `useLookupOptions`
+  for the collection a lookup points to, `useUdcChanges`) and leaves it when
+  the last one unmounts. A new list opens a new stream; the old one is closed
+  only once the new one is subscribed, so the collections that stay miss
+  nothing. Mounts close together (`batchMs`, 50 ms) make one reopen.
+- **On an event** (`{ collection, op, ids? }`, no row data) the collection's
+  lists, the lookup batches into it (the labels other views show) and its
+  picker options are invalidated, so what is on screen refetches. A burst is
+  debounced into one refetch (`debounceMs`, 200 ms), held back while a
+  mutation of yours is in flight. A `delete` that names its `ids` takes those
+  rows out of the cached lists at once (`removeDeleted: false` turns that
+  off); nothing else is applied without the server's answer: a row is never
+  synthesised from an event.
+- **On "reconnected"** (the stream dropped and is back) everything the stream
+  carries is refetched: changes made meanwhile were not sent. A collection
+  that joins the stream is refetched when its data was fetched before the
+  stream was asked for.
+- **Polling is the fallback.** While the stream carries a collection its
+  `refresh_interval_ms` timer is suspended; it runs again while the stream
+  reconnects, when the server refused it, and always without a feed. An
+  unauthenticated stream goes to `createUdcQueryClient`'s
+  `onUnauthenticated` (in the same burst as failed queries) and is not
+  reopened until the set of collections changes.
+- **What stays put** across such a refetch: the active row and the focus, the
+  selection, an open cell editor (and what was typed in it), the scroll
+  position of an infinite list. The rows are replaced under them, by id.
+- **The indicator.** Beside the freshness pill the data view shows "live"
+  while the stream carries its collection and "reconnecting" while it is
+  being reopened (`FEED_LIVE`, `FEED_RECONNECTING` and their `_HINT`
+  tooltips, `en` and `sr`); `liveIndicator={false}` hides it, and
+  `LiveIndicator` draws it in a toolbar of your own.
+
+`changes` also takes `UdcChangeFeedOptions`: `debounceMs`, `batchMs`,
+`removeDeleted`, and `minDelayMs`, `maxDelayMs`, `idleTimeoutMs` passed to
+`UdcClient.changes`. A `UdcProvider` without `changes` inside one with the
+same client uses the outer feed; `changes={false}` turns it off below.
+
+`useUdcChanges(collection, onEvent?, { capabilities?, enabled? })` answers
+`{ status, live }`: `off` (no feed, or the collection does not offer it),
+`connecting`, `live`, `reconnecting`, or `down` (refused). It reads the
+capability from the collection's cached `describe` unless you pass
+`capabilities`.
+
+**Without the feed** nothing changes: a provider without `changes` opens no
+connection and asks no `describe` for it, a collection whose `describe` does
+not say `capabilities.changes: true` is never subscribed, and every view
+polls on `refresh_interval_ms` (or not at all) exactly as before.
+
+## Selection and bulk actions
+
+A user selects rows (one, a range, the page, or everything that matches the
+filter) and runs the view's `bulk_actions` on them. Selection is on when the
+view says `multiselect: true` or declares `bulk_actions`; `selectable` on
+`UdcDataView` forces it on (`true`) or off (`false`). A view with neither
+draws exactly what it drew before 0.5.0.
+
+**What the user does.** The table gets a checkbox column pinned at the start
+and a header checkbox for the page (checked, empty or indeterminate);
+shift-click selects the range from the last row toggled; with row activation
+on, Space toggles the active row and Shift+Space selects a range to it. The
+cards get a checkbox each. Kanban, tree, calendar, map and chart do not
+select. While anything is selected a bar over the list shows the count, a
+button per `bulk_actions` entry and a clear button.
+
+**All that match.** When the whole page is selected and more rows match than
+are loaded, the bar offers "Select all 1,234 that match". Taking it switches
+the selection to "every row the filter matches, except the ones you uncheck"
+(the bar reads "All 1,234 are selected"), and an action then goes to the
+server by filter, not by ids. When everything is loaded already the page is
+everything, and nothing is offered.
+
+**The selection is cleared** when the filter changes (the search, a chip,
+the filter builder, the host's `filter`) or the collection does (under a
+source search, see [Search answered by the source](#search-answered-by-the-source),
+"all that match" is not offered); a sort, a
+refetch and more pages loading keep it. In id mode the selected rows are
+remembered, so a row a refetch drops still counts and still reaches a
+handler.
+
+**Without a total.** A source answering `capabilities.total_count: false`
+lists with `total: null`. The offer then reads "Select all that match", with
+no number, the bar "All matching rows are selected", with no number, and the
+result message reports the count the server answers (`updated`).
+
+### Running an action
+
+Each `bulk_actions` entry is an `ActionDef` of `@jsudc/core`: `kind`,
+`label`, `icon` (`lucide:<name>`), `variant`, `when`, and 0.5.0's `set`,
+`action` and `confirm`. Its button reads the term `ACTION_<KIND>` of the
+collection's section (`TBL_<COLLECTION>`), else `ACTIONS.<kind>`, else the
+def's `label`. It is disabled unless its `when` holds for every selected row
+(`isActionEligibleForAll`); in "all that match" mode rows that are not loaded
+cannot be checked in the browser, so it is offered unless `when` is `false`
+and the server decides.
+
+A click runs the first of these that applies:
+
+1. **A handler for its `kind`**: the view's `actions` prop, else
+   `UdcProvider actions`. It gets `{ kind, def, collection, ids }` in id mode
+   or `{ kind, def, collection, filter, exceptIds }` in "all that match" mode,
+   with `rows` (the selected rows that are loaded) and `clearSelection`. The
+   view does not clear the selection after a handler; call `clearSelection`
+   when you are done. A handler that throws shows its message.
+2. **`delete`**: a confirmation, then `mutate_many` `delete`.
+3. **A def with `set`**: `mutate_many` `update` with that patch.
+4. **Anything else**: the server action the def's `action` names (default its
+   `kind`) with `{ collection, ids }` or `{ collection, filter, except_ids }`
+   — a host action registered on the dispatcher (`@jsudc/server`'s
+   `Dispatcher.register`). An `unsupported_op` answer shows "The server does
+   not support …", naming the action.
+
+The built-in paths ask first when `actionConfirms(def)` says so: `delete` by
+default, any other def with `confirm: true` or a question of its own. They
+change the loaded rows at once (`useUdcMutateMany`), put them back if the
+call fails, refetch the collection's lists and lookups when it settles, and
+report what the server answers: "12 rows deleted", "Mark read: 12 rows", and
+"3 rows could not be changed" for the ids in `failed`, which stay selected.
+
+A mailbox whose view archives through the host's own endpoint, marks read
+with a patch, and deletes with the built-in delete:
+
+```yaml
+# The view of `messages`
+view:
+  columns: [{ field: subject }, { field: from }, { field: received_at }]
+  bulk_actions:
+    - kind: archive
+      label: Archive
+      icon: lucide:archive
+    - kind: mark_read
+      label: Mark read
+      icon: lucide:mail-open
+      set: { read: true }
+      when: { field: read, op: eq, value: false }
+    - kind: delete
+      variant: destructive
+```
+
+```tsx
+import { UdcDataView } from "@jsudc/react";
+
+export function Inbox() {
+  return (
+    <UdcDataView
+      collection="messages"
+      filter={{ field: "folder", op: "eq", value: "inbox" }}
+      actions={{
+        // Id mode: `ids`. "All that match": `filter` (the host's folder, the search, the chips)
+        // and `exceptIds`. `rows` are the selected rows the view has loaded.
+        archive: async ({ ids, filter, exceptIds, clearSelection }) => {
+          await fetch("/api/mail/archive", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify(ids ? { ids } : { filter, except_ids: exceptIds }),
+          });
+          clearSelection();
+        },
+        // mark_read has `set`: a mutate_many update, no handler needed.
+        // delete is built in: a confirmation, then a mutate_many delete.
+      }}
+    />
+  );
+}
+```
+
+**Accessibility.** With selection on and row activation off the table stays a
+table: each row's checkbox is a native checkbox labelled "Select row", the
+header's "Select all rows shown" (`aria-checked="mixed"` when some are). With
+both on the list is ARIA's multi-select grid (`aria-multiselectable="true"`):
+`aria-selected` on a row says whether it is **selected**, and the active row
+is the one holding the focus (the roving tab stop), marked
+`aria-current="true"` and `data-active="true"`. With selection off,
+`aria-selected` marks the active row as in 0.4.0. A selected row carries
+`data-selected="true"` (`.udc-row[data-selected]`, `.udc-card[data-selected]`)
+and the `--selected` background; the bar is `role="toolbar"` and its count is
+announced politely.
+
+**In a host renderer.** `RendererProps.selection` (a `RowSelection`, set
+while the view selects) carries `mode`, `ids`, `exceptIds`, `count`
+(`null` in "all that match" mode without a total), `rows`, `pageState`,
+`isSelected(id)`, `toggle(id, { range })`, `setPage(on)`,
+`selectAllMatching()`, `setIds(ids)` and `clear()`; the view draws the bar.
+`useRowSelection({ rows, total, resetKey })` of `@jsudc/react/headless` is
+the same model for a list of your own, and its pure operations
+(`toggleSelection`, `selectRange`, `setPageSelection`, `selectAllMatching`,
+`selectionCount`, …) range over the rows as loaded, not over the DOM.
+`useRowActivation` takes `isSelected` and `onToggleSelect(row, range)` for
+Space and the ARIA above.
+
+### `useUdcMutateMany` and `useUdcAction`
+
+`useUdcMutateMany(collection)` is `useUdcMutate` for many rows: `mutateAsync({
+op: "update", ids, row })`, `{ op: "delete", ids }`, or by `filter` with
+`except_ids`. The rows it touches are patched (or removed, the total counted
+down) in every cached list at once, put back on an error, and the lists and
+lookups are invalidated when it settles. It resolves to the server's `{
+updated, failed }`: report `failed` yourself.
+
+`useUdcAction(action)` is a mutation over the client's typed `call` for any
+host action. Given the action's definition (`defineHostAction`, in a module
+the server and the browser share), the payload and the answer are typed from
+its schemas and the answer is checked; given a name, you type it
+(`useUdcAction<Res, Req>("mail.flag")`). `invalidates` names the collections
+whose lists to refetch afterwards; every other TanStack mutation option
+passes through.
+
+```ts
+// shared/actions.ts — imported by the server (Dispatcher.register) and by the browser
+import { defineHostAction } from "@jsudc/core";
+import { z } from "zod";
+
+export const snooze = defineHostAction({
+  name: "mail.snooze",
+  request: z.object({ ids: z.array(z.string()), until: z.iso.datetime() }),
+  response: z.object({ snoozed: z.number().int() }),
+});
+```
+
+```tsx
+import { useUdcAction } from "@jsudc/react";
+import { snooze } from "../shared/actions";
+
+export function SnoozeButton({ ids }: { ids: string[] }) {
+  const run = useUdcAction(snooze, { invalidates: ["messages"] });
+  return (
+    <button
+      type="button"
+      disabled={run.isPending}
+      // The payload is typed { ids: string[]; until: string }; data is { snoozed: number }.
+      onClick={() => run.mutate({ ids, until: new Date(Date.now() + 3_600_000).toISOString() })}
+    >
+      {run.data ? `Snoozed ${run.data.snoozed}` : "Snooze an hour"}
+    </button>
+  );
+}
+```
+
+## Row actions
+
+Each row offers the actions its view declares for one row, as icon buttons at
+the end of the row or in a "more" menu, each only where its `when` holds for
+that row. They run exactly as a bulk action does on a selection of that one
+row: the same handlers, the same server paths. A view that declares none
+draws exactly what it drew before 0.5.0.
+
+**What a row offers.** The three keys are udc's, read as udc-js reads them:
+`row_action_defs` (a list of `ActionDef`, the shape of `bulk_actions`) when
+the view has any, else the kinds of the legacy `row_actions: string[]`
+lifted to `{ kind }`. Each is filtered by its `when` for that row
+(`isActionEligible` of `@jsudc/core`: against `row.__meta.state` when the
+source sends one, else the row's fields). A row none of whose actions apply
+shows nothing.
+
+**How they are drawn**, by `row_actions_display`:
+
+- `inline` (the default, as in udc-js): the table gets a trailing column
+  pinned at the end (after any column pinned right) with one icon button per
+  action, labelled for screen readers and in a tooltip; an action whose
+  `icon` is not known draws its label as a small text button. The column is
+  sized from every declared action, with the `when`-gated ones counted as
+  alternatives (only the widest), so it does not jump as rows change.
+- `menu`: one "more" button per row opening a dropdown, and the same menu on
+  right-click anywhere on the row.
+
+The cards draw the same actions as a "more" menu on each card (right-click
+opens it too), whatever the display. Kanban, tree, calendar, map and chart
+draw no row actions.
+
+**The keyboard.** With row activation on, the focused row opens its menu from
+the context-menu key, Shift+F10 or `.` (`isRowMenuKey`); in the inline
+display the keys open the same actions as a menu. Arrow keys move in the
+menu, Enter runs, Escape closes, and the focus goes back to the row. Opened
+from the "more" button, the focus goes back to that button.
+
+**A click on an action is the action's**: it neither activates the row
+(`onRowActivate`), nor follows its `row_link`, nor toggles its selection; a
+click anywhere else on the row does what it did.
+
+**Running one** goes through [Running an action](#running-an-action) with
+`ids: [id]` and `rows: [row]`:
+
+1. **A handler for its `kind`** (the view's `actions`, else `UdcProvider
+   actions`): it gets the bulk context with `ids: [id]`, `rows: [row]` and
+   `row`, the one row (absent when the bulk bar runs it). `clearSelection`
+   clears the view's selection, if it selects.
+2. **`delete`**: a confirmation ("Delete this row?"), then `mutate_many`
+   `delete` when the source has `capabilities.mutate_many`, else `mutate`
+   `delete`. The row leaves the list and the selection.
+3. **A def with `set`**: an update with that patch (`mutate_many` or
+   `mutate`), shown at once and put back if the call fails.
+4. **Anything else**: the server action the def's `action` names (default its
+   `kind`) with `{ collection, ids: [id] }`.
+
+As for a bulk action, the built-in paths ask first per `confirm`, a handler
+asks its own questions, and an error (or the row named in a `failed` answer)
+is shown as a toast. A row action names its button with the term
+`ACTION_<KIND>` of the collection's section, else `ACTIONS.<kind>`, else the
+def's `label`, else the kind made readable.
+
+A mailbox whose rows mark themselves read through a patch and archive through
+the host's own endpoint, each hidden where it does not apply:
+
+```yaml
+# The view of `messages`
+view:
+  columns: [{ field: subject }, { field: from }, { field: received_at }]
+  row_actions_display: inline # or `menu`
+  row_action_defs:
+    - kind: mark_read
+      label: Mark read
+      icon: lucide:mail-open
+      set: { read: true } # no handler needed: an optimistic update
+      when: { field: read, op: eq, value: false }
+    - kind: archive
+      label: Archive
+      icon: lucide:archive
+      when: { field: folder, op: neq, value: archive }
+```
+
+```tsx
+import { UdcDataView } from "@jsudc/react";
+
+export function Inbox() {
+  return (
+    <UdcDataView
+      collection="messages"
+      filter={{ field: "folder", op: "eq", value: "inbox" }}
+      onRowActivate={(row) => openMessage(row.__meta.id)}
+      actions={{
+        // The same handler serves the bulk bar (`ids` of the selection, or `filter`) and the row
+        // ("archive" on one row: `ids: [id]`, `rows: [row]`, `row`).
+        archive: async ({ ids, filter, exceptIds, row, clearSelection }) => {
+          await fetch("/api/mail/archive", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify(ids ? { ids } : { filter, except_ids: exceptIds }),
+          });
+          if (!row) clearSelection();
+        },
+      }}
+    />
+  );
+}
+```
+
+An unread message in the inbox shows both; a read one only "Archive"; a read
+one already archived, none. Clicking "Mark read" shows the row read at once (and so
+"Mark read" goes from it); clicking the row itself still opens the message.
+
+**In a host renderer.** `RendererProps.rowActions` (a `RowActions`, set when
+the view declares row actions) carries `display`, `defs` (every declared
+action, before `when`), `eligible(row)`, `label(def)`, `run(def, row)` (the
+path above; it shows its errors and does not reject) and `runningOn(id)`
+(the kind running on that row, else `null`). `RowActionsControls` with
+`useRowMenu()` draws the built-in buttons and menu; `rowMenuHandlers` gives a
+row element its menu key and right-click. The headless parts —
+`rowActionDefs(view)`, `rowActionsDisplay(view)`, `eligibleRowActions(defs,
+row)`, `isRowMenuKey(e)` — are in `@jsudc/react/headless`. A UI kit's
+`DropdownMenu` may take the optional `open` / `onOpenChange` and its content
+`onCloseAutoFocus` (the default kit does); a kit that ignores them still
+opens the menu from its trigger, but not from the keys or a right-click.
+
+## Long lists
+
+In infinite mode the table mounts only the rows in and near its viewport,
+however many pages are loaded: a mailbox scrolled through for thousands of
+messages keeps a few dozen `<tr>` in the page, not thousands. The rows
+outside the window are stood in for by spacer rows of their height, so the
+scrollbar, the scroll position and the sticky header behave as if every row
+were there. Rows have one height (the view's `row_height`, default 40 px),
+so the window is arithmetic: no dependency, no measuring of each row.
+
+**When it applies.** Only in infinite mode (pages mode is never windowed)
+and, by default, only once **more than 200 rows** are loaded: a list at or
+under that draws exactly the markup it drew before 0.5.0. The `virtualize`
+prop of `UdcDataView` (and of `TableRenderer`) changes that:
+
+| `virtualize`                       | Infinite mode windows its rows…                    |
+| ---------------------------------- | -------------------------------------------------- |
+| left out, or `{ enabled: "auto" }` | once more than `threshold` (200) rows are loaded   |
+| `true` / `{ enabled: true }`       | always, however few                                |
+| `false` / `{ enabled: false }`     | never: every loaded row is mounted, as before      |
+| `{ threshold: 500 }`               | once more than 500 are loaded                      |
+| `{ overscan: 20 }`                 | with 20 rows mounted beyond each edge (default 10) |
+
+```tsx
+import { UdcDataView } from "@jsudc/react";
+
+// The mailbox: always infinite, always windowed (even a short folder), with a deeper overscan
+// for fast keyboard scrolling.
+export function Mailbox({ folder }: { folder: string }) {
+  return (
+    <UdcDataView
+      collection="messages"
+      filter={{ field: "folder", op: "eq", value: folder }}
+      pagingMode="infinite"
+      virtualize={{ enabled: true, overscan: 20 }}
+      onRowActivate={(row) => openMessage(row.__meta.id)}
+    />
+  );
+}
+```
+
+With 5 000 messages loaded this mounts about 40 rows (the ~10 that show, 20
+above and 20 below); scrolling moves the window, and reaching the end of the
+loaded rows loads the next page as before.
+
+**What keeps working across the window.**
+
+- The sticky header, pinned columns and their shadows, column widths and
+  horizontal scroll: the spacers span every column.
+- The infinite sentinel: it sits under the full height of the rows, so it
+  comes into view at the end of the loaded rows and asks for the next page.
+- The keys of row activation: ArrowDown / ArrowUp / `j` / `k` onto a row
+  outside the window scroll it in (to the nearest edge), mount it and focus
+  it; Home and End go to the first and the last loaded row. A row is kept
+  mounted, wherever it is, while it is the active row, holds the list's tab
+  stop or has the focus, so it keeps the focus when it is scrolled away and
+  back.
+- Selection: a shift-range and "select the page" are computed over the
+  loaded rows, never the mounted ones, so a range spanning rows that were
+  never drawn selects them all.
+- An open cell editor: its row stays mounted while the editor is open (the
+  edit is neither committed nor cancelled by scrolling), and a row whose
+  "more" menu is open stays mounted too.
+- Row actions, custom cells and lookups: a lookup column still makes one
+  fetch for every loaded row, not one per window.
+- A refetch from the change feed keeps the scroll position: the window
+  follows `scrollTop`, which a refetch of the same pages does not change.
+- `aria-rowcount` on the table is the loaded count and every mounted row
+  carries its `aria-rowindex` (1-based, over the loaded rows), so a screen
+  reader hears "row 2 501 of 5 000" for a row it could not otherwise place.
+
+**Limits.** The browser's find-in-page (Ctrl / Cmd+F) sees only the mounted
+rows; search the list with the view's search box instead. Printing prints
+the window, not the list. Rows of variable height are not supported (a row
+taller than `row_height` is measured once and its height used for all), and
+the cards, kanban and tree renderers are not windowed.
+
+**In a host renderer.** The arithmetic is in `@jsudc/react/headless`:
+`virtualizationApplies(virtualize, mode, count)`,
+`resolveVirtualization(virtualize)` (with `DEFAULT_VIRTUAL_THRESHOLD`,
+`DEFAULT_VIRTUAL_OVERSCAN`), `visibleRange`, `withOverscan`, `keepRange`,
+`bodySlices(count, range, pinned)` and the hook `useRowWindow`. A windowed
+list of your own passes `reveal(row, index)` to `useRowActivation`: the keys
+call it for a row that is not mounted, and the row takes the focus the
+moment its element attaches. `RendererProps.virtualize` carries the view's
+prop when the host set it.
 
 ## Custom cells
 
@@ -775,7 +1340,7 @@ peer while the default kit is the fallback.
 Everything the components import that a host is likely to have too is a peer,
 so there is one copy of it in the bundle:
 
-- `@jsudc/core` ^0.4.0 — one copy of the protocol, shared with the host's
+- `@jsudc/core` ^0.5.0 — one copy of the protocol, shared with the host's
   own `UdcClient`;
 - `react`, `react-dom` ^19 — one React, or hooks break;
 - `@tanstack/react-query` ^5 — one `QueryClient` context, shared with the
@@ -1115,7 +1680,17 @@ registry and everything not tied to one renderer. Beyond the above:
 `EmptyState` / `ErrorState` / `NoRendererState`; the `UdcQueryClientOptions` type;
 the row activation `useRowActivation`, `rowActivationEnabled`, `ownsKeys`
 and the `RowActivationProps` / `RowActivation` / `RowActivationRowProps` /
-`UseRowActivationOptions` types; the cells `createCellRegistry`,
+`UseRowActivationOptions` types; the selection `useRowSelection` with its
+pure operations and the `RowSelection` / `RowSelectionState` types; the bulk
+actions `UdcActionsProvider`, `useBulkActionHandlers`, `planBulkAction`,
+`bulkActionEligible`, `selectionTarget`, `MATCH_ALL` and the
+`BulkActionContext` / `BulkActionHandler` / `BulkActionHandlers` /
+`BulkActionPlan` types; the row actions `rowActionDefs`, `rowActionsDisplay`,
+`eligibleRowActions`, `isRowMenuKey`, `RowActionsControls`, `useRowMenu`,
+`rowMenuHandlers`, `rowActionsColumnWidth` and the `RowActions` /
+`RowActionsDisplay` / `RowMenuState` / `RowMenuVia` /
+`RowActionsControlsProps` / `RowMenuKeyEvent` types; the hooks `useUdcMutateMany`, `useUdcAction` and the
+cache helpers `applyToListRows`, `mutateManyTouches`, `callAction`; the cells `createCellRegistry`,
 `cellComponent`, `mergeCellRegistries`, `UdcCellsProvider`, `useCellRegistry`
 and the `CellProps` / `CellComponent` / `CellDefinition` / `CellRegistry`
 types; `mergeMessages`, `makeT`,
@@ -1132,7 +1707,10 @@ bundles (`LUCIDE_ICONS`); and the zone helpers `allZones`, `offsetLabel`,
 `UdcLookupBatch`, `LookupValue`, `useLookupLabels`, `useLookupOptions`,
 `LookupSelectChip`, `LookupCombobox`, `UdcLinksProvider`, `useUdcLinks`,
 `defaultUdcLinks`, `filterHref`, `followLink` (the hooks without markup are in
-`@jsudc/react/headless` too).
+`@jsudc/react/headless` too); the change feed: `useUdcChanges`,
+`useUdcChangeFeed`, `UdcChangeFeed`, `LiveIndicator` and the
+`UdcChangeFeedOptions` / `UdcChangeFeedStatus` / `UseUdcChangesOptions` /
+`UdcChangesResult` types (see [Live updates](#live-updates)).
 
 The subpaths: one per renderer and `@jsudc/react/all` (see
 [Renderers](#renderers)), `@jsudc/react/headless` (see [Headless](#headless)),

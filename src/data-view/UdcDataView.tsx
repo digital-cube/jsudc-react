@@ -1,6 +1,9 @@
-import type { FilterChipConfig, FilterNode, Row } from "@jsudc/core";
+import { type FilterChipConfig, type FilterNode, type Row, sourceAnswersSearch } from "@jsudc/core";
 import { BookOpen, FileCode2, InfinityIcon, Rows3 } from "lucide-react";
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
+import type { BulkActionHandlers } from "../actions/bulk.js";
+import { rowActionDefs, rowActionsDisplay } from "../actions/row.js";
+import { useRowActionRunner } from "../actions/useRowActionRunner.js";
 import { type CellRegistry, UdcCellsProvider } from "../cells/registry.js";
 import { ChartWindowControl } from "../chart/ChartWindowControl.js";
 import { useChartWindow } from "../chart/useChartWindow.js";
@@ -11,14 +14,18 @@ import { useRendererRegistry } from "../renderers/context.js";
 import { rendererEntry, rendererTabs, resolveTab } from "../renderers/registry.js";
 import type { FolderNav, RendererCount, RendererRegistry } from "../renderers/types.js";
 import { rowActivationEnabled } from "../rows/useRowActivation.js";
+import { useRowSelection } from "../rows/useRowSelection.js";
 import { useSchemaEditor } from "../schema-editor/useSchemaEditor.js";
 import { ErrorState, NoRendererState } from "../table/states.js";
+import type { TableVirtualizeProp } from "../table/useRowWindow.js";
+import { useUdcChanges } from "../udc/changes.js";
 import { useUdcCollection, useUdcDescribe } from "../udc/hooks.js";
 import type { PagingMode } from "../udc/keys.js";
 import { useUiKit } from "../ui-kit/context.js";
 import type { UrlStateAdapter } from "../url-state/adapter.js";
 import { createMemoryUrlStateAdapter, prefixUrlStateAdapter } from "../url-state/adapters.js";
 import { UdcUrlStateProvider, useUrlStateAdapter } from "../url-state/UrlState.js";
+import { BulkBar } from "./BulkBar.js";
 import { composeFilter } from "./compose.js";
 import { DocTab } from "./DocTab.js";
 import { FilePreview } from "./FilePreview.js";
@@ -27,6 +34,7 @@ import { FilterChips } from "./FilterChips.js";
 import { FolderBar } from "./FolderBar.js";
 import { Freshness } from "./Freshness.js";
 import { joinFolder, splitFolder } from "./folder.js";
+import { LiveIndicator } from "./LiveIndicator.js";
 import { liveDescribe, liveSort, pruneTree } from "./liveView.js";
 import { SearchBox } from "./SearchBox.js";
 import { SourceTab } from "./SourceTab.js";
@@ -93,6 +101,31 @@ export interface UdcDataViewProps {
   activeRowId?: string | null | undefined;
   /** The active row changed by the user: the keys (no Enter needed) or a click on another row. */
   onActiveRowChange?: ((row: Row | null) => void) | undefined;
+  /**
+   * Row selection (checkboxes in the table and the cards, the bulk bar):
+   * `true` or `false` forces it on or off. Left out, it is on when the view
+   * says `multiselect: true` or declares `bulk_actions`.
+   */
+  selectable?: boolean | undefined;
+  /**
+   * Handlers of the view's `bulk_actions`, by `kind`, before the provider's
+   * (`UdcProvider actions`). An action without one goes to the server: see
+   * README "Selection and bulk actions".
+   */
+  actions?: BulkActionHandlers | undefined;
+  /**
+   * The change feed's state ("live" / "reconnecting") beside the freshness
+   * pill, when the provider has a feed (`UdcProvider changes`) and the
+   * collection offers it. Default `true`; `false` hides it.
+   */
+  liveIndicator?: boolean | undefined;
+  /**
+   * Long lists (0.5.0): the table's infinite mode mounts only the rows near the viewport.
+   * Left out: once more than 200 rows are loaded. `true` / `false` force it on or off;
+   * `{ enabled, threshold, overscan }` sets each. Pages mode is never windowed. See README
+   * "Long lists".
+   */
+  virtualize?: TableVirtualizeProp | undefined;
 }
 
 /** `full`: today's view, every part drawn. `embedded`: one pane of a host's screen, no part drawn. */
@@ -178,6 +211,10 @@ function DataViewBody({
   onRowActivate,
   activeRowId: activeRowIdProp,
   onActiveRowChange: onActiveRowChangeProp,
+  selectable,
+  actions,
+  liveIndicator = true,
+  virtualize,
 }: UdcDataViewProps) {
   const chrome = resolveChrome(chromeProp);
   // Row activation: off unless the host passed one of its props. Uncontrolled, the view keeps
@@ -280,16 +317,20 @@ function DataViewBody({
     [folderOpts, userTree, setTree],
   );
 
+  // A source that answers search itself (0.5.0) gets the text as `search`, not as `contains`.
+  const bySource = sourceAnswersSearch(live?.capabilities);
+  const listSearch = bySource ? state.search.trim() || undefined : undefined;
+  const composedSearch = bySource ? "" : state.search;
   const userFilter = useMemo(
     () =>
       composeFilter({
-        search: state.search,
+        search: composedSearch,
         searchConfig: view?.search,
         chips: state.chips,
         chipConfigs: view?.filters,
         tree,
       }),
-    [state.search, state.chips, tree, view?.search, view?.filters],
+    [composedSearch, state.chips, tree, view?.search, view?.filters],
   );
   const userBaseFilter = useMemo(
     () =>
@@ -336,7 +377,48 @@ function DataViewBody({
     enabled: describe.isSuccess && paging,
     capabilities: live?.capabilities,
     refetchInterval: view?.refresh_interval_ms,
+    search: listSearch,
   });
+  // The change feed's state for the indicator (the list hooks subscribe on their own).
+  const feed = useUdcChanges(collection, undefined, {
+    capabilities: live?.capabilities,
+    enabled: describe.isSuccess,
+  });
+
+  // Selection (0.5.0): off unless the view or the host asks. Cleared by a new collection or
+  // filter; kept across a sort, a refetch and more pages (the key holds neither).
+  const bulkDefs = view?.bulk_actions ?? [];
+  const selectionOn =
+    selectable ?? (view?.multiselect === true || (view?.bulk_actions?.length ?? 0) > 0);
+  const selection = useRowSelection({
+    rows: data.rows,
+    total: data.total,
+    // A new source search is a new set of rows, as a new filter is.
+    resetKey: JSON.stringify(
+      listSearch === undefined
+        ? [collection, filter ?? null]
+        : [collection, filter ?? null, listSearch],
+    ),
+  });
+  const selecting = selectionOn && paging && Boolean(view);
+  const moreThanLoaded =
+    data.hasNextPage ||
+    (data.total !== null
+      ? data.total > data.rows.length
+      : state.mode === "pages" && data.rows.length >= limit);
+
+  // Row actions (0.5.0): `row_action_defs`, else the kinds of `row_actions`; none, nothing new.
+  const rowDefs = useMemo(() => (view ? rowActionDefs(view) : []), [view]);
+  const rowRunner = useRowActionRunner({
+    collection,
+    section,
+    defs: rowDefs,
+    display: view ? rowActionsDisplay(view) : "inline",
+    capabilities: live?.capabilities,
+    handlers: actions,
+    selection: selecting ? selection : undefined,
+  });
+  const rowActions = rowRunner.rowActions;
 
   const fieldLabel = useCallback((field: string) => t(section, field), [t, section]);
   const chipLabel = useCallback(
@@ -359,7 +441,7 @@ function DataViewBody({
   }
 
   // The window and the host's filter are not filters the user can clear: "clear filters" leaves them.
-  const filtered = userFilter !== undefined;
+  const filtered = userFilter !== undefined || listSearch !== undefined;
   const fmt = (n: number) => new Intl.NumberFormat(intlLocale).format(n);
   const shown = paging ? data.rows.length : (ownCount?.shown ?? 0);
   const total = paging ? data.total : (ownCount?.total ?? null);
@@ -384,7 +466,11 @@ function DataViewBody({
     : [];
   const showToggle = Boolean(view) && paging && chrome.pagingToggle;
   const showTabs = Boolean(view) && tabs.length > 1;
-  const resetKey = JSON.stringify([filter ?? null, sort, state.mode]);
+  const resetKey = JSON.stringify(
+    listSearch === undefined
+      ? [filter ?? null, sort, state.mode]
+      : [filter ?? null, sort, state.mode, listSearch],
+  );
 
   return (
     <div
@@ -545,6 +631,7 @@ function DataViewBody({
                   <entry.toolbar collection={collection} describe={live} />
                 ) : null}
                 {chartWindow ? <ChartWindowControl win={chartWindow} clearable={!onChart} /> : null}
+                {liveIndicator ? <LiveIndicator status={feed.status} /> : null}
                 <Freshness fetchedAt={fetchedAt} stale={stale} source={live?.source} />
                 <span
                   className="udc:text-xs udc:whitespace-nowrap udc:text-muted-foreground udc:tabular-nums"
@@ -612,6 +699,20 @@ function DataViewBody({
 
         {folderNav && !onPage ? <FolderBar folder={folder} onOpen={folderNav.open} /> : null}
 
+        {selecting && !onPage && !selection.isEmpty ? (
+          <BulkBar
+            collection={collection}
+            section={section}
+            defs={bulkDefs}
+            selection={selection}
+            filter={filter}
+            moreThanLoaded={moreThanLoaded}
+            total={data.total}
+            handlers={actions}
+            {...(listSearch === undefined ? {} : { allMatching: false })}
+          />
+        ) : null}
+
         {live && onDoc && docText ? (
           <DocTab markdown={docText} />
         ) : live && onSource ? (
@@ -627,6 +728,7 @@ function DataViewBody({
             chartWindow={chartWindow}
             unwindowedFilter={unwindowedFilter}
             search={state.search}
+            {...(listSearch === undefined ? {} : { listSearch })}
             sort={sort}
             onSort={(field, multi) => state.setSort(cycleSort(sort, field, multi))}
             mode={state.mode}
@@ -642,6 +744,9 @@ function DataViewBody({
             onCount={setOwnCount}
             folder={folderNav}
             {...activation}
+            {...(selecting ? { selection } : {})}
+            {...(rowActions ? { rowActions } : {})}
+            {...(virtualize === undefined ? {} : { virtualize })}
           />
         ) : live ? (
           <NoRendererState name={state.tab} />
@@ -655,6 +760,7 @@ function DataViewBody({
         )}
       </div>
       {editor.dialogs}
+      {rowRunner.dialog}
       {folderOpts?.preview ? (
         <FilePreview
           collection={collection}

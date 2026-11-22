@@ -9,6 +9,8 @@ export interface ListKeyParams {
   /** `all`: every row up to `limit`, fetched page by page into one list (`useUdcAllRows`). */
   mode: PagingMode | "all";
   page?: number;
+  /** The text sent as `ListRequest.search` (a source that answers search); absent otherwise. */
+  search?: string;
 }
 
 /** Every query this app makes sits under `["udc", ...]`. */

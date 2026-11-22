@@ -15,21 +15,35 @@ import {
   type RendererCount,
   type RendererDefinition,
   type RendererProps,
+  type RowActions,
+  RowActionsControls,
   type RowActivationProps,
+  type RowSelection,
+  type TableVirtualizeProp,
   type UdcCollectionResult,
   UdcDataView,
   type UdcDataViewProps,
   UdcProvider,
+  useRowMenu,
+  type useUdcAllRows,
+  type useUdcCollection,
   windowLocationAdapter,
 } from "@jsudc/react";
 import { RENDERERS } from "@jsudc/react/all";
 import { cardsRenderer } from "@jsudc/react/cards";
 import {
+  type BulkActionHandlers,
+  eligibleRowActions,
   createCellRegistry as headlessCells,
   createMemoryUrlStateAdapter as headlessMemory,
   prefixUrlStateAdapter as headlessPrefix,
+  isRowMenuKey,
+  rowActionDefs,
   type useDataViewState,
   useRowActivation,
+  useRowSelection,
+  useUdcAction,
+  useUdcMutateMany,
 } from "@jsudc/react/headless";
 import { UdcReactRouterUrlState } from "@jsudc/react/react-router";
 import { tableRenderer } from "@jsudc/react/table";
@@ -61,6 +75,7 @@ export const rendererContract: Equal<
     chartWindow?: RendererProps["chartWindow"];
     unwindowedFilter?: FilterNode | undefined;
     search: string;
+    listSearch?: string | undefined;
     sort: SortKey[];
     onSort: (field: string, multi: boolean) => void;
     mode: PagingMode;
@@ -76,6 +91,9 @@ export const rendererContract: Equal<
     onRowActivate?: ((row: Row) => void) | undefined;
     activeRowId?: string | null | undefined;
     onActiveRowChange?: ((row: Row | null) => void) | undefined;
+    selection?: RowSelection | undefined;
+    rowActions?: RowActions | undefined;
+    virtualize?: TableVirtualizeProp | undefined;
   }
 > = true;
 
@@ -204,7 +222,79 @@ export const fromHeadless = [headlessMemory(), headlessPrefix(createMemoryUrlSta
 // @ts-expect-error a chrome preset is "full" or "embedded"
 export const badChrome: UdcDataViewProps = { collection: "x", chrome: "minimal" };
 
+// RendererProps exactly as 0.4.0 published it: a host renderer written against it still is a
+// renderer of 0.5.0 (`selection` is optional).
+type RendererProps040 = Omit<RendererProps, "selection">;
+function List040({ data, onRowActivate }: RendererProps040) {
+  return createElement("ol", { onClick: () => onRowActivate?.(data.rows[0] as Row) });
+}
+export const renderer040: RendererDefinition = {
+  name: "r040",
+  component: List040,
+  icon: Inbox,
+  labelKey: "TAB_R040",
+  paging: true,
+  editMode: false,
+};
+
+// Selection and bulk actions (README "Selection and bulk actions").
+function SelectList({ data, selection }: RendererProps) {
+  const items = data.rows.map((row) =>
+    createElement("input", {
+      key: row.__meta.id,
+      type: "checkbox",
+      checked: selection?.isSelected(row.__meta.id) ?? false,
+      onChange: () => selection?.toggle(row.__meta.id, { range: false }),
+    }),
+  );
+  return createElement("div", { "data-count": selection?.count ?? "all" }, items);
+}
+export const bulkHandlers: BulkActionHandlers = {
+  archive: ({ ids, filter, exceptIds, rows, collection, clearSelection }) => {
+    clearSelection();
+    return [ids, filter, exceptIds, rows.length, collection];
+  },
+};
+export const selectable: UdcDataViewProps = {
+  collection: "messages",
+  selectable: true,
+  actions: bulkHandlers,
+};
+// @ts-expect-error a handler is a function of the action's context
+export const badHandlers: BulkActionHandlers = { archive: "archive" };
+export const selectionHooks = [useRowSelection, useUdcMutateMany, useUdcAction, SelectList];
+
+// Row actions (README "Row actions").
+function ActionList({ data, rowActions }: RendererProps) {
+  const menu = useRowMenu();
+  const items = data.rows.map((row) =>
+    rowActions
+      ? createElement(RowActionsControls, { key: row.__meta.id, row, rowActions, menu })
+      : null,
+  );
+  return createElement("div", { "data-display": rowActions?.display ?? "none" }, items);
+}
+export function runFirst(actions: RowActions, row: Row): Promise<void> | undefined {
+  const [first] = actions.eligible(row);
+  return first ? actions.run(first, row) : undefined;
+}
+export const rowDefs = rowActionDefs({ row_actions: ["delete"], row_action_defs: undefined });
+export const rowEligible = (row: Row) => eligibleRowActions(rowDefs, row).map((d) => d.kind);
+export const menuKey = isRowMenuKey({
+  key: ".",
+  shiftKey: false,
+  altKey: false,
+  ctrlKey: false,
+  metaKey: false,
+});
+export const rowHandlers: BulkActionHandlers = {
+  archive: ({ row, ids }) => [row?.__meta.id, ids],
+};
+// @ts-expect-error `run` takes the def and the row
+export const badRun = (actions: RowActions) => actions.run("archive");
+
 export const used = [
+  ActionList,
   ActiveList,
   RENDERERS,
   UdcDataView,
@@ -213,3 +303,17 @@ export const used = [
   defaultUiKit,
   Toaster,
 ];
+
+// Search answered by the source (0.5.0): `search` on the list hooks, `listSearch` on a renderer.
+export const allRowsWithSearch: Parameters<typeof useUdcAllRows>[0] = {
+  collection: "mail",
+  search: "invoice",
+};
+export const pagedWithSearch: Parameters<typeof useUdcCollection>[0] = {
+  collection: "mail",
+  mode: "pages",
+  pageLimit: 50,
+  search: "invoice",
+};
+// @ts-expect-error the search text is a string
+export const notSearch: Parameters<typeof useUdcAllRows>[0] = { collection: "mail", search: 3 };

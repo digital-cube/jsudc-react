@@ -90,6 +90,7 @@ function Calendar({
   collection,
   describe,
   filter,
+  listSearch,
   filtered,
   onClearFilters,
   onCount,
@@ -125,6 +126,7 @@ function Calendar({
     capabilities,
     enabled: !kanban || boardId !== null,
     refetchInterval: describe.view.refresh_interval_ms,
+    search: listSearch,
   });
 
   // Moves in flight: drawn where they were dropped until the server answers.

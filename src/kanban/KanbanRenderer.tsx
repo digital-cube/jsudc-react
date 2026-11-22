@@ -124,6 +124,7 @@ function Board({
   collection,
   describe,
   filter,
+  listSearch,
   filtered,
   onClearFilters,
   onCount,
@@ -155,6 +156,7 @@ function Board({
     capabilities,
     enabled: boardId !== null,
     refetchInterval: describe.view.refresh_interval_ms,
+    search: listSearch,
   });
   // Every card on the board, whatever the filter: the "of N" in the toolbar.
   const boardTotal = useUdcCollection({

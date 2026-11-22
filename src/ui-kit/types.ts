@@ -176,11 +176,25 @@ export interface UiTriggerProps extends Base {
 export interface UiDropdownMenuProps {
   /** `false`: the page behind stays interactive while the menu is open. */
   modal?: boolean;
+  /**
+   * Controlled (0.5.0, optional): the menu is open while `true`. A row's
+   * actions menu sets it to open from the keyboard and on right-click; a kit
+   * that ignores it still opens the menu from its trigger.
+   */
+  open?: boolean;
+  /** The menu wants to open or close (its trigger, Escape, a click outside, an item chosen). */
+  onOpenChange?: (open: boolean) => void;
   children?: ReactNode;
 }
 
 export interface UiDropdownMenuContentProps extends Base {
   align?: "start" | "center" | "end";
+  /**
+   * The menu closed and is about to give the focus back to its trigger
+   * (0.5.0, optional): `preventDefault()` to put it elsewhere (a row's menu
+   * gives it back to the row).
+   */
+  onCloseAutoFocus?: (e: PreventableEvent) => void;
   children?: ReactNode;
 }
 
