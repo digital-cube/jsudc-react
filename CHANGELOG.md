@@ -7,6 +7,14 @@ All notable changes to `@jsudc/react` are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-22
+
+Row selection and the bulk bar, row actions, host actions from the browser
+(`useUdcAction`, `useUdcMutateMany`), search answered by the source, live
+updates from the change feed and windowed rows for long lists, released
+together with `@jsudc/core` 0.5.0 and `@jsudc/server` 0.5.0. Needs
+`@jsudc/core` 0.5.0. A host that changes nothing keeps 0.4.0's behaviour.
+
 Selection and bulk actions, row actions (R1 + S3, the React part), host
 actions in the browser (S4), search answered by the source (S6), live
 updates over the change feed (S5) and long lists in the table (R5). Builds on `@jsudc/core` 0.5.0's
@@ -197,6 +205,10 @@ updates over the change feed (S5) and long lists in the table (R5). Builds on `@
 
 ### Changed
 
+- The `@jsudc/core` peer range is `^0.5.0` (`mutate_many`, host actions, action eligibility, `ListRequest.search` and
+  `UdcClient.changes` come from core 0.5.0). The development
+  dependency is pinned to core's `release-0.5.0` commit until core 0.5.0 is on
+  npm.
 - With selection on and row activation on, `aria-selected` on a row is its
   selection (the grid is `aria-multiselectable`) and the active row is marked
   `aria-current="true"`. With selection off nothing changes: `aria-selected`
@@ -602,7 +614,8 @@ First tagged version, installed from the GitHub tag.
   Serbian), theme and time-zone providers, the UI primitives.
 - `styles.css`, compiled at build time, and `tokens.css`, its raw source.
 
-[Unreleased]: https://github.com/digital-cube/jsudc-react/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/digital-cube/jsudc-react/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/digital-cube/jsudc-react/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/digital-cube/jsudc-react/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/digital-cube/jsudc-react/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/digital-cube/jsudc-react/compare/v0.2.1...v0.3.0
