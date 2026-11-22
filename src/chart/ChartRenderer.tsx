@@ -71,6 +71,7 @@ function ChartTab({
   collection,
   describe,
   filter,
+  listSearch,
   unwindowedFilter,
   chartWindow,
   filtered,
@@ -95,6 +96,7 @@ function ChartTab({
     capabilities,
     max: opts.max_rows,
     refetchInterval: view.refresh_interval_ms,
+    search: listSearch,
   });
   // "N points in window of M": M counts the filter without the window (one row asked for).
   const outside = useUdcCollection({
@@ -104,6 +106,7 @@ function ChartTab({
     pageLimit: 1,
     enabled: chartWindow !== undefined,
     capabilities,
+    search: listSearch,
   });
 
   const windowed = chartWindow !== undefined;

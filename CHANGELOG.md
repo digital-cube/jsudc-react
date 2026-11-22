@@ -7,10 +7,11 @@ All notable changes to `@jsudc/react` are recorded here. The format follows
 
 ## [Unreleased]
 
-Selection and bulk actions, row actions (R1 + S3, the React part) and host
-actions in the browser (S4). Builds on `@jsudc/core` 0.5.0's `mutate_many`,
-typed host actions, eligibility helpers and the `set` / `action` / `confirm`
-keys of `ActionDef`.
+Selection and bulk actions, row actions (R1 + S3, the React part), host
+actions in the browser (S4) and search answered by the source (S6). Builds on
+`@jsudc/core` 0.5.0's `mutate_many`, typed host actions, eligibility helpers,
+the `set` / `action` / `confirm` keys of `ActionDef`, and `ListRequest.search`
+with the capability `search`.
 
 ### Added
 
@@ -107,6 +108,23 @@ keys of `ActionDef`.
 - README section "Row actions" (a worked mailbox example: "mark read"
   through `set`, "archive" through a host handler, both hidden where `when`
   fails).
+- Search answered by the source (S6): when `describe.capabilities.search`
+  is `"source"`, the search box's text is sent as `ListRequest.search` and
+  not composed into the filter — in the paged list, in the renderers that
+  load their own rows (kanban, calendar, map, chart, a tree that does not
+  highlight in the browser) and in the query keys. A collection without the
+  capability sends exactly today's requests. With a search and no sort the
+  table shows no sort indicator (relevance order); a chosen sort is sent with
+  the search.
+- `search?` on `useUdcCollection`, `useUdcAllRows` and `fetchAllRows`
+  (blank: not sent, not in the key); `ListKeyParams.search?`;
+  `RendererProps.listSearch?`, the text a renderer that loads its own rows
+  passes on.
+- The selection is cleared by a new source search text; "select all that
+  match" is not offered while a source search is active (`mutate_many` by
+  filter cannot carry the text), with a hint instead. i18n term
+  `SELECT_ALL_MATCHING_SEARCH` in `en` and `sr`.
+- README section "Search answered by the source".
 
 ### Changed
 

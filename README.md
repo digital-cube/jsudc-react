@@ -164,6 +164,7 @@ when this table drifts).
 | `unwindowedFilter`                   | `FilterNode \| undefined` (optional)       | `filter` without the chart window: what "of M" counts                                                                             |
 | `chartWindow`                        | `ChartWindowState \| undefined` (optional) | the chart window when one applies (already in `filter`)                                                                           |
 | `search`                             | `string`                                   | the search box as typed (for highlighting)                                                                                        |
+| `listSearch`                         | `string \| undefined` (optional)           | the text to send as `search` with every list, when the source answers search itself ([Search](#search-answered-by-the-source))    |
 | `sort`, `onSort(field, multi)`       | `SortKey[]`, function                      | the sort and the header click that cycles it                                                                                      |
 | `mode`, `page`, `limit`, `onPage(n)` | `"pages" \| "infinite"`, numbers, function | the paging mode, the 1-based page, the page size, go to a page                                                                    |
 | `filtered`, `onClearFilters()`       | `boolean`, function                        | did the user filter (the host's `filter` does not count), and "clear filters" for the empty state                                 |
@@ -184,8 +185,9 @@ column's cells are drawn is not a renderer's business: see
 [Custom cells](#custom-cells).
 
 A renderer with `paging: true` draws `data` and needs nothing else; one with
-`paging: false` loads its own rows with `filter` (the hooks of
-`@jsudc/react/headless`, e.g. `useUdcAllRows`) and reports `onCount`. A message
+`paging: false` loads its own rows with `filter` and `listSearch` (the hooks
+of `@jsudc/react/headless`, e.g. `useUdcAllRows({ filter, search: listSearch })`)
+and reports `onCount`. A message
 list of a mail client:
 
 ```tsx
@@ -625,6 +627,60 @@ function MessageList({ data, onRowActivate, activeRowId, onActiveRowChange }: Re
 and `nav.activate(row)` drive it from the host's own buttons, and `ownsKeys`
 says whether a key belongs to the element it was pressed on.
 
+## Search answered by the source
+
+The search box filters in the browser's terms by default: its text becomes
+`contains` over the view's `search.fields`, or-ed, and is ANDed with the chips
+and the filter tree. When a collection's `describe` says
+`capabilities.search: "source"` (a `postgres_table` with a `tsvector`, a
+collection backed by OpenSearch; see `@jsudc/server`'s "Search answered by the
+source"), the data view sends the text as `search` in `list` instead and
+composes nothing for it:
+
+- **The paged list** carries `search` next to the filter (the host's filter,
+  the chips, the tree), and so does its query key, so every text is its own
+  cache entry. A blank box sends no `search`.
+- **Renderers that load their own rows** get the text as `listSearch` (and a
+  `filter` / `baseFilter` without it). Kanban, calendar, map, chart and tree
+  pass it on; a tree that highlights what it loaded
+  (`on_search: highlight_and_expand`) keeps searching in the browser. A renderer of your
+  own passes it as `search` to `useUdcAllRows` or `useUdcCollection`.
+- **Relevance order.** With a search and no sort chosen, the request has no
+  sort and the source answers by relevance, so no column shows a sort
+  indicator. Clicking a header still sorts, and the sort is sent with the
+  search.
+- **The selection** is cleared by a new search text, as by a new filter.
+  "Select all that match" is not offered while a source search is active:
+  `mutate_many` by filter cannot carry the search, so it could not name the
+  same rows. The bar says so instead ("Only the loaded rows can be selected
+  while searching"); the loaded rows can still be selected and acted on.
+- The rest of the box is unchanged: the debounce, `?q=` in the URL, and the
+  clear button.
+
+Nothing changes for a host: the capability comes from the server, and a
+collection without it sends exactly the requests it sent before.
+
+```tsx
+import { useUdcAllRows, type RendererProps } from "@jsudc/react";
+
+// A renderer of your own that loads its rows: pass the source's search on.
+function Timeline({ collection, describe, filter, listSearch }: RendererProps) {
+  const { rows } = useUdcAllRows({
+    collection,
+    filter, // no `contains` for the box under the capability
+    search: listSearch, // undefined without it, or with an empty box
+    capabilities: describe.capabilities,
+  });
+  return (
+    <ol>
+      {rows.map((r) => (
+        <li key={r.__meta.id}>{String(r.subject)}</li>
+      ))}
+    </ol>
+  );
+}
+```
+
 ## Selection and bulk actions
 
 A user selects rows (one, a range, the page, or everything that matches the
@@ -649,7 +705,9 @@ server by filter, not by ids. When everything is loaded already the page is
 everything, and nothing is offered.
 
 **The selection is cleared** when the filter changes (the search, a chip,
-the filter builder, the host's `filter`) or the collection does; a sort, a
+the filter builder, the host's `filter`) or the collection does (under a
+source search, see [Search answered by the source](#search-answered-by-the-source),
+"all that match" is not offered); a sort, a
 refetch and more pages loading keep it. In id mode the selected rows are
 remembered, so a row a refetch drops still counts and still reaches a
 handler.

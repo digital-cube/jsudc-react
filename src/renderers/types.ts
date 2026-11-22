@@ -44,7 +44,7 @@ export interface RendererProps {
   describe: DescribeResponse;
   /** The data view's paged list; loaded only for a renderer with `paging`. */
   data: UdcCollectionResult;
-  /** Search, chips and filter tree, composed. */
+  /** Search, chips and filter tree, composed (the search left out under `listSearch`). */
   filter: FilterNode | undefined;
   /** Chips and filter tree without the search: for a renderer that searches what it loaded. */
   baseFilter: FilterNode | undefined;
@@ -58,6 +58,14 @@ export interface RendererProps {
   unwindowedFilter?: FilterNode | undefined;
   /** The search box, as typed. */
   search: string;
+  /**
+   * The text to send as `ListRequest.search` with every list the renderer
+   * makes, set only when the collection's source answers search itself
+   * (`describe.capabilities.search === "source"`) and the box is not blank.
+   * `filter` and `baseFilter` then hold no `contains` for it. Pass it as
+   * `search` to `useUdcAllRows` / `useUdcCollection` (0.5.0).
+   */
+  listSearch?: string | undefined;
   sort: SortKey[];
   onSort: (field: string, multi: boolean) => void;
   mode: PagingMode;

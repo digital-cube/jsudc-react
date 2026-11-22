@@ -24,6 +24,8 @@ import {
   type UdcDataViewProps,
   UdcProvider,
   useRowMenu,
+  type useUdcAllRows,
+  type useUdcCollection,
   windowLocationAdapter,
 } from "@jsudc/react";
 import { RENDERERS } from "@jsudc/react/all";
@@ -72,6 +74,7 @@ export const rendererContract: Equal<
     chartWindow?: RendererProps["chartWindow"];
     unwindowedFilter?: FilterNode | undefined;
     search: string;
+    listSearch?: string | undefined;
     sort: SortKey[];
     onSort: (field: string, multi: boolean) => void;
     mode: PagingMode;
@@ -298,3 +301,17 @@ export const used = [
   defaultUiKit,
   Toaster,
 ];
+
+// Search answered by the source (0.5.0): `search` on the list hooks, `listSearch` on a renderer.
+export const allRowsWithSearch: Parameters<typeof useUdcAllRows>[0] = {
+  collection: "mail",
+  search: "invoice",
+};
+export const pagedWithSearch: Parameters<typeof useUdcCollection>[0] = {
+  collection: "mail",
+  mode: "pages",
+  pageLimit: 50,
+  search: "invoice",
+};
+// @ts-expect-error the search text is a string
+export const notSearch: Parameters<typeof useUdcAllRows>[0] = { collection: "mail", search: 3 };

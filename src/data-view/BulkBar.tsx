@@ -54,6 +54,13 @@ export interface BulkBarProps {
   total: number | null;
   /** The view's own handlers (`UdcDataView actions`), before the provider's. */
   handlers?: BulkActionHandlers | undefined;
+  /**
+   * `false`: "select all that match" is not offered, and a short hint says
+   * why. `UdcDataView` sets it while the source answers the search (0.5.0):
+   * `mutate_many` by filter cannot carry the search text, so it could not
+   * name the same set. Default `true`.
+   */
+  allMatching?: boolean | undefined;
 }
 
 const VARIANT: Record<NonNullable<ActionDef["variant"]>, ButtonVariant> = {
@@ -103,6 +110,7 @@ export function BulkBar({
   moreThanLoaded,
   total,
   handlers,
+  allMatching = true,
 }: BulkBarProps) {
   const { Button, Dialog, DialogContent, DialogBody, DialogFooter, Spinner, useToast } = useUiKit();
   const { toast } = useToast();
@@ -128,7 +136,8 @@ export function BulkBar({
       : count === null
         ? t("APP", "SELECTED_ALL_MATCHING")
         : t("APP", "SELECTED_ALL_COUNT", { count: fmt(count) });
-  const offerAll = mode === "ids" && selection.pageState === "all" && moreThanLoaded;
+  const couldOfferAll = mode === "ids" && selection.pageState === "all" && moreThanLoaded;
+  const offerAll = couldOfferAll && allMatching;
 
   /** Report a `mutate_many`-shaped answer and settle the selection. */
   const report = (def: ActionDef, label: string, res: Partial<MutateManyResponse>) => {
@@ -266,6 +275,10 @@ export function BulkBar({
               ? t("APP", "SELECT_ALL_MATCHING")
               : t("APP", "SELECT_ALL_MATCHING_COUNT", { count: fmt(total) })}
           </Button>
+        ) : couldOfferAll ? (
+          <span data-testid="select-all-matching-off" className="udc:text-muted-foreground">
+            {t("APP", "SELECT_ALL_MATCHING_SEARCH")}
+          </span>
         ) : null}
         <div className="udc:ml-auto udc:flex udc:flex-wrap udc:items-center udc:gap-1.5">
           {defs.map((def) => {

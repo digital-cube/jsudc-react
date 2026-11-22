@@ -66,6 +66,12 @@ export interface UseUdcCollectionArgs {
   capabilities?: Pick<Capabilities, "paging"> | undefined;
   /** Poll: refetch the loaded rows this often (the view's `refresh_interval_ms`). */
   refetchInterval?: number | undefined;
+  /**
+   * The search box's text, sent as `ListRequest.search` for a source that
+   * answers search itself (`capabilities.search === "source"`); blank or
+   * absent: no `search` in the request, nor in the query key.
+   */
+  search?: string | undefined;
 }
 
 export interface UdcCollectionResult {
@@ -97,6 +103,12 @@ export function freshnessOf(res: Pick<ListResponse, "fetched_at" | "stale"> | un
   return { fetchedAt: res?.fetched_at ?? null, stale: res?.stale === true };
 }
 
+/** `{ search }` for a non-blank text, else nothing: spread into a list request and its query key. */
+export function searchPart(search: string | undefined): { search?: string } {
+  const text = search?.trim();
+  return text ? { search: text } : {};
+}
+
 /** The `offset` a 1-based page asks for. */
 export function pageOffset(page: number, limit: number): number {
   return Math.max(0, Math.floor(page) - 1) * limit;
@@ -118,8 +130,9 @@ export function useUdcCollection(args: UseUdcCollectionArgs): UdcCollectionResul
   const enabled = args.enabled ?? true;
   const byCursor = args.capabilities?.paging?.includes("cursor") ?? true;
   const refetchInterval = pollInterval(args.refetchInterval);
+  const searched = searchPart(args.search);
 
-  const infiniteParams: ListKeyParams = { filter, sort, limit, mode: "infinite" };
+  const infiniteParams: ListKeyParams = { filter, sort, limit, mode: "infinite", ...searched };
   const infinite = useInfiniteQuery({
     queryKey: udcKeys.list(collection, infiniteParams),
     queryFn: ({ pageParam, signal }) =>
@@ -128,6 +141,7 @@ export function useUdcCollection(args: UseUdcCollectionArgs): UdcCollectionResul
           collection,
           ...(filter ? { filter } : {}),
           sort,
+          ...searched,
           page:
             typeof pageParam === "number"
               ? { limit, offset: pageParam }
@@ -150,7 +164,7 @@ export function useUdcCollection(args: UseUdcCollectionArgs): UdcCollectionResul
     refetchInterval,
   });
 
-  const pagesParams: ListKeyParams = { filter, sort, limit, mode: "pages", page };
+  const pagesParams: ListKeyParams = { filter, sort, limit, mode: "pages", page, ...searched };
   const paged = useQuery({
     queryKey: udcKeys.list(collection, pagesParams),
     queryFn: ({ signal }) =>
@@ -159,6 +173,7 @@ export function useUdcCollection(args: UseUdcCollectionArgs): UdcCollectionResul
           collection,
           ...(filter ? { filter } : {}),
           sort,
+          ...searched,
           page: { limit, offset: pageOffset(page, limit) },
         },
         { signal },
@@ -210,6 +225,8 @@ export interface FetchAllRowsArgs {
   pageLimit?: number;
   /** Keyset paging unless the source pages by offset only. */
   cursor: boolean;
+  /** Sent as `ListRequest.search` when not blank (a source that answers search). */
+  search?: string | undefined;
   signal?: AbortSignal;
   onProgress?: (loaded: number, total: number | null) => void;
 }
@@ -241,7 +258,7 @@ export async function fetchAllRows(
         : { limit }
       : { limit, offset: rows.length };
     const res = await client.list(
-      { collection, ...(filter ? { filter } : {}), sort, page },
+      { collection, ...(filter ? { filter } : {}), sort, ...searchPart(args.search), page },
       args.signal ? { signal: args.signal } : undefined,
     );
     if (rows.length === 0) {
@@ -276,6 +293,8 @@ export interface UseUdcAllRowsArgs {
   enabled?: boolean;
   /** Poll: refetch every row this often (the view's `refresh_interval_ms`). */
   refetchInterval?: number | undefined;
+  /** Sent as `ListRequest.search` when not blank (`capabilities.search === "source"`). */
+  search?: string | undefined;
 }
 
 export interface UdcAllRowsResult {
@@ -307,7 +326,8 @@ export function useUdcAllRows(args: UseUdcAllRowsArgs): UdcAllRowsResult {
   const cursor = args.capabilities?.paging?.includes("cursor") ?? true;
   const [progress, setProgress] = useState<UdcAllRowsResult["progress"]>(null);
 
-  const key: ListKeyParams = { filter, sort, limit: max, mode: "all" };
+  const searched = searchPart(args.search);
+  const key: ListKeyParams = { filter, sort, limit: max, mode: "all", ...searched };
   const query = useQuery({
     queryKey: udcKeys.list(collection, key),
     queryFn: async ({ signal }) => {
@@ -319,6 +339,7 @@ export function useUdcAllRows(args: UseUdcAllRowsArgs): UdcAllRowsResult {
           sort,
           max,
           cursor,
+          ...searched,
           signal,
           onProgress: (loaded, total) => setProgress({ loaded, total }),
         });

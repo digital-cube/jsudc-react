@@ -73,6 +73,8 @@ export interface TreeCtx {
   lazy: boolean;
   /** What every lazy branch adds to its own condition: the data view's filter. */
   dataFilter: FilterNode | undefined;
+  /** The text sent as `search` with every list (a source that answers search); absent otherwise. */
+  dataSearch?: string | undefined;
   /** The highlighted search term ("" when none). */
   term: string;
   isOpen: (id: string, depth: number) => boolean;
@@ -143,6 +145,7 @@ function Tree({
   filter,
   baseFilter,
   search,
+  listSearch,
   filtered,
   onClearFilters,
   onCount,
@@ -158,7 +161,12 @@ function Tree({
   const term = search.trim();
   // highlight_and_expand on a loaded tree searches in the browser; anything else asks the server.
   const clientSearch = !lazy && opts.on_search.mode === "highlight_and_expand";
-  const dataFilter: FilterNode | undefined = clientSearch ? baseFilter : filter;
+  // A source that answers search gets the text, unless the tree searches what it loaded.
+  const serverSearch = clientSearch ? undefined : listSearch;
+  // A lazy tree lists the matches of a filter flat; a source search alone is such a filter too.
+  const dataFilter: FilterNode | undefined = clientSearch
+    ? baseFilter
+    : (filter ?? (serverSearch === undefined ? undefined : { and: [] }));
   const highlight = opts.on_search.mode === "highlight_and_expand" ? term : "";
 
   // --- rows ----------------------------------------------------------------------
@@ -169,6 +177,7 @@ function Tree({
     capabilities,
     enabled: !lazy,
     refetchInterval: describe.view.refresh_interval_ms,
+    search: serverSearch,
   });
   const rootsQ = lazyRootsQuery(opts, dataFilter);
   const roots = useUdcCollection({
@@ -178,6 +187,7 @@ function Tree({
     mode: "pages",
     pageLimit: rootsQ.limit,
     enabled: lazy,
+    search: serverSearch,
   });
   const totalQ = useUdcCollection({
     collection,
@@ -185,6 +195,7 @@ function Tree({
     mode: "pages",
     pageLimit: 1,
     enabled: lazy,
+    search: serverSearch,
   });
 
   const [moved, setMoved] = useState<ReadonlyMap<string, Moved>>(new Map());
@@ -414,6 +425,7 @@ function Tree({
     describe,
     lazy,
     dataFilter,
+    dataSearch: serverSearch,
     term: highlight,
     isOpen,
     setOpen,
@@ -535,7 +547,7 @@ export function LazyChildren({ parent, depth }: { parent: string; depth: number 
   const { Spinner } = useUiKit();
   const { t } = useI18n();
   const ctx = useTree();
-  const { opts, collection, moved, report, dataFilter } = ctx;
+  const { opts, collection, moved, report, dataFilter, dataSearch } = ctx;
   const q = lazyChildrenQuery(opts, parent, dataFilter);
   const res = useUdcCollection({
     collection,
@@ -543,6 +555,7 @@ export function LazyChildren({ parent, depth }: { parent: string; depth: number 
     sort: q.sort ?? [],
     mode: "pages",
     pageLimit: q.limit,
+    search: dataSearch,
   });
   useEffect(() => report(parent, res.rows), [report, parent, res.rows]);
   const rows = withMoves(res.rows, parent, moved, ctx);

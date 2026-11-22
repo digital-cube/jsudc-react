@@ -401,6 +401,10 @@ export const TRANSLATIONS: Translations = {
       sr: "Izaberi sve koji odgovaraju ({count})",
     },
     SELECT_ALL_MATCHING: { en: "Select all that match", sr: "Izaberi sve koji odgovaraju" },
+    SELECT_ALL_MATCHING_SEARCH: {
+      en: "Only the loaded rows can be selected while searching",
+      sr: "Dok je pretraga aktivna, mogu se izabrati samo učitani redovi",
+    },
     SELECTION_CLEAR: { en: "Clear selection", sr: "Poništi izbor" },
     BULK_ACTIONS: { en: "Actions on the selected rows", sr: "Akcije nad izabranim redovima" },
     BULK_DELETE: { en: "Delete", sr: "Obriši" },

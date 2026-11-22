@@ -1,4 +1,4 @@
-import type { FilterChipConfig, FilterNode, Row } from "@jsudc/core";
+import { type FilterChipConfig, type FilterNode, type Row, sourceAnswersSearch } from "@jsudc/core";
 import { BookOpen, FileCode2, InfinityIcon, Rows3 } from "lucide-react";
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import type { BulkActionHandlers } from "../actions/bulk.js";
@@ -299,16 +299,20 @@ function DataViewBody({
     [folderOpts, userTree, setTree],
   );
 
+  // A source that answers search itself (0.5.0) gets the text as `search`, not as `contains`.
+  const bySource = sourceAnswersSearch(live?.capabilities);
+  const listSearch = bySource ? state.search.trim() || undefined : undefined;
+  const composedSearch = bySource ? "" : state.search;
   const userFilter = useMemo(
     () =>
       composeFilter({
-        search: state.search,
+        search: composedSearch,
         searchConfig: view?.search,
         chips: state.chips,
         chipConfigs: view?.filters,
         tree,
       }),
-    [state.search, state.chips, tree, view?.search, view?.filters],
+    [composedSearch, state.chips, tree, view?.search, view?.filters],
   );
   const userBaseFilter = useMemo(
     () =>
@@ -355,6 +359,7 @@ function DataViewBody({
     enabled: describe.isSuccess && paging,
     capabilities: live?.capabilities,
     refetchInterval: view?.refresh_interval_ms,
+    search: listSearch,
   });
 
   // Selection (0.5.0): off unless the view or the host asks. Cleared by a new collection or
@@ -365,7 +370,12 @@ function DataViewBody({
   const selection = useRowSelection({
     rows: data.rows,
     total: data.total,
-    resetKey: JSON.stringify([collection, filter ?? null]),
+    // A new source search is a new set of rows, as a new filter is.
+    resetKey: JSON.stringify(
+      listSearch === undefined
+        ? [collection, filter ?? null]
+        : [collection, filter ?? null, listSearch],
+    ),
   });
   const selecting = selectionOn && paging && Boolean(view);
   const moreThanLoaded =
@@ -408,7 +418,7 @@ function DataViewBody({
   }
 
   // The window and the host's filter are not filters the user can clear: "clear filters" leaves them.
-  const filtered = userFilter !== undefined;
+  const filtered = userFilter !== undefined || listSearch !== undefined;
   const fmt = (n: number) => new Intl.NumberFormat(intlLocale).format(n);
   const shown = paging ? data.rows.length : (ownCount?.shown ?? 0);
   const total = paging ? data.total : (ownCount?.total ?? null);
@@ -433,7 +443,11 @@ function DataViewBody({
     : [];
   const showToggle = Boolean(view) && paging && chrome.pagingToggle;
   const showTabs = Boolean(view) && tabs.length > 1;
-  const resetKey = JSON.stringify([filter ?? null, sort, state.mode]);
+  const resetKey = JSON.stringify(
+    listSearch === undefined
+      ? [filter ?? null, sort, state.mode]
+      : [filter ?? null, sort, state.mode, listSearch],
+  );
 
   return (
     <div
@@ -671,6 +685,7 @@ function DataViewBody({
             moreThanLoaded={moreThanLoaded}
             total={data.total}
             handlers={actions}
+            {...(listSearch === undefined ? {} : { allMatching: false })}
           />
         ) : null}
 
@@ -689,6 +704,7 @@ function DataViewBody({
             chartWindow={chartWindow}
             unwindowedFilter={unwindowedFilter}
             search={state.search}
+            {...(listSearch === undefined ? {} : { listSearch })}
             sort={sort}
             onSort={(field, multi) => state.setSort(cycleSort(sort, field, multi))}
             mode={state.mode}
