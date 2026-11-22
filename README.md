@@ -771,6 +771,32 @@ What happens:
 `UdcClient.changes`. A `UdcProvider` without `changes` inside one with the
 same client uses the outer feed; `changes={false}` turns it off below.
 
+**When the user behind the client changes.** The server runs the plugin's
+`context` once, when a stream opens, and keeps that scope for the life of the
+stream. With `headers` as a function (`new UdcClient({ headers: () => ({
+"x-user": current }) })`: a demo user switcher, an account switcher,
+impersonation) a switch leaves the collections on screen as they were, so
+nothing would reopen the stream: the new user would hear the old user's
+events and miss their own. Tell the provider who the stream is for:
+
+```tsx
+<UdcProvider client={client} changes={{ identity: user }}>
+  <Routes />
+</UdcProvider>;
+```
+
+When `identity` changes (compared with `Object.is`: pass an id, not a new
+object per render) the provider calls `reconnect()` on its feed: the stream
+is closed at once and reopened for the same collections, `headers` read
+again; meanwhile the views say `reconnecting` and poll, and once it is open
+what was fetched before the switch is refetched. Nothing below the provider
+remounts, so component state survives (no `key={user}` needed). The same is
+`useUdcChangeFeed()?.reconnect()` from your own code, which also asks again
+for a stream the server refused (after signing in again). For full control,
+provide a feed of your own through `UdcChangeFeedContext` (`new
+UdcChangeFeed(client, options)`, one per user, `close()` it when replaced);
+a `UdcProvider` below it with the same client and without `changes` uses it.
+
 `useUdcChanges(collection, onEvent?, { capabilities?, enabled? })` answers
 `{ status, live }`: `off` (no feed, or the collection does not offer it),
 `connecting`, `live`, `reconnecting`, or `down` (refused). It reads the

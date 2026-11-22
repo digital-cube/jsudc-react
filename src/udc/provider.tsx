@@ -1,5 +1,5 @@
 import type { UdcClient } from "@jsudc/core/client";
-import { type ReactNode, useContext, useEffect, useMemo } from "react";
+import { type ReactNode, useContext, useEffect, useMemo, useRef } from "react";
 import { type BulkActionHandlers, UdcActionsProvider } from "../actions/bulk.js";
 import { type CellRegistry, UdcCellsProvider } from "../cells/registry.js";
 import { type UdcLinks, UdcLinksProvider } from "../lookup/links.js";
@@ -10,6 +10,22 @@ import type { UiKit } from "../ui-kit/types.js";
 import { UdcChangeFeed, type UdcChangeFeedOptions } from "./changeFeed.js";
 import { UdcChangeFeedContext } from "./changes.js";
 import { UdcClientContext } from "./client.js";
+
+/**
+ * `UdcProvider changes={…}` as an object: the feed's options and the
+ * `identity` the stream is scoped to.
+ */
+export interface UdcProviderChangesOptions extends UdcChangeFeedOptions {
+  /**
+   * Who the stream is for, when `UdcClient`'s `headers` is a function whose
+   * answer changes (a demo user switcher, an account switcher, an
+   * impersonation switch). The server scopes a stream once, when it opens;
+   * when `identity` changes the provider calls `UdcChangeFeed.reconnect()`,
+   * so the stream follows the new user, without remounting anything below.
+   * Compared with `Object.is`: a user id, not a new object per render.
+   */
+  identity?: string | number | boolean | null | undefined;
+}
 
 export {
   createUdcQueryClient,
@@ -57,14 +73,17 @@ export function UdcProvider({
    * stream for the collections the views below show, and they refetch when
    * the server says their rows changed instead of on their timer. Off by
    * default: no connection. Left out under another `UdcProvider` with the
-   * same client, the outer feed is used.
+   * same client, the outer feed is used. `identity` (see
+   * `UdcProviderChangesOptions`) reopens the stream when the user behind the
+   * client's `headers` changes.
    */
-  changes?: boolean | UdcChangeFeedOptions;
+  changes?: boolean | UdcProviderChangesOptions;
   children: ReactNode;
 }) {
   const outer = useContext(UdcChangeFeedContext);
+  const { identity, ...feedOptions } = typeof changes === "object" ? changes : {};
   const optionsKey =
-    typeof changes === "object" ? JSON.stringify(changes) : String(changes ?? false);
+    typeof changes === "object" ? JSON.stringify(feedOptions) : String(changes ?? false);
   // `changes` is read through its key: a new but equal options object keeps the feed.
   const own = useMemo(
     () =>
@@ -77,6 +96,13 @@ export function UdcProvider({
     [client, optionsKey],
   );
   useEffect(() => (own ? () => own.close() : undefined), [own]);
+  // A new identity behind the client's `headers`: the same feed, its stream reopened for it.
+  const scoped = useRef<{ feed: UdcChangeFeed | null; identity: unknown } | null>(null);
+  useEffect(() => {
+    const last = scoped.current;
+    scoped.current = { feed: own, identity };
+    if (own && last?.feed === own && !Object.is(last.identity, identity)) own.reconnect();
+  }, [own, identity]);
   const feed = changes === undefined ? (outer?.client === client ? outer : null) : own;
 
   let inner = (

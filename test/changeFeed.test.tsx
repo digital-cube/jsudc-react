@@ -10,15 +10,16 @@ import {
 import { UdcClient } from "@jsudc/core/client";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { RENDERERS } from "../src/all";
 import { UdcDataView } from "../src/data-view/UdcDataView";
 import { useUdcChanges, useUdcCollection } from "../src/headless";
 import { UdcI18nProvider } from "../src/i18n/i18n";
 import { useUdcLookup } from "../src/lookup/useUdcLookup";
-import type { UdcChangeFeedOptions } from "../src/udc/changeFeed";
-import { createUdcQueryClient, UdcProvider } from "../src/udc/provider";
+import { UdcChangeFeed, type UdcChangeFeedOptions } from "../src/udc/changeFeed";
+import { UdcChangeFeedContext, useUdcChangeFeed } from "../src/udc/changes";
+import { createUdcQueryClient, UdcProvider, useUdcClient } from "../src/udc/provider";
 import { Toaster, TooltipProvider } from "../src/ui-kit/ui";
 import { describeMessages } from "./embedFixture";
 import { fakeChanges } from "./fakeStream";
@@ -495,5 +496,202 @@ describe("an infinite list", () => {
     // Both pages were asked again, and the list never shrank meanwhile.
     expect(lists(calls)).toBe(before + 2);
     expect(seen.min).toBe(4);
+  });
+});
+
+// TCKWEPXYF9: the server scopes a stream once, when it opens; a switch of the user behind a
+// `headers` function leaves the set of collections as it was, so it has to reopen the stream.
+let mounts = 0;
+/** Counts its mounts: a remount of what is below the provider shows a new number. */
+function Mounted() {
+  const [n] = useState(() => ++mounts);
+  return <span data-testid="mounted">{n}</span>;
+}
+
+/** A demo user switcher: the identity is a prop of the provider, the children stay. */
+function Switcher({ options = FAST }: { options?: UdcChangeFeedOptions }) {
+  const client = useUdcClient();
+  const [user, setUser] = useState("ana");
+  const [opts, setOpts] = useState(options);
+  return (
+    <>
+      <button type="button" onClick={() => setUser("marko")}>
+        marko
+      </button>
+      <button type="button" onClick={() => setUser((u) => `${u}`)}>
+        same
+      </button>
+      <button type="button" onClick={() => setOpts({ ...opts, debounceMs: 30 })}>
+        options
+      </button>
+      <UdcProvider client={client} changes={{ ...opts, identity: user }}>
+        <Mounted />
+        <Pane />
+        <Badge />
+        <Reconnect />
+      </UdcProvider>
+    </>
+  );
+}
+
+/** `useUdcChangeFeed()?.reconnect()`, as a host's own switch would call it. */
+function Reconnect() {
+  const feed = useUdcChangeFeed();
+  return (
+    <button type="button" onClick={() => feed?.reconnect()}>
+      reconnect
+    </button>
+  );
+}
+
+const badgeStatus = () => screen.getByTestId("badge").getAttribute("data-status");
+
+/** A host that builds a feed of its own per user and provides it. */
+function HostFeed({ children }: { children: ReactNode }) {
+  const client = useUdcClient();
+  const [user, setUser] = useState("ana");
+  // A real host reads `user` in its `headers`; the memo builds one feed per user.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `user` is the point of the memo
+  const feed = useMemo(() => new UdcChangeFeed(client, FAST), [client, user]);
+  useEffect(() => () => feed.close(), [feed]);
+  return (
+    <>
+      <button type="button" onClick={() => setUser("marko")}>
+        marko
+      </button>
+      <UdcChangeFeedContext.Provider value={feed}>
+        <UdcProvider client={client}>{children}</UdcProvider>
+      </UdcChangeFeedContext.Provider>
+    </>
+  );
+}
+describe("a new identity behind the client's headers", () => {
+  it("useUdcChangeFeed().reconnect() reopens the same collections; reconnecting, then live and a refetch", async () => {
+    const d = describeWith({}, { changes: true });
+    const { fake, calls } = mount(
+      <>
+        <Pane />
+        <Badge />
+        <Reconnect />
+      </>,
+      { describe: d, rows: FOUR },
+      { changes: FAST },
+    );
+    await screen.findByText("4/4");
+    await waitFor(() => expect(fake.open).toHaveLength(1));
+    const old = fake.last;
+    old.open();
+    await sleep(80);
+    expect(badgeStatus()).toBe("live");
+    const before = { list: lists(calls), lookups: lists(calls, "messages", true) };
+
+    fireEvent.click(screen.getByText("reconnect"));
+    // At once, not after `batchMs`: the old stream carries the previous user's scope.
+    expect(old.closed).toBe(true);
+    expect(fake.streams).toHaveLength(2);
+    expect(fake.last.collections).toEqual(["messages"]);
+    expect(badgeStatus()).toBe("reconnecting");
+    // An event of the old stream after the switch is nobody's.
+    old.emit(ev("messages"));
+    await sleep(80);
+    expect(lists(calls)).toBe(before.list);
+
+    fake.last.open();
+    expect(badgeStatus()).toBe("live");
+    await waitFor(() => expect(lists(calls)).toBe(before.list + 1));
+    await waitFor(() => expect(lists(calls, "messages", true)).toBe(before.lookups + 1));
+    // The new stream delivers.
+    await sleep(80);
+    fake.last.emit(ev("messages", "insert", ["m9"]));
+    await waitFor(() => expect(screen.getByTestId("badge").textContent).toBe("1"));
+  });
+
+  it("reconnect() asks again for a set the server refused (signed in again)", async () => {
+    const onUnauthenticated = vi.fn();
+    const d = describeWith({}, { changes: true });
+    const { fake, spy } = mount(
+      <>
+        <Badge />
+        <Reconnect />
+      </>,
+      { describe: d, rows: FOUR },
+      { changes: FAST, onUnauthenticated },
+    );
+    await waitFor(() => expect(fake.open).toHaveLength(1));
+    await fake.last.refuse(unauthenticatedError("udc.changes: HTTP 401", { http_status: 401 }));
+    expect(badgeStatus()).toBe("down");
+    await sleep(60);
+    expect(spy).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByText("reconnect"));
+    expect(spy).toHaveBeenCalledTimes(2);
+    fake.last.open();
+    expect(badgeStatus()).toBe("live");
+  });
+
+  it("reconnect() with nobody subscribed opens nothing", async () => {
+    const d = describeWith({}, { changes: true });
+    const { spy } = mount(<Reconnect />, { describe: d, rows: FOUR }, { changes: FAST });
+    fireEvent.click(screen.getByText("reconnect"));
+    await sleep(60);
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it("UdcProvider changes={{ identity }}: a new user reopens the stream and nothing below remounts", async () => {
+    mounts = 0;
+    const d = describeWith({}, { changes: true });
+    const { fake, calls } = mount(<Switcher />, { describe: d, rows: FOUR });
+    await screen.findByText("4/4");
+    await waitFor(() => expect(fake.open).toHaveLength(1));
+    const ana = fake.last;
+    ana.open();
+    await sleep(80);
+    expect(screen.getByTestId("mounted").textContent).toBe("1");
+    const before = lists(calls);
+
+    // The same identity again: nothing happens.
+    fireEvent.click(screen.getByText("same"));
+    await sleep(60);
+    expect(fake.streams).toHaveLength(1);
+
+    fireEvent.click(screen.getByText("marko"));
+    expect(ana.closed).toBe(true);
+    expect(fake.streams).toHaveLength(2);
+    expect(fake.last.collections).toEqual(["messages"]);
+    expect(badgeStatus()).toBe("reconnecting");
+    fake.last.open();
+    expect(badgeStatus()).toBe("live");
+    // Ana's rows are refetched for Marko; the components kept their state.
+    await waitFor(() => expect(lists(calls)).toBe(before + 1));
+    expect(screen.getByTestId("mounted").textContent).toBe("1");
+
+    // `identity` is not one of the feed's options: a change of them still builds a new feed.
+    fireEvent.click(screen.getByText("options"));
+    await waitFor(() => expect(fake.streams).toHaveLength(3));
+    expect(screen.getByTestId("mounted").textContent).toBe("1");
+  });
+
+  it("UdcChangeFeedContext: a host's own feed per user, used by a provider without changes", async () => {
+    const d = describeWith({}, { changes: true });
+    mounts = 0;
+    const { fake } = mount(
+      <HostFeed>
+        <Mounted />
+        <Badge />
+      </HostFeed>,
+      { describe: d, rows: FOUR },
+    );
+    await waitFor(() => expect(fake.open).toHaveLength(1));
+    const ana = fake.last;
+    ana.open();
+    expect(badgeStatus()).toBe("live");
+
+    fireEvent.click(screen.getByText("marko"));
+    await waitFor(() => expect(ana.closed).toBe(true));
+    await waitFor(() => expect(fake.open).toHaveLength(1));
+    expect(fake.last).not.toBe(ana);
+    fake.last.open();
+    expect(badgeStatus()).toBe("live");
+    expect(screen.getByTestId("mounted").textContent).toBe("1");
   });
 });

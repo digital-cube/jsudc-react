@@ -7,6 +7,24 @@ All notable changes to `@jsudc/react` are recorded here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- `UdcChangeFeed.reconnect()` (also `useUdcChangeFeed()?.reconnect()`):
+  closes the change feed's stream at once and opens it again for the same
+  collections, so the server scopes it to whoever the client's `headers`
+  say is signed in now. The collections report `reconnecting` until it is
+  open; data fetched before the call is then refetched. It also asks again
+  for a stream the server refused, which otherwise waits for the set of
+  collections to change.
+- `UdcProvider changes={{ identity }}` (`UdcProviderChangesOptions`): when
+  `identity` changes the provider reconnects its feed, without remounting
+  anything below it. For a `headers` function whose user changes (a demo
+  user switcher, an account switcher, impersonation); before, the stream
+  kept the previous user's scope until the collections on screen changed.
+- `UdcChangeFeedContext` is exported (from `@jsudc/react` and
+  `@jsudc/react/headless`), so a host can provide a `UdcChangeFeed` of its
+  own.
+
 ## [0.5.0] - 2026-11-22
 
 Row selection and the bulk bar, row actions, host actions from the browser

@@ -55,6 +55,8 @@ interface Conn {
   state: ConnState;
   /** When the stream was asked for: data fetched before it may have missed an event. */
   startedAt: number;
+  /** Opened by `reconnect()`: no stream carries its collections until it is open ("reconnecting"). */
+  resumed: boolean;
 }
 
 const keyOf = (collections: Iterable<string>) => [...collections].sort().join("\n");
@@ -136,7 +138,8 @@ export class UdcChangeFeed {
     }
     const pen = this.pending;
     if (pen?.collections.has(collection)) {
-      return pen.state === "live" ? "live" : pen.state === "down" ? "down" : "connecting";
+      if (pen.state === "live" || pen.state === "down") return pen.state;
+      return pen.resumed ? "reconnecting" : "connecting";
     }
     return "connecting";
   }
@@ -147,6 +150,34 @@ export class UdcChangeFeed {
     return () => {
       this.listeners.delete(listener);
     };
+  }
+
+  /**
+   * Close the stream and open it again for the same collections, now: the
+   * server runs the plugin's `context` again, so the stream is scoped to
+   * whoever `UdcClient`'s `headers` (or cookies) say is signed in now. For an
+   * identity switch with a `headers` function (a demo user, an account
+   * switcher, impersonation), or after signing in again, since a stream the
+   * server refused is otherwise not asked for until the set of collections
+   * changes. Meanwhile the collections report `reconnecting` (polling
+   * resumes); once it is open, data fetched before the call is refetched. Does
+   * nothing while nobody is subscribed. `UdcProvider changes={{ identity }}`
+   * calls it when `identity` changes.
+   */
+  reconnect(): void {
+    if (this.reconcileTimer) clearTimeout(this.reconcileTimer);
+    this.reconcileTimer = null;
+    const wanted = this.collections();
+    if (wanted.length === 0) {
+      this.close();
+      return;
+    }
+    // The open stream carries the previous identity's scope: nothing of it is kept.
+    this.pending?.ctl.abort();
+    this.current?.ctl.abort();
+    this.current = null;
+    this.pending = this.open(wanted, keyOf(wanted), true);
+    this.emit();
   }
 
   /** Close the stream and drop every timer; the feed opens again when somebody subscribes. */
@@ -194,18 +225,21 @@ export class UdcChangeFeed {
       return;
     }
     if (this.pending?.key === key) return;
+    // A set that changes while `reconnect()` is reopening: still no stream carries it.
+    const resumed = cur === null && this.pending?.resumed === true;
     this.pending?.ctl.abort();
-    this.pending = this.open(wanted, key);
+    this.pending = this.open(wanted, key, resumed);
     this.emit();
   }
 
-  private open(collections: string[], key: string): Conn {
+  private open(collections: string[], key: string, resumed = false): Conn {
     const conn: Conn = {
       key,
       collections: new Set(collections),
       ctl: new AbortController(),
       state: "connecting",
       startedAt: Date.now(),
+      resumed,
     };
     const { minDelayMs, maxDelayMs, idleTimeoutMs } = this.opts;
     const options: ChangesOptions = {
