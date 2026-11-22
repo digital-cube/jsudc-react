@@ -24,6 +24,27 @@ All notable changes to `@jsudc/react` are recorded here. The format follows
 - `UdcChangeFeedContext` is exported (from `@jsudc/react` and
   `@jsudc/react/headless`), so a host can provide a `UdcChangeFeed` of its
   own.
+### Fixed
+
+- **A source that does not count (`capabilities.total_count: false`) no
+  longer leaves the toolbar's row count a loading skeleton forever.** Such a
+  source (`postgres_table`'s `totalCount: false` in `@jsudc/server` 0.4.0)
+  answers every `list` with `total: null`, which the data view read as "still
+  loading". The skeleton now stands only until the first page has answered;
+  then the count shows what is known: "Showing 50+" while infinite mode has
+  more to load, "Showing 12" once it has all of it, "Showing 51–100" in pages
+  mode, and nothing when the list failed. `[data-testid="row-count"]` carries
+  `data-loading="true"` while the skeleton is up and still no `data-total`
+  without a total. A renderer that counts itself (the kanban) and reports no
+  total shows "Showing N" when the source does not count.
+- **Pages mode without a total.** The pager used to disappear (it drew only
+  for `total > 0`), so there was no way past the first page. It now draws for
+  a source that does not count too: the range of the page ("51–100", no "of"),
+  the pages seen so far and the next one while the page is full, previous and
+  next, "Page N" instead of "Page N of M", and no last page.
+- **Infinite mode by offset without a total.** A source that pages by
+  `offset` only and does not count stopped after its first page; a full page
+  now asks for the next one, as `fetchAllRows` already did.
 
 ## [0.5.0] - 2026-11-22
 
