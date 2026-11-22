@@ -8,10 +8,11 @@ All notable changes to `@jsudc/react` are recorded here. The format follows
 ## [Unreleased]
 
 Selection and bulk actions, row actions (R1 + S3, the React part), host
-actions in the browser (S4) and search answered by the source (S6). Builds on
-`@jsudc/core` 0.5.0's `mutate_many`, typed host actions, eligibility helpers,
-the `set` / `action` / `confirm` keys of `ActionDef`, and `ListRequest.search`
-with the capability `search`.
+actions in the browser (S4), search answered by the source (S6) and live
+updates over the change feed (S5). Builds on `@jsudc/core` 0.5.0's
+`mutate_many`, typed host actions, eligibility helpers, the `set` / `action` /
+`confirm` keys of `ActionDef`, `ListRequest.search` with the capability
+`search`, and `UdcClient.changes` with the capability `changes`.
 
 ### Added
 
@@ -125,6 +126,43 @@ with the capability `search`.
   filter cannot carry the text), with a hint instead. i18n term
   `SELECT_ALL_MATCHING_SEARCH` in `en` and `sr`.
 - README section "Search answered by the source".
+- Live updates (S5): `UdcProvider changes` (`true` or `UdcChangeFeedOptions`
+  `{ debounceMs, batchMs, removeDeleted, minDelayMs, maxDelayMs,
+  idleTimeoutMs }`; off by default, no connection) opens one change-feed
+  stream (`UdcClient.changes`) for the collections the views and hooks below
+  show, each one that offers `capabilities.changes`. Collections are
+  reference-counted: added when the first view of one mounts, dropped when
+  the last one unmounts; the stream is reopened with the new list, the old
+  one closed only once the new one is subscribed. A provider without
+  `changes` under another one with the same client uses the outer feed.
+- On an event the collection's lists, the lookup batches into it and its
+  lookup picker options are invalidated, a burst debounced into one
+  invalidation (and held back while a mutation is in flight); a `delete`
+  with `ids` takes those rows out of the cached lists at once. "Reconnected"
+  invalidates every collection of the stream; a collection that joins it is
+  refetched when its data predates the subscription.
+- Polling is the fallback: `refresh_interval_ms` (`refetchInterval` of
+  `useUdcCollection` / `useUdcAllRows`) is suspended while the stream carries
+  the collection and resumes while it reconnects, when it is refused, or
+  without a feed. An unauthenticated stream goes to `createUdcQueryClient`'s
+  `onUnauthenticated`, in the same burst as the queries, and is not reopened
+  until the set of collections changes.
+- `useUdcChanges(collection, onEvent?, options?)` → `{ status, live }`
+  (`UdcChangeFeedStatus`: `off`, `connecting`, `live`, `reconnecting`,
+  `down`; `UseUdcChangesOptions` `{ capabilities, enabled }`,
+  `UdcChangesResult`): subscribes for a host (a badge counter) and is what
+  the data view, `useUdcCollection`, `useUdcAllRows`, `useUdcLookup`,
+  `useUdcLookups` and `useLookupOptions` subscribe through.
+  `useUdcChangeFeed()` and the class `UdcChangeFeed` are exported too (also
+  from `@jsudc/react/headless`).
+- `UdcDataView liveIndicator` (default `true`): "live" / "reconnecting"
+  beside the freshness pill while a feed carries the collection
+  (`LiveIndicator`); nothing without a feed. i18n terms `FEED_LIVE`,
+  `FEED_LIVE_HINT`, `FEED_RECONNECTING`, `FEED_RECONNECTING_HINT` in `en` and
+  `sr`.
+- `capabilities` of `useUdcCollection` and `useUdcAllRows` accept
+  `changes` next to `paging` (a wider `Pick`; what compiled still compiles).
+- README section "Live updates".
 
 ### Changed
 

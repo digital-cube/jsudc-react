@@ -10,7 +10,7 @@ import {
 import { UdcClient } from "@jsudc/core/client";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { RENDERERS } from "../src/all";
 import { UdcDataView } from "../src/data-view/UdcDataView";
@@ -56,6 +56,8 @@ interface Server {
   /** By collection; one entry serves every collection. */
   describe: DescribeResponse | Record<string, DescribeResponse>;
   rows: Row[];
+  /** Pages by cursor ("2" for the second page) of `pageSize` rows, instead of every row at once. */
+  pageSize?: number;
 }
 
 function mount(
@@ -73,7 +75,14 @@ function mount(
           : (d as Record<string, DescribeResponse>)[String(body.collection)],
       };
     },
-    list: () => ({ ok: listOf(server.rows) }),
+    list: (body) => {
+      const size = server.pageSize;
+      if (!size) return { ok: listOf(server.rows) };
+      const page = (body.page as { cursor?: string } | undefined)?.cursor;
+      const from = page ? (Number(page) - 1) * size : 0;
+      const next = from + size < server.rows.length ? String(from / size + 2) : null;
+      return { ok: listOf(server.rows.slice(from, from + size), server.rows.length, next) };
+    },
     update: (body) => ({ ok: { row: { __meta: { id: body.id, version: 2 } } } }),
   });
   const client = new UdcClient({ httpUrl: "http://api", fetch: mock.fetch });
@@ -437,5 +446,54 @@ describe("what survives an event-driven refetch", () => {
     expect(within(rowEl("m1")).getByRole("checkbox")).toBeChecked();
     const still = within(screen.getByTestId("cell-editor")).getByRole("textbox");
     expect(still).toHaveValue("Delta, edited");
+  });
+});
+
+/** An infinite list: loads its second page, and records the fewest rows it drew after that. */
+const seen = { min: Number.POSITIVE_INFINITY, loaded: false };
+function Infinite() {
+  const list = useUdcCollection({
+    collection: "messages",
+    mode: "infinite",
+    pageLimit: 2,
+    capabilities: { changes: true },
+  });
+  const n = list.rows.length;
+  useEffect(() => {
+    if (n === 4) seen.loaded = true;
+    if (seen.loaded) seen.min = Math.min(seen.min, n);
+  }, [n]);
+  return (
+    <>
+      <div data-testid="infinite">{list.rows.map((r) => String(r.subject)).join(",")}</div>
+      <button type="button" onClick={list.fetchNextPage}>
+        more
+      </button>
+    </>
+  );
+}
+
+describe("an infinite list", () => {
+  it("keeps every loaded page through an event-driven refetch (the scroll position has its rows)", async () => {
+    const server: Server = {
+      describe: describeWith({}, { changes: true }),
+      rows: FOUR,
+      pageSize: 2,
+    };
+    const { fake, calls } = mount(<Infinite />, server, { changes: FAST });
+    await screen.findByText("Alpha,Bravo");
+    fireEvent.click(screen.getByText("more"));
+    await screen.findByText("Alpha,Bravo,Charlie,Delta");
+    await waitFor(() => expect(fake.open).toHaveLength(1));
+    fake.last.open();
+    await sleep(80);
+
+    server.rows = [m("m1", "Alpha"), m("m2", "Bravo"), m("m3", "Charlie 2"), m("m4", "Delta")];
+    const before = lists(calls);
+    fake.last.emit(ev("messages", "update", ["m3"]));
+    await screen.findByText("Alpha,Bravo,Charlie 2,Delta");
+    // Both pages were asked again, and the list never shrank meanwhile.
+    expect(lists(calls)).toBe(before + 2);
+    expect(seen.min).toBe(4);
   });
 });

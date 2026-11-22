@@ -239,7 +239,8 @@ plain HTML builds its own renderer on it and gets the same queries, filters and
 URL state.
 
 - the client context and the hooks: `useUdcClient`, `useUdcDescribe`,
-  `useUdcCollection`, `useUdcAllRows`, `useUdcMutate`, `useUdcSchema`, `udcKeys`;
+  `useUdcCollection`, `useUdcAllRows`, `useUdcMutate`, `useUdcSchema`, `udcKeys`,
+  and the change feed's `useUdcChanges` (see [Live updates](#live-updates));
 - the data view's state: `useDataViewState` (tab, search, chips, filter tree,
   sort, paging in the URL), `composeFilter`, the URL codecs of `urlState.ts`,
   `liveDescribe` / `liveSort`, the folder helpers;
@@ -680,6 +681,105 @@ function Timeline({ collection, describe, filter, listSearch }: RendererProps) {
   );
 }
 ```
+
+## Live updates
+
+By default a view refreshes on a timer: the view's `refresh_interval_ms`
+becomes the list's polling interval, and nothing at all without it. A server
+with the change feed (`@jsudc/server`'s "Change feed": `createChangeFeed()`
+passed as `changes` to `createDispatcher`) says `capabilities.changes: true`
+on its collections and serves one Server-Sent Events stream for a list of
+collections (`UdcClient.changes` in `@jsudc/core`). Turn it on in the
+provider and the views refetch when the server says their rows changed:
+
+```tsx
+import { UdcClient } from "@jsudc/core/client";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { createUdcQueryClient, UdcDataView, UdcProvider, useUdcChanges } from "@jsudc/react";
+import { RENDERERS } from "@jsudc/react/all";
+import { useState } from "react";
+
+const client = new UdcClient({ httpUrl: "" });
+const queryClient = createUdcQueryClient({ onUnauthenticated: () => location.assign("/login") });
+
+export function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      {/* `changes`: one stream for the collections on screen. Off by default. */}
+      <UdcProvider client={client} renderers={RENDERERS} changes>
+        <InboxBadge />
+        {/* Mark a message read in another tab: this list refetches within a moment. */}
+        <UdcDataView collection="messages" />
+      </UdcProvider>
+    </QueryClientProvider>
+  );
+}
+
+// A host's own counter: every insert the feed reports, as it arrives.
+function InboxBadge() {
+  const [unseen, setUnseen] = useState(0);
+  const { status } = useUdcChanges("messages", (event) => {
+    if (event.op === "insert") setUnseen((n) => n + (event.ids?.length ?? 1));
+  });
+  return (
+    <button type="button" onClick={() => setUnseen(0)} title={status}>
+      Inbox {unseen > 0 ? `(${unseen})` : null}
+    </button>
+  );
+}
+```
+
+What happens:
+
+- **One stream per provider.** A collection joins the stream when the first
+  view or hook that shows it mounts (the data view, `useUdcCollection`,
+  `useUdcAllRows`, `useUdcLookup` / `useUdcLookups` and `useLookupOptions`
+  for the collection a lookup points to, `useUdcChanges`) and leaves it when
+  the last one unmounts. A new list opens a new stream; the old one is closed
+  only once the new one is subscribed, so the collections that stay miss
+  nothing. Mounts close together (`batchMs`, 50 ms) make one reopen.
+- **On an event** (`{ collection, op, ids? }`, no row data) the collection's
+  lists, the lookup batches into it (the labels other views show) and its
+  picker options are invalidated, so what is on screen refetches. A burst is
+  debounced into one refetch (`debounceMs`, 200 ms), held back while a
+  mutation of yours is in flight. A `delete` that names its `ids` takes those
+  rows out of the cached lists at once (`removeDeleted: false` turns that
+  off); nothing else is applied without the server's answer: a row is never
+  synthesised from an event.
+- **On "reconnected"** (the stream dropped and is back) everything the stream
+  carries is refetched: changes made meanwhile were not sent. A collection
+  that joins the stream is refetched when its data was fetched before the
+  stream was asked for.
+- **Polling is the fallback.** While the stream carries a collection its
+  `refresh_interval_ms` timer is suspended; it runs again while the stream
+  reconnects, when the server refused it, and always without a feed. An
+  unauthenticated stream goes to `createUdcQueryClient`'s
+  `onUnauthenticated` (in the same burst as failed queries) and is not
+  reopened until the set of collections changes.
+- **What stays put** across such a refetch: the active row and the focus, the
+  selection, an open cell editor (and what was typed in it), the scroll
+  position of an infinite list. The rows are replaced under them, by id.
+- **The indicator.** Beside the freshness pill the data view shows "live"
+  while the stream carries its collection and "reconnecting" while it is
+  being reopened (`FEED_LIVE`, `FEED_RECONNECTING` and their `_HINT`
+  tooltips, `en` and `sr`); `liveIndicator={false}` hides it, and
+  `LiveIndicator` draws it in a toolbar of your own.
+
+`changes` also takes `UdcChangeFeedOptions`: `debounceMs`, `batchMs`,
+`removeDeleted`, and `minDelayMs`, `maxDelayMs`, `idleTimeoutMs` passed to
+`UdcClient.changes`. A `UdcProvider` without `changes` inside one with the
+same client uses the outer feed; `changes={false}` turns it off below.
+
+`useUdcChanges(collection, onEvent?, { capabilities?, enabled? })` answers
+`{ status, live }`: `off` (no feed, or the collection does not offer it),
+`connecting`, `live`, `reconnecting`, or `down` (refused). It reads the
+capability from the collection's cached `describe` unless you pass
+`capabilities`.
+
+**Without the feed** nothing changes: a provider without `changes` opens no
+connection and asks no `describe` for it, a collection whose `describe` does
+not say `capabilities.changes: true` is never subscribed, and every view
+polls on `refresh_interval_ms` (or not at all) exactly as before.
 
 ## Selection and bulk actions
 
@@ -1519,7 +1619,10 @@ bundles (`LUCIDE_ICONS`); and the zone helpers `allZones`, `offsetLabel`,
 `UdcLookupBatch`, `LookupValue`, `useLookupLabels`, `useLookupOptions`,
 `LookupSelectChip`, `LookupCombobox`, `UdcLinksProvider`, `useUdcLinks`,
 `defaultUdcLinks`, `filterHref`, `followLink` (the hooks without markup are in
-`@jsudc/react/headless` too).
+`@jsudc/react/headless` too); the change feed: `useUdcChanges`,
+`useUdcChangeFeed`, `UdcChangeFeed`, `LiveIndicator` and the
+`UdcChangeFeedOptions` / `UdcChangeFeedStatus` / `UseUdcChangesOptions` /
+`UdcChangesResult` types (see [Live updates](#live-updates)).
 
 The subpaths: one per renderer and `@jsudc/react/all` (see
 [Renderers](#renderers)), `@jsudc/react/headless` (see [Headless](#headless)),
