@@ -438,5 +438,9 @@ export const TRANSLATIONS: Translations = {
       en: "The server does not support “{action}”",
       sr: "Server ne podržava „{action}”",
     },
+    ROW_ACTIONS: { en: "Row actions", sr: "Akcije nad redom" },
+    ROW_ACTIONS_MORE: { en: "More actions", sr: "Još akcija" },
+    ROW_CONFIRM_DELETE: { en: "Delete this row?", sr: "Obrisati ovaj red?" },
+    ROW_CONFIRM_ACTION: { en: "{action}: this row?", sr: "{action}: ovaj red?" },
   },
 };

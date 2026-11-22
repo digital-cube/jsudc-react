@@ -175,6 +175,7 @@ when this table drifts).
 | `activeRowId`                        | `string \| null` (optional)                | the row to draw as active; set whenever activation is on (the view keeps it when the host does not)                               |
 | `onActiveRowChange(row \| null)`     | function (optional)                        | report the active row moving (keys, a click on another row); set whenever activation is on                                        |
 | `selection`                          | `RowSelection` (optional)                  | the row selection ([Selection and bulk actions](#selection-and-bulk-actions)); set while the view selects and the renderer pages  |
+| `rowActions`                         | `RowActions` (optional)                    | the actions of each row ([Row actions](#row-actions)); set when the view declares `row_action_defs` or `row_actions`              |
 
 The three activation props are absent unless the host turned activation on;
 `useRowActivation` of `@jsudc/react/headless` does everything they describe
@@ -811,6 +812,131 @@ export function SnoozeButton({ ids }: { ids: string[] }) {
 }
 ```
 
+## Row actions
+
+Each row offers the actions its view declares for one row, as icon buttons at
+the end of the row or in a "more" menu, each only where its `when` holds for
+that row. They run exactly as a bulk action does on a selection of that one
+row: the same handlers, the same server paths. A view that declares none
+draws exactly what it drew before 0.5.0.
+
+**What a row offers.** The three keys are udc's, read as udc-js reads them:
+`row_action_defs` (a list of `ActionDef`, the shape of `bulk_actions`) when
+the view has any, else the kinds of the legacy `row_actions: string[]`
+lifted to `{ kind }`. Each is filtered by its `when` for that row
+(`isActionEligible` of `@jsudc/core`: against `row.__meta.state` when the
+source sends one, else the row's fields). A row none of whose actions apply
+shows nothing.
+
+**How they are drawn**, by `row_actions_display`:
+
+- `inline` (the default, as in udc-js): the table gets a trailing column
+  pinned at the end (after any column pinned right) with one icon button per
+  action, labelled for screen readers and in a tooltip; an action whose
+  `icon` is not known draws its label as a small text button. The column is
+  sized from every declared action, with the `when`-gated ones counted as
+  alternatives (only the widest), so it does not jump as rows change.
+- `menu`: one "more" button per row opening a dropdown, and the same menu on
+  right-click anywhere on the row.
+
+The cards draw the same actions as a "more" menu on each card (right-click
+opens it too), whatever the display. Kanban, tree, calendar, map and chart
+draw no row actions.
+
+**The keyboard.** With row activation on, the focused row opens its menu from
+the context-menu key, Shift+F10 or `.` (`isRowMenuKey`); in the inline
+display the keys open the same actions as a menu. Arrow keys move in the
+menu, Enter runs, Escape closes, and the focus goes back to the row. Opened
+from the "more" button, the focus goes back to that button.
+
+**A click on an action is the action's**: it neither activates the row
+(`onRowActivate`), nor follows its `row_link`, nor toggles its selection; a
+click anywhere else on the row does what it did.
+
+**Running one** goes through [Running an action](#running-an-action) with
+`ids: [id]` and `rows: [row]`:
+
+1. **A handler for its `kind`** (the view's `actions`, else `UdcProvider
+   actions`): it gets the bulk context with `ids: [id]`, `rows: [row]` and
+   `row`, the one row (absent when the bulk bar runs it). `clearSelection`
+   clears the view's selection, if it selects.
+2. **`delete`**: a confirmation ("Delete this row?"), then `mutate_many`
+   `delete` when the source has `capabilities.mutate_many`, else `mutate`
+   `delete`. The row leaves the list and the selection.
+3. **A def with `set`**: an update with that patch (`mutate_many` or
+   `mutate`), shown at once and put back if the call fails.
+4. **Anything else**: the server action the def's `action` names (default its
+   `kind`) with `{ collection, ids: [id] }`.
+
+As for a bulk action, the built-in paths ask first per `confirm`, a handler
+asks its own questions, and an error (or the row named in a `failed` answer)
+is shown as a toast. A row action names its button with the term
+`ACTION_<KIND>` of the collection's section, else `ACTIONS.<kind>`, else the
+def's `label`, else the kind made readable.
+
+A mailbox whose rows mark themselves read through a patch and archive through
+the host's own endpoint, each hidden where it does not apply:
+
+```yaml
+# The view of `messages`
+view:
+  columns: [{ field: subject }, { field: from }, { field: received_at }]
+  row_actions_display: inline # or `menu`
+  row_action_defs:
+    - kind: mark_read
+      label: Mark read
+      icon: lucide:mail-open
+      set: { read: true } # no handler needed: an optimistic update
+      when: { field: read, op: eq, value: false }
+    - kind: archive
+      label: Archive
+      icon: lucide:archive
+      when: { field: folder, op: neq, value: archive }
+```
+
+```tsx
+import { UdcDataView } from "@jsudc/react";
+
+export function Inbox() {
+  return (
+    <UdcDataView
+      collection="messages"
+      filter={{ field: "folder", op: "eq", value: "inbox" }}
+      onRowActivate={(row) => openMessage(row.__meta.id)}
+      actions={{
+        // The same handler serves the bulk bar (`ids` of the selection, or `filter`) and the row
+        // ("archive" on one row: `ids: [id]`, `rows: [row]`, `row`).
+        archive: async ({ ids, filter, exceptIds, row, clearSelection }) => {
+          await fetch("/api/mail/archive", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify(ids ? { ids } : { filter, except_ids: exceptIds }),
+          });
+          if (!row) clearSelection();
+        },
+      }}
+    />
+  );
+}
+```
+
+An unread message in the inbox shows both; a read one only "Archive"; a read
+one already archived, none. Clicking "Mark read" shows the row read at once (and so
+"Mark read" goes from it); clicking the row itself still opens the message.
+
+**In a host renderer.** `RendererProps.rowActions` (a `RowActions`, set when
+the view declares row actions) carries `display`, `defs` (every declared
+action, before `when`), `eligible(row)`, `label(def)`, `run(def, row)` (the
+path above; it shows its errors and does not reject) and `runningOn(id)`
+(the kind running on that row, else `null`). `RowActionsControls` with
+`useRowMenu()` draws the built-in buttons and menu; `rowMenuHandlers` gives a
+row element its menu key and right-click. The headless parts —
+`rowActionDefs(view)`, `rowActionsDisplay(view)`, `eligibleRowActions(defs,
+row)`, `isRowMenuKey(e)` — are in `@jsudc/react/headless`. A UI kit's
+`DropdownMenu` may take the optional `open` / `onOpenChange` and its content
+`onCloseAutoFocus` (the default kit does); a kit that ignores them still
+opens the menu from its trigger, but not from the keys or a right-click.
+
 ## Custom cells
 
 A column of the table can be drawn by a component of the host's. Register
@@ -1313,7 +1439,11 @@ pure operations and the `RowSelection` / `RowSelectionState` types; the bulk
 actions `UdcActionsProvider`, `useBulkActionHandlers`, `planBulkAction`,
 `bulkActionEligible`, `selectionTarget`, `MATCH_ALL` and the
 `BulkActionContext` / `BulkActionHandler` / `BulkActionHandlers` /
-`BulkActionPlan` types; the hooks `useUdcMutateMany`, `useUdcAction` and the
+`BulkActionPlan` types; the row actions `rowActionDefs`, `rowActionsDisplay`,
+`eligibleRowActions`, `isRowMenuKey`, `RowActionsControls`, `useRowMenu`,
+`rowMenuHandlers`, `rowActionsColumnWidth` and the `RowActions` /
+`RowActionsDisplay` / `RowMenuState` / `RowMenuVia` /
+`RowActionsControlsProps` / `RowMenuKeyEvent` types; the hooks `useUdcMutateMany`, `useUdcAction` and the
 cache helpers `applyToListRows`, `mutateManyTouches`, `callAction`; the cells `createCellRegistry`,
 `cellComponent`, `mergeCellRegistries`, `UdcCellsProvider`, `useCellRegistry`
 and the `CellProps` / `CellComponent` / `CellDefinition` / `CellRegistry`

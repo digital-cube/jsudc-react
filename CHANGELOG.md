@@ -7,10 +7,10 @@ All notable changes to `@jsudc/react` are recorded here. The format follows
 
 ## [Unreleased]
 
-Selection and bulk actions (R1 + S3, the React part) and host actions in the
-browser (S4). Builds on `@jsudc/core` 0.5.0's `mutate_many`, typed host
-actions, eligibility helpers and the `set` / `action` / `confirm` keys of
-`ActionDef`.
+Selection and bulk actions, row actions (R1 + S3, the React part) and host
+actions in the browser (S4). Builds on `@jsudc/core` 0.5.0's `mutate_many`,
+typed host actions, eligibility helpers and the `set` / `action` / `confirm`
+keys of `ActionDef`.
 
 ### Added
 
@@ -75,6 +75,38 @@ actions, eligibility helpers and the `set` / `action` / `confirm` keys of
 - README section "Selection and bulk actions" (a worked mailbox example,
   the behaviour without a total, the accessibility of selection next to the
   active row, `useUdcMutateMany` and `useUdcAction` with a worked example).
+- Row actions: each row offers its view's `row_action_defs` (else the kinds
+  of `row_actions`, as udc-js reads them), each only where its `when` holds
+  for that row. `row_actions_display: inline` (the default) draws icon
+  buttons in a trailing table column pinned at the end; `menu` one "more"
+  button per row and the same dropdown on right-click of the row. The cards
+  draw them as a menu on each card. With row activation on, the focused row
+  opens its menu from the context-menu key, Shift+F10 or `.`, and the focus
+  returns to the row when it closes. A click on an action neither activates
+  the row, nor follows its `row_link`, nor toggles its selection. A view with
+  no row actions draws what it drew before.
+- Running a row action is the bulk path on one row: the host's
+  `actions[kind]` handler (its context gains the optional `row`, with
+  `ids: [id]`, `rows: [row]`); else `delete` after a confirmation
+  (`mutate_many` when the source has it, else `mutate`), a `set` patch
+  (optimistic, rolled back on an error), or the server action the def names
+  with `{ collection, ids: [id] }`. `BulkActionContext.row` is optional and
+  absent for the bulk bar.
+- `RendererProps.rowActions` (optional `RowActions`: `display`, `defs`,
+  `eligible(row)`, `label(def)`, `run(def, row)`, `runningOn(id)`), set when
+  the view declares row actions. `RowActionsControls`, `useRowMenu`,
+  `rowMenuHandlers`, `rowActionsColumnWidth` draw the built-in ones in a
+  host renderer; `rowActionDefs`, `rowActionsDisplay`, `eligibleRowActions`
+  and `isRowMenuKey` are also in `@jsudc/react/headless`.
+- The `UiKit` contract: `DropdownMenu` takes the optional `open` and
+  `onOpenChange`, `DropdownMenuContent` the optional `onCloseAutoFocus` (the
+  default kit passes them to Radix). A kit that ignores them still opens a
+  row's menu from its trigger.
+- i18n terms in `en` and `sr`: `ROW_ACTIONS`, `ROW_ACTIONS_MORE`,
+  `ROW_CONFIRM_DELETE`, `ROW_CONFIRM_ACTION`.
+- README section "Row actions" (a worked mailbox example: "mark read"
+  through `set`, "archive" through a host handler, both hidden where `when`
+  fails).
 
 ### Changed
 

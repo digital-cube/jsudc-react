@@ -15,21 +15,27 @@ import {
   type RendererCount,
   type RendererDefinition,
   type RendererProps,
+  type RowActions,
+  RowActionsControls,
   type RowActivationProps,
   type RowSelection,
   type UdcCollectionResult,
   UdcDataView,
   type UdcDataViewProps,
   UdcProvider,
+  useRowMenu,
   windowLocationAdapter,
 } from "@jsudc/react";
 import { RENDERERS } from "@jsudc/react/all";
 import { cardsRenderer } from "@jsudc/react/cards";
 import {
   type BulkActionHandlers,
+  eligibleRowActions,
   createCellRegistry as headlessCells,
   createMemoryUrlStateAdapter as headlessMemory,
   prefixUrlStateAdapter as headlessPrefix,
+  isRowMenuKey,
+  rowActionDefs,
   type useDataViewState,
   useRowActivation,
   useRowSelection,
@@ -82,6 +88,7 @@ export const rendererContract: Equal<
     activeRowId?: string | null | undefined;
     onActiveRowChange?: ((row: Row | null) => void) | undefined;
     selection?: RowSelection | undefined;
+    rowActions?: RowActions | undefined;
   }
 > = true;
 
@@ -252,7 +259,37 @@ export const selectable: UdcDataViewProps = {
 export const badHandlers: BulkActionHandlers = { archive: "archive" };
 export const selectionHooks = [useRowSelection, useUdcMutateMany, useUdcAction, SelectList];
 
+// Row actions (README "Row actions").
+function ActionList({ data, rowActions }: RendererProps) {
+  const menu = useRowMenu();
+  const items = data.rows.map((row) =>
+    rowActions
+      ? createElement(RowActionsControls, { key: row.__meta.id, row, rowActions, menu })
+      : null,
+  );
+  return createElement("div", { "data-display": rowActions?.display ?? "none" }, items);
+}
+export function runFirst(actions: RowActions, row: Row): Promise<void> | undefined {
+  const [first] = actions.eligible(row);
+  return first ? actions.run(first, row) : undefined;
+}
+export const rowDefs = rowActionDefs({ row_actions: ["delete"], row_action_defs: undefined });
+export const rowEligible = (row: Row) => eligibleRowActions(rowDefs, row).map((d) => d.kind);
+export const menuKey = isRowMenuKey({
+  key: ".",
+  shiftKey: false,
+  altKey: false,
+  ctrlKey: false,
+  metaKey: false,
+});
+export const rowHandlers: BulkActionHandlers = {
+  archive: ({ row, ids }) => [row?.__meta.id, ids],
+};
+// @ts-expect-error `run` takes the def and the row
+export const badRun = (actions: RowActions) => actions.run("archive");
+
 export const used = [
+  ActionList,
   ActiveList,
   RENDERERS,
   UdcDataView,

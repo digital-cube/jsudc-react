@@ -37,6 +37,11 @@ export interface BulkActionContext {
   rows: Row[];
   /** Select nothing: call it once the action is done (the view does not clear on its own). */
   clearSelection: () => void;
+  /**
+   * A row action (0.5.0): the one row it was run on, also `ids[0]` and
+   * `rows[0]`. Absent when the bulk bar ran it on a selection.
+   */
+  row?: Row | undefined;
 }
 
 /** Runs one bulk action. A rejected promise (or a throw) shows its message as an error. */

@@ -1,5 +1,12 @@
 import type { ColumnColor, DescribeResponse, Row } from "@jsudc/core";
-import { type ReactNode, useEffect, useMemo, useRef } from "react";
+import { type KeyboardEvent, type ReactNode, useEffect, useMemo, useRef } from "react";
+import {
+  RowActionsControls,
+  type RowMenuState,
+  rowMenuHandlers,
+  useRowMenu,
+} from "../actions/RowActionsMenu.js";
+import type { RowActions } from "../actions/row.js";
 import { useCellRegistry } from "../cells/registry.js";
 import { FolderEntry } from "../data-view/FolderEntry.js";
 import { tableSection, useI18n } from "../i18n/i18n.js";
@@ -71,6 +78,8 @@ export interface CardRendererProps extends RowActivationProps {
   folder?: FolderNav | undefined;
   /** Row selection (0.5.0): a checkbox on each card; Space toggles the active card. */
   selection?: RowSelection | undefined;
+  /** Row actions (0.5.0): a "more" menu on each card, also on right-click and from the keyboard. */
+  rowActions?: RowActions | undefined;
 }
 
 /**
@@ -108,6 +117,7 @@ export function CardRenderer(props: CardRendererProps) {
   useEffect(() => {
     if (props.resetKey && scrollRef.current) scrollRef.current.scrollTop = 0;
   }, [props.resetKey]);
+  const rowMenu = useRowMenu();
 
   const showSkeleton = data.isLoading && data.rows.length === 0;
   const showError = data.error !== null && data.rows.length === 0;
@@ -159,6 +169,8 @@ export function CardRenderer(props: CardRendererProps) {
                     folder={props.folder}
                     activation={activation}
                     selection={selection}
+                    rowActions={props.rowActions}
+                    rowMenu={rowMenu}
                   />
                 ))}
           </div>
@@ -206,6 +218,8 @@ function Card({
   folder,
   activation,
   selection,
+  rowActions,
+  rowMenu,
 }: {
   row: Row;
   slots: CardSlots;
@@ -215,6 +229,8 @@ function Card({
   folder?: FolderNav | undefined;
   activation: RowActivation;
   selection?: RowSelection | undefined;
+  rowActions?: RowActions | undefined;
+  rowMenu: RowMenuState;
 }) {
   const { t, locale, intlLocale } = useI18n();
   const { timeZone } = useTimezone();
@@ -235,6 +251,9 @@ function Card({
   const on = activation.enabled;
   const active = activation.activeRowId === row.__meta.id;
   const checked = selection?.isSelected(row.__meta.id) === true;
+  const rowProps = activation.rowProps(row);
+  // On a card the actions are always a menu: the same one opens on right-click and from the keys.
+  const menuKeys = rowMenuHandlers(rowActions, rowMenu, row, { contextMenu: true });
 
   return (
     // biome-ignore lint/a11y/useKeyWithClickEvents: the keys come with rowProps (onKeyDown)
@@ -243,7 +262,15 @@ function Card({
       data-row-id={row.__meta.id}
       data-accent={tone ?? undefined}
       data-selected={checked ? "true" : undefined}
-      {...activation.rowProps(row)}
+      {...rowProps}
+      {...(rowActions
+        ? {
+            onKeyDown: (e: KeyboardEvent<HTMLElement>) => {
+              if (!menuKeys.keyDown(e)) rowProps.onKeyDown?.(e);
+            },
+            onContextMenu: menuKeys.contextMenu,
+          }
+        : {})}
       role={on ? "row" : undefined}
       onClick={on ? (e) => activation.handleClick(e, row) : undefined}
       className={cn(
@@ -335,6 +362,15 @@ function Card({
               </p>
             ) : null}
           </div>
+          {rowActions ? (
+            <RowActionsControls
+              row={row}
+              rowActions={rowActions}
+              menu={rowMenu}
+              display="menu"
+              className="udc:-mr-1.5 udc:shrink-0"
+            />
+          ) : null}
         </div>
         {slots.metric ? (
           <div

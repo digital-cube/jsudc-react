@@ -1,6 +1,7 @@
 import type { DescribeResponse, FilterNode, FolderOptions, Row, SortKey } from "@jsudc/core";
 import type { LucideIcon } from "lucide-react";
 import type { ComponentType } from "react";
+import type { RowActions } from "../actions/row.js";
 import type { ChartWindowState } from "../chart/useChartWindow.js";
 import type { RowSelection } from "../rows/useRowSelection.js";
 import type { SchemaAction } from "../schema-editor/fieldForm.js";
@@ -92,6 +93,13 @@ export interface RendererProps {
    * `setPage`, `selectAllMatching` and `clear`; the view draws the bulk bar.
    */
   selection?: RowSelection | undefined;
+  /**
+   * Row actions (0.5.0; `RowActions` of `@jsudc/react/headless`): set when the
+   * view declares `row_action_defs` or `row_actions`, absent otherwise. Draw
+   * `eligible(row)` as `display` says, label each with `label`, run one with
+   * `run(def, row)` (the host's handler, else the server, as the bulk bar).
+   */
+  rowActions?: RowActions | undefined;
 }
 
 export interface RendererEntry {

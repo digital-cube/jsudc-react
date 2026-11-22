@@ -2,6 +2,8 @@ import type { FilterChipConfig, FilterNode, Row } from "@jsudc/core";
 import { BookOpen, FileCode2, InfinityIcon, Rows3 } from "lucide-react";
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import type { BulkActionHandlers } from "../actions/bulk.js";
+import { rowActionDefs, rowActionsDisplay } from "../actions/row.js";
+import { useRowActionRunner } from "../actions/useRowActionRunner.js";
 import { type CellRegistry, UdcCellsProvider } from "../cells/registry.js";
 import { ChartWindowControl } from "../chart/ChartWindowControl.js";
 import { useChartWindow } from "../chart/useChartWindow.js";
@@ -372,6 +374,19 @@ function DataViewBody({
       ? data.total > data.rows.length
       : state.mode === "pages" && data.rows.length >= limit);
 
+  // Row actions (0.5.0): `row_action_defs`, else the kinds of `row_actions`; none, nothing new.
+  const rowDefs = useMemo(() => (view ? rowActionDefs(view) : []), [view]);
+  const rowRunner = useRowActionRunner({
+    collection,
+    section,
+    defs: rowDefs,
+    display: view ? rowActionsDisplay(view) : "inline",
+    capabilities: live?.capabilities,
+    handlers: actions,
+    selection: selecting ? selection : undefined,
+  });
+  const rowActions = rowRunner.rowActions;
+
   const fieldLabel = useCallback((field: string) => t(section, field), [t, section]);
   const chipLabel = useCallback(
     (cfg: FilterChipConfig) => tMaybe(section, cfg.field) ?? cfg.label ?? humanize(cfg.field),
@@ -690,6 +705,7 @@ function DataViewBody({
             folder={folderNav}
             {...activation}
             {...(selecting ? { selection } : {})}
+            {...(rowActions ? { rowActions } : {})}
           />
         ) : live ? (
           <NoRendererState name={state.tab} />
@@ -703,6 +719,7 @@ function DataViewBody({
         )}
       </div>
       {editor.dialogs}
+      {rowRunner.dialog}
       {folderOpts?.preview ? (
         <FilePreview
           collection={collection}

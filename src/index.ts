@@ -18,6 +18,26 @@ export {
   type UdcActionsProviderProps,
   useBulkActionHandlers,
 } from "./actions/bulk.js";
+export {
+  RowActionsControls,
+  type RowActionsControlsProps,
+  type RowMenuState,
+  type RowMenuVia,
+  rowActionsColumnWidth,
+  rowMenuHandlers,
+  useRowMenu,
+} from "./actions/RowActionsMenu.js";
+// Row actions (0.5.0): what a row offers and how it runs (also in `@jsudc/react/headless`),
+// and the buttons and menu the table and the cards draw them with.
+export {
+  eligibleRowActions,
+  isRowMenuKey,
+  type RowActions,
+  type RowActionsDisplay,
+  type RowMenuKeyEvent,
+  rowActionDefs,
+  rowActionsDisplay,
+} from "./actions/row.js";
 // Custom cells: components a column's `render` names, registered like the renderers.
 export {
   type CellComponent,

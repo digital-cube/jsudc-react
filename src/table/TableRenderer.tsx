@@ -11,7 +11,22 @@ import {
 } from "@jsudc/core";
 import { type Column, type ColumnDef, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { ArrowDown, ArrowUp, ChevronsUpDown, Plus } from "lucide-react";
-import { type CSSProperties, type MouseEvent, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type CSSProperties,
+  type KeyboardEvent,
+  type MouseEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import {
+  RowActionsControls,
+  rowActionsColumnWidth,
+  rowMenuHandlers,
+  useRowMenu,
+} from "../actions/RowActionsMenu.js";
+import type { RowActions } from "../actions/row.js";
 import { useCellRegistry } from "../cells/registry.js";
 import { FolderEntry } from "../data-view/FolderEntry.js";
 import { tableSection, useI18n } from "../i18n/i18n.js";
@@ -91,6 +106,8 @@ export interface TableRendererProps extends RowActivationProps {
   folder?: FolderNav | undefined;
   /** Row selection (0.5.0): a checkbox column pinned at the start; Space toggles the active row. */
   selection?: RowSelection | undefined;
+  /** Row actions (0.5.0): a trailing column pinned at the end, inline buttons or a "more" menu. */
+  rowActions?: RowActions | undefined;
 }
 
 type EditTarget = { rowId: string; colId: string };
@@ -153,6 +170,10 @@ export function TableRenderer(props: TableRendererProps) {
 
   const selection = props.selection;
   const selectWidth = selection ? SELECT_COLUMN_WIDTH : 0;
+  // Row actions (0.5.0): a column pinned at the end, after any column pinned right.
+  const rowActions = props.rowActions;
+  const rowMenu = useRowMenu();
+  const actionsWidth = rowActions ? rowActionsColumnWidth(rowActions) : 0;
   const left = table.getLeftLeafColumns();
   const center = table.getCenterLeafColumns();
   const right = table.getRightLeafColumns();
@@ -161,7 +182,8 @@ export function TableRenderer(props: TableRendererProps) {
   const totalWidth =
     ordered.reduce((sum, c) => sum + c.getSize(), 0) +
     (schemaEdit ? ADD_COLUMN_WIDTH : 0) +
-    selectWidth;
+    selectWidth +
+    actionsWidth;
   const rowHeight = view.row_height ?? DEFAULT_ROW_HEIGHT;
 
   const canEdit = (c: Column<Row, unknown>) =>
@@ -314,7 +336,7 @@ export function TableRenderer(props: TableRendererProps) {
     const pin = c.getIsPinned();
     const width = c.getSize();
     if (pin === "left") return { width, left: c.getStart("left") + selectWidth };
-    if (pin === "right") return { width, right: c.getAfter("right") };
+    if (pin === "right") return { width, right: c.getAfter("right") + actionsWidth };
     return { width };
   };
 
@@ -498,6 +520,36 @@ export function TableRenderer(props: TableRendererProps) {
       </td>
     ) : null;
 
+  // The row actions column: pinned at the end, its shadow when rows scroll under it.
+  const actionsClass = cn(
+    "udc:sticky udc:right-0 udc:z-[5] udc:border-b udc:border-border udc:p-0",
+    right.length === 0 &&
+      "udc:before:pointer-events-none udc:before:absolute udc:before:inset-y-0 udc:before:-left-3 udc:before:w-3 udc:before:bg-gradient-to-l udc:before:from-[var(--shadow-pin)] udc:before:to-transparent udc:before:opacity-0 udc:before:transition-opacity",
+    right.length === 0 && edges.right && "udc:before:opacity-100",
+  );
+  const actionsHeader = rowActions ? (
+    <th
+      key="__actions"
+      scope="col"
+      data-testid="th-actions"
+      style={{ width: actionsWidth }}
+      className={cn(actionsClass, "udc:z-[15] udc:h-9 udc:bg-muted")}
+    >
+      <span className="udc:sr-only">{t("APP", "ROW_ACTIONS")}</span>
+    </th>
+  ) : null;
+  const actionsCell = (row: Row, className: string) =>
+    rowActions ? (
+      <td
+        key="__actions"
+        data-testid="cell-actions"
+        style={{ width: actionsWidth }}
+        className={cn(actionsClass, "udc:px-1.5", className)}
+      >
+        <RowActionsControls row={row} rowActions={rowActions} menu={rowMenu} />
+      </td>
+    ) : null;
+
   return (
     <div className="udc:flex udc:min-h-0 udc:flex-1 udc:flex-col">
       <div
@@ -533,6 +585,7 @@ export function TableRenderer(props: TableRendererProps) {
             {right.map((c) => (
               <col key={c.id} style={{ width: c.getSize() }} />
             ))}
+            {rowActions ? <col style={{ width: actionsWidth }} /> : null}
           </colgroup>
           <thead className="udc:sticky udc:top-0 udc:z-30">
             <tr>
@@ -541,6 +594,7 @@ export function TableRenderer(props: TableRendererProps) {
               {addColumnHeader}
               <th aria-hidden className="udc:border-b udc:border-border udc:bg-muted udc:p-0" />
               {right.map(header)}
+              {actionsHeader}
             </tr>
           </thead>
           <UdcLookupBatch value={lookups}>
@@ -585,6 +639,13 @@ export function TableRenderer(props: TableRendererProps) {
                           <Skeleton className="udc:h-3 udc:w-2/3" />
                         </td>
                       ))}
+                      {rowActions ? (
+                        <td
+                          aria-hidden
+                          style={{ width: actionsWidth }}
+                          className={cn(actionsClass, "udc:bg-surface")}
+                        />
+                      ) : null}
                     </tr>
                   ))
                 : null}
@@ -593,6 +654,10 @@ export function TableRenderer(props: TableRendererProps) {
                 const tone = resolveRowColor(row, view.row_color);
                 const active = activation.activeRowId === row.__meta.id;
                 const checked = selection?.isSelected(row.__meta.id) === true;
+                const rowProps = activation.rowProps(row);
+                const menuKeys = rowMenuHandlers(rowActions, rowMenu, row, {
+                  contextMenu: rowActions?.display === "menu",
+                });
                 const cell = (c: Column<Row, unknown>) => {
                   const { config, def } = meta(c);
                   const editable = canEdit(c);
@@ -695,7 +760,15 @@ export function TableRenderer(props: TableRendererProps) {
                     data-row-id={row.__meta.id}
                     data-row-link={rowLink ? rowLinkHref(row) : undefined}
                     data-selected={checked ? "true" : undefined}
-                    {...activation.rowProps(row)}
+                    {...rowProps}
+                    {...(rowActions
+                      ? {
+                          onKeyDown: (e: KeyboardEvent<HTMLTableRowElement>) => {
+                            if (!menuKeys.keyDown(e)) rowProps.onKeyDown?.(e);
+                          },
+                          onContextMenu: menuKeys.contextMenu,
+                        }
+                      : {})}
                     className={cn(
                       "udc-row udc:group/row",
                       (rowLink || activation.enabled) && "udc:cursor-pointer",
@@ -726,6 +799,12 @@ export function TableRenderer(props: TableRendererProps) {
                         : "udc:border-b udc:border-border udc:bg-surface udc:group-hover/row:bg-hover",
                     )}
                     {right.map(cell)}
+                    {actionsCell(
+                      row,
+                      active || checked
+                        ? "udc:bg-selected"
+                        : "udc:bg-surface udc:group-hover/row:bg-hover",
+                    )}
                   </tr>
                 );
               })}

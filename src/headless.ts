@@ -5,6 +5,8 @@
 
 // Row selection (ids, or all that match except some) and what runs a bulk action (0.5.0).
 export * from "./actions/bulk.js";
+// The actions one row offers (`row_action_defs` / `row_actions`, filtered by `when`) (0.5.0).
+export * from "./actions/row.js";
 // Each renderer's model and state hook.
 export * from "./calendar/model.js";
 export * from "./calendar/useCalendarUrl.js";
