@@ -7,6 +7,11 @@ All notable changes to `@jsudc/react` are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-11-22
+
+Patch release of `@jsudc/react` alone; `@jsudc/core` and `@jsudc/server` stay
+0.5.0 and the peer range `^0.5.0` is unchanged.
+
 ### Added
 
 - `UdcChangeFeed.reconnect()` (also `useUdcChangeFeed()?.reconnect()`):
@@ -24,6 +29,7 @@ All notable changes to `@jsudc/react` are recorded here. The format follows
 - `UdcChangeFeedContext` is exported (from `@jsudc/react` and
   `@jsudc/react/headless`), so a host can provide a `UdcChangeFeed` of its
   own.
+
 ### Fixed
 
 - **A source that does not count (`capabilities.total_count: false`) no
@@ -653,7 +659,8 @@ First tagged version, installed from the GitHub tag.
   Serbian), theme and time-zone providers, the UI primitives.
 - `styles.css`, compiled at build time, and `tokens.css`, its raw source.
 
-[Unreleased]: https://github.com/digital-cube/jsudc-react/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/digital-cube/jsudc-react/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/digital-cube/jsudc-react/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/digital-cube/jsudc-react/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/digital-cube/jsudc-react/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/digital-cube/jsudc-react/compare/v0.3.0...v0.3.1
