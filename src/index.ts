@@ -51,6 +51,7 @@ export {
   type UdcCellsProviderProps,
   useCellRegistry,
 } from "./cells/registry.js";
+export { LiveIndicator } from "./data-view/LiveIndicator.js";
 // One collection: the tabs its view declares, each drawn by a registered renderer.
 export {
   resolveChrome,
@@ -197,6 +198,17 @@ export {
   zoneCity,
 } from "./time/zoned.js";
 export { i18nKey } from "./tree/model.js";
+export {
+  UdcChangeFeed,
+  type UdcChangeFeedOptions,
+  type UdcChangeFeedStatus,
+} from "./udc/changeFeed.js";
+export {
+  type UdcChangesResult,
+  type UseUdcChangesOptions,
+  useUdcChangeFeed,
+  useUdcChanges,
+} from "./udc/changes.js";
 // The hooks over @jsudc/core's client, the client context and the TanStack Query client.
 export {
   ALL_ROWS_MAX,

@@ -72,6 +72,17 @@ export {
   sortSiblings,
 } from "./tree/model.js";
 // The client context and the hooks over @jsudc/core's client.
+export {
+  UdcChangeFeed,
+  type UdcChangeFeedOptions,
+  type UdcChangeFeedStatus,
+} from "./udc/changeFeed.js";
+export {
+  type UdcChangesResult,
+  type UseUdcChangesOptions,
+  useUdcChangeFeed,
+  useUdcChanges,
+} from "./udc/changes.js";
 export * from "./udc/client.js";
 export * from "./udc/hooks.js";
 export * from "./udc/keys.js";

@@ -10,6 +10,7 @@ import {
 import type { UdcClient } from "@jsudc/core/client";
 import { keepPreviousData, useQueries, useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
+import { useUdcChangesMany } from "../udc/changes.js";
 import { useUdcClient } from "../udc/client.js";
 import { udcKeys } from "../udc/keys.js";
 
@@ -109,7 +110,10 @@ export function useUdcLookup(
   const lookup = asLookup(target);
   const sorted = useMemo(() => lookupKeys(keys), [keys]);
   const q = lookupQuery(client, lookup, sorted);
-  const res = useQuery({ ...q, enabled: q.enabled && (opts.enabled ?? true) });
+  const enabled = q.enabled && (opts.enabled ?? true);
+  // A change of the target collection may change the labels shown (the provider's change feed).
+  useUdcChangesMany([lookup.collection], { enabled });
+  const res = useQuery({ ...q, enabled });
   return result(res.data, res.isLoading, res.error);
 }
 
@@ -128,6 +132,7 @@ export function useUdcLookups(requests: readonly LookupRequest[]): Map<string, U
     [client, requests],
   );
   const results = useQueries({ queries });
+  useUdcChangesMany(requests.filter((_, i) => queries[i]?.enabled).map((r) => r.lookup.collection));
   return useMemo(() => {
     const out = new Map<string, UdcLookupResult>();
     requests.forEach((r, i) => {

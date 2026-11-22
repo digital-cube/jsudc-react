@@ -17,6 +17,7 @@ import { rowActivationEnabled } from "../rows/useRowActivation.js";
 import { useRowSelection } from "../rows/useRowSelection.js";
 import { useSchemaEditor } from "../schema-editor/useSchemaEditor.js";
 import { ErrorState, NoRendererState } from "../table/states.js";
+import { useUdcChanges } from "../udc/changes.js";
 import { useUdcCollection, useUdcDescribe } from "../udc/hooks.js";
 import type { PagingMode } from "../udc/keys.js";
 import { useUiKit } from "../ui-kit/context.js";
@@ -32,6 +33,7 @@ import { FilterChips } from "./FilterChips.js";
 import { FolderBar } from "./FolderBar.js";
 import { Freshness } from "./Freshness.js";
 import { joinFolder, splitFolder } from "./folder.js";
+import { LiveIndicator } from "./LiveIndicator.js";
 import { liveDescribe, liveSort, pruneTree } from "./liveView.js";
 import { SearchBox } from "./SearchBox.js";
 import { SourceTab } from "./SourceTab.js";
@@ -110,6 +112,12 @@ export interface UdcDataViewProps {
    * README "Selection and bulk actions".
    */
   actions?: BulkActionHandlers | undefined;
+  /**
+   * The change feed's state ("live" / "reconnecting") beside the freshness
+   * pill, when the provider has a feed (`UdcProvider changes`) and the
+   * collection offers it. Default `true`; `false` hides it.
+   */
+  liveIndicator?: boolean | undefined;
 }
 
 /** `full`: today's view, every part drawn. `embedded`: one pane of a host's screen, no part drawn. */
@@ -197,6 +205,7 @@ function DataViewBody({
   onActiveRowChange: onActiveRowChangeProp,
   selectable,
   actions,
+  liveIndicator = true,
 }: UdcDataViewProps) {
   const chrome = resolveChrome(chromeProp);
   // Row activation: off unless the host passed one of its props. Uncontrolled, the view keeps
@@ -360,6 +369,11 @@ function DataViewBody({
     capabilities: live?.capabilities,
     refetchInterval: view?.refresh_interval_ms,
     search: listSearch,
+  });
+  // The change feed's state for the indicator (the list hooks subscribe on their own).
+  const feed = useUdcChanges(collection, undefined, {
+    capabilities: live?.capabilities,
+    enabled: describe.isSuccess,
   });
 
   // Selection (0.5.0): off unless the view or the host asks. Cleared by a new collection or
@@ -608,6 +622,7 @@ function DataViewBody({
                   <entry.toolbar collection={collection} describe={live} />
                 ) : null}
                 {chartWindow ? <ChartWindowControl win={chartWindow} clearable={!onChart} /> : null}
+                {liveIndicator ? <LiveIndicator status={feed.status} /> : null}
                 <Freshness fetchedAt={fetchedAt} stale={stale} source={live?.source} />
                 <span
                   className="udc:text-xs udc:whitespace-nowrap udc:text-muted-foreground udc:tabular-nums"

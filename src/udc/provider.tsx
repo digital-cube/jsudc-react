@@ -1,5 +1,5 @@
 import type { UdcClient } from "@jsudc/core/client";
-import type { ReactNode } from "react";
+import { type ReactNode, useContext, useEffect, useMemo } from "react";
 import { type BulkActionHandlers, UdcActionsProvider } from "../actions/bulk.js";
 import { type CellRegistry, UdcCellsProvider } from "../cells/registry.js";
 import { type UdcLinks, UdcLinksProvider } from "../lookup/links.js";
@@ -7,6 +7,8 @@ import { UdcRenderersProvider } from "../renderers/context.js";
 import type { RendererRegistry } from "../renderers/types.js";
 import { UdcUiProvider } from "../ui-kit/context.js";
 import type { UiKit } from "../ui-kit/types.js";
+import { UdcChangeFeed, type UdcChangeFeedOptions } from "./changeFeed.js";
+import { UdcChangeFeedContext } from "./changes.js";
 import { UdcClientContext } from "./client.js";
 
 export {
@@ -30,6 +32,7 @@ export function UdcProvider({
   links,
   cells,
   actions,
+  changes,
   children,
 }: {
   client: UdcClient;
@@ -49,9 +52,38 @@ export function UdcProvider({
    * `kind` (README "Selection and bulk actions"); a view's `actions` win.
    */
   actions?: BulkActionHandlers;
+  /**
+   * The change feed (README "Live updates"): `true`, or options, opens one
+   * stream for the collections the views below show, and they refetch when
+   * the server says their rows changed instead of on their timer. Off by
+   * default: no connection. Left out under another `UdcProvider` with the
+   * same client, the outer feed is used.
+   */
+  changes?: boolean | UdcChangeFeedOptions;
   children: ReactNode;
 }) {
-  let inner = <UdcClientContext.Provider value={client}>{children}</UdcClientContext.Provider>;
+  const outer = useContext(UdcChangeFeedContext);
+  const optionsKey =
+    typeof changes === "object" ? JSON.stringify(changes) : String(changes ?? false);
+  // `changes` is read through its key: a new but equal options object keeps the feed.
+  const own = useMemo(
+    () =>
+      optionsKey === "false"
+        ? null
+        : new UdcChangeFeed(
+            client,
+            optionsKey === "true" ? {} : (JSON.parse(optionsKey) as UdcChangeFeedOptions),
+          ),
+    [client, optionsKey],
+  );
+  useEffect(() => (own ? () => own.close() : undefined), [own]);
+  const feed = changes === undefined ? (outer?.client === client ? outer : null) : own;
+
+  let inner = (
+    <UdcClientContext.Provider value={client}>
+      <UdcChangeFeedContext.Provider value={feed}>{children}</UdcChangeFeedContext.Provider>
+    </UdcClientContext.Provider>
+  );
   if (links) inner = <UdcLinksProvider links={links}>{inner}</UdcLinksProvider>;
   if (cells) inner = <UdcCellsProvider cells={cells}>{inner}</UdcCellsProvider>;
   if (actions) inner = <UdcActionsProvider actions={actions}>{inner}</UdcActionsProvider>;

@@ -2,6 +2,7 @@ import { isUdcError, isUnauthenticated, type UdcError } from "@jsudc/core";
 import type { UdcClient } from "@jsudc/core/client";
 import { MutationCache, QueryCache, QueryClient } from "@tanstack/react-query";
 import { createContext, useContext } from "react";
+import { registerUnauthenticated } from "./unauthenticated.js";
 
 /** The client every hook talks to; `UdcProvider` sets it. */
 export const UdcClientContext = createContext<UdcClient | null>(null);
@@ -56,7 +57,7 @@ export function createUdcQueryClient(options: UdcQueryClientOptions = {}): Query
   const notify = options.onUnauthenticated
     ? unauthenticatedNotifier(options.onUnauthenticated, options.unauthenticatedQuietMs ?? 2000)
     : undefined;
-  return new QueryClient({
+  const qc = new QueryClient({
     ...(notify
       ? {
           queryCache: new QueryCache({ onError: notify }),
@@ -68,4 +69,7 @@ export function createUdcQueryClient(options: UdcQueryClientOptions = {}): Query
       mutations: { retry: false },
     },
   });
+  // The change feed's unauthenticated error takes the same path (and the same burst).
+  if (notify) registerUnauthenticated(qc, notify);
+  return qc;
 }

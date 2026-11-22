@@ -43,6 +43,16 @@ export const TRANSLATIONS: Translations = {
     },
     FRESH_NO_CACHE: { en: "Server cache: none", sr: "Keš servera: nema" },
     STALE: { en: "stale", sr: "zastarelo" },
+    FEED_LIVE: { en: "live", sr: "uživo" },
+    FEED_LIVE_HINT: {
+      en: "Rows refresh as soon as they change on the server",
+      sr: "Redovi se osvežavaju čim se promene na serveru",
+    },
+    FEED_RECONNECTING: { en: "reconnecting", sr: "ponovo se povezuje" },
+    FEED_RECONNECTING_HINT: {
+      en: "The live connection dropped; rows refresh on the timer until it is back",
+      sr: "Veza uživo je prekinuta; redovi se osvežavaju periodično dok se ne vrati",
+    },
     STALE_HINT: {
       en: "The source could not be reached; this is the last copy it sent",
       sr: "Izvor nije dostupan; ovo je poslednja kopija koju je poslao",

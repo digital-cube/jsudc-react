@@ -13,7 +13,6 @@ import {
 } from "@jsudc/core";
 import type { UdcClient } from "@jsudc/core/client";
 import {
-  type InfiniteData,
   keepPreviousData,
   type QueryClient,
   type UseMutationOptions,
@@ -24,8 +23,12 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { useState } from "react";
+import { useUdcChanges } from "./changes.js";
 import { useUdcClient } from "./client.js";
 import { type ListKeyParams, type PagingMode, udcKeys } from "./keys.js";
+import { applyToListRows, isInfinite, type ListCache } from "./listCache.js";
+
+export { applyToListRows };
 
 export function useUdcCollections() {
   const client = useUdcClient();
@@ -62,9 +65,15 @@ export interface UseUdcCollectionArgs {
   /** 1-based; pages mode only. */
   page?: number;
   enabled?: boolean;
-  /** From `describe`: a source without `cursor` paging is walked by offset in infinite mode too. */
-  capabilities?: Pick<Capabilities, "paging"> | undefined;
-  /** Poll: refetch the loaded rows this often (the view's `refresh_interval_ms`). */
+  /**
+   * From `describe`: a source without `cursor` paging is walked by offset in
+   * infinite mode too; `changes` says whether it offers the change feed.
+   */
+  capabilities?: Pick<Capabilities, "paging" | "changes"> | undefined;
+  /**
+   * Poll: refetch the loaded rows this often (the view's `refresh_interval_ms`).
+   * Suspended while the provider's change feed carries the collection.
+   */
   refetchInterval?: number | undefined;
   /**
    * The search box's text, sent as `ListRequest.search` for a source that
@@ -129,7 +138,12 @@ export function useUdcCollection(args: UseUdcCollectionArgs): UdcCollectionResul
   const page = Math.max(1, args.page ?? 1);
   const enabled = args.enabled ?? true;
   const byCursor = args.capabilities?.paging?.includes("cursor") ?? true;
-  const refetchInterval = pollInterval(args.refetchInterval);
+  // The change feed (when the provider has one) refetches on events; the timer covers the rest.
+  const feed = useUdcChanges(collection, undefined, {
+    capabilities: args.capabilities,
+    enabled,
+  });
+  const refetchInterval = feed.live ? false : pollInterval(args.refetchInterval);
   const searched = searchPart(args.search);
 
   const infiniteParams: ListKeyParams = { filter, sort, limit, mode: "infinite", ...searched };
@@ -288,10 +302,13 @@ export interface UseUdcAllRowsArgs {
   sort?: SortKey[];
   /** Default 2,000. */
   max?: number;
-  /** From `describe`: whether the source pages by cursor. */
-  capabilities?: Pick<Capabilities, "paging"> | undefined;
+  /** From `describe`: whether the source pages by cursor, and offers the change feed. */
+  capabilities?: Pick<Capabilities, "paging" | "changes"> | undefined;
   enabled?: boolean;
-  /** Poll: refetch every row this often (the view's `refresh_interval_ms`). */
+  /**
+   * Poll: refetch every row this often (the view's `refresh_interval_ms`).
+   * Suspended while the provider's change feed carries the collection.
+   */
   refetchInterval?: number | undefined;
   /** Sent as `ListRequest.search` when not blank (`capabilities.search === "source"`). */
   search?: string | undefined;
@@ -325,6 +342,10 @@ export function useUdcAllRows(args: UseUdcAllRowsArgs): UdcAllRowsResult {
   const max = args.max ?? ALL_ROWS_MAX;
   const cursor = args.capabilities?.paging?.includes("cursor") ?? true;
   const [progress, setProgress] = useState<UdcAllRowsResult["progress"]>(null);
+  const feed = useUdcChanges(collection, undefined, {
+    capabilities: args.capabilities,
+    enabled: args.enabled ?? true,
+  });
 
   const searched = searchPart(args.search);
   const key: ListKeyParams = { filter, sort, limit: max, mode: "all", ...searched };
@@ -349,7 +370,7 @@ export function useUdcAllRows(args: UseUdcAllRowsArgs): UdcAllRowsResult {
     },
     placeholderData: keepPreviousData,
     enabled: args.enabled ?? true,
-    refetchInterval: pollInterval(args.refetchInterval),
+    refetchInterval: feed.live ? false : pollInterval(args.refetchInterval),
   });
 
   const rows = query.data?.rows ?? [];
@@ -365,12 +386,6 @@ export function useUdcAllRows(args: UseUdcAllRowsArgs): UdcAllRowsResult {
     progress,
     ...freshnessOf(query.data),
   };
-}
-
-type ListCache = ListResponse | InfiniteData<ListResponse, unknown>;
-
-function isInfinite(data: ListCache): data is InfiniteData<ListResponse, unknown> {
-  return "pages" in data;
 }
 
 /** `data` with every row whose id is `id` passed through `patch`. */
@@ -500,33 +515,6 @@ export function mutateManyTouches(vars: UdcMutateManyVars): (row: Row) => boolea
       return false;
     }
   };
-}
-
-/**
- * `data` with every row `touches` picks patched (`patch` given) or removed
- * (`patch` absent; each page's `total` goes down by the rows removed from the
- * whole list).
- */
-export function applyToListRows(
-  data: ListCache | undefined,
-  touches: (row: Row) => boolean,
-  patch?: (row: Row) => Row,
-): ListCache | undefined {
-  if (!data) return data;
-  const pages = isInfinite(data) ? data.pages : [data];
-  let removed = 0;
-  const next = pages.map((page) => {
-    if (!page.rows.some(touches)) return page;
-    if (patch) return { ...page, rows: page.rows.map((r) => (touches(r) ? patch(r) : r)) };
-    const rows = page.rows.filter((r) => !touches(r));
-    removed += page.rows.length - rows.length;
-    return { ...page, rows };
-  });
-  const counted =
-    removed === 0
-      ? next
-      : next.map((p) => (p.total === null ? p : { ...p, total: Math.max(0, p.total - removed) }));
-  return isInfinite(data) ? { ...data, pages: counted } : (counted[0] as ListResponse);
 }
 
 /**
