@@ -14,7 +14,8 @@ What is in the package:
 - **`UdcProvider`** and **`createUdcQueryClient`**, and TanStack Query hooks over
   the transport client of [`@jsudc/core`](https://github.com/digital-cube/jsudc-core)
   (`useUdcCollections`, `useUdcDescribe`, `useUdcCollection`, `useUdcAllRows`,
-  `useUdcMutate`, `useUdcSchema`, `useUdcSource`);
+  `useUdcMutate`, `useUdcMutateMany`, `useUdcAction`, `useUdcSchema`,
+  `useUdcSource`);
 - **`UdcDataView`** and **`createRendererRegistry`**; each renderer is a
   subpath of its own (`@jsudc/react/table`, `/cards`, `/kanban`, `/calendar`,
   `/tree`, `/map`, `/chart`), so a page bundles, and a host installs the peers
@@ -173,6 +174,7 @@ when this table drifts).
 | `onRowActivate(row)`                 | function (optional)                        | Enter or a plain click on a row ([Row activation and keyboard](#row-activation-and-keyboard)); set only when the host passed one  |
 | `activeRowId`                        | `string \| null` (optional)                | the row to draw as active; set whenever activation is on (the view keeps it when the host does not)                               |
 | `onActiveRowChange(row \| null)`     | function (optional)                        | report the active row moving (keys, a click on another row); set whenever activation is on                                        |
+| `selection`                          | `RowSelection` (optional)                  | the row selection ([Selection and bulk actions](#selection-and-bulk-actions)); set while the view selects and the renderer pages  |
 
 The three activation props are absent unless the host turned activation on;
 `useRowActivation` of `@jsudc/react/headless` does everything they describe
@@ -245,7 +247,9 @@ URL state.
 - `applyTransforms`, `displayText`, `renderKind` and the cell formatters;
   the zone helpers and `useTimezone`;
 - `useRowActivation` (the active row and the keys, see
-  [Row activation and keyboard](#row-activation-and-keyboard)) and the cell
+  [Row activation and keyboard](#row-activation-and-keyboard)), `useRowSelection`
+  and what runs a bulk action (`planBulkAction`, `bulkActionEligible`, see
+  [Selection and bulk actions](#selection-and-bulk-actions)) and the cell
   registry (`createCellRegistry`, `UdcCellsProvider`, `useCellRegistry`, see
   [Custom cells](#custom-cells));
 - the registry functions (`createRendererRegistry`, `resolveTab`) and the URL
@@ -510,13 +514,15 @@ ArrowDown / `j` and ArrowUp / `k` move the active row (and the focus) by one,
 Home / End jump to the first / last loaded row, Enter activates. They are
 left alone while an input, the search box, a cell editor, a menu, a list box
 or a dialog has the focus, and with Ctrl, Cmd, Alt or Shift held. Space is
-not bound (it is the selection's, in 0.5.0). Double-click and Enter still
+not bound unless the view selects; then it toggles the active row (0.5.0). Double-click and Enter still
 edit an editable cell when the focus is on the cell itself.
 
 **One tab stop.** The rows are a roving-`tabindex` list: Tab reaches the
 active row (else the one last focused, else the first) and leaves the list on
 the next Tab. The table is `role="grid"`; the card grid too, each card a
-`row`. The active row has `aria-selected="true"`, the attribute
+`row`. The active row has `aria-selected="true"` (while the view selects,
+`aria-selected` is the selection and the active row has `aria-current`: see
+[Selection and bulk actions](#selection-and-bulk-actions)), the attribute
 `data-active="true"` (`.udc-row[data-active]`, `.udc-card[data-active]` for
 your CSS) and the `--selected` background.
 
@@ -617,6 +623,193 @@ function MessageList({ data, onRowActivate, activeRowId, onActiveRowChange }: Re
 `nav.activeRowId` is the active row (when it is loaded), `nav.move("next")`
 and `nav.activate(row)` drive it from the host's own buttons, and `ownsKeys`
 says whether a key belongs to the element it was pressed on.
+
+## Selection and bulk actions
+
+A user selects rows (one, a range, the page, or everything that matches the
+filter) and runs the view's `bulk_actions` on them. Selection is on when the
+view says `multiselect: true` or declares `bulk_actions`; `selectable` on
+`UdcDataView` forces it on (`true`) or off (`false`). A view with neither
+draws exactly what it drew before 0.5.0.
+
+**What the user does.** The table gets a checkbox column pinned at the start
+and a header checkbox for the page (checked, empty or indeterminate);
+shift-click selects the range from the last row toggled; with row activation
+on, Space toggles the active row and Shift+Space selects a range to it. The
+cards get a checkbox each. Kanban, tree, calendar, map and chart do not
+select. While anything is selected a bar over the list shows the count, a
+button per `bulk_actions` entry and a clear button.
+
+**All that match.** When the whole page is selected and more rows match than
+are loaded, the bar offers "Select all 1,234 that match". Taking it switches
+the selection to "every row the filter matches, except the ones you uncheck"
+(the bar reads "All 1,234 are selected"), and an action then goes to the
+server by filter, not by ids. When everything is loaded already the page is
+everything, and nothing is offered.
+
+**The selection is cleared** when the filter changes (the search, a chip,
+the filter builder, the host's `filter`) or the collection does; a sort, a
+refetch and more pages loading keep it. In id mode the selected rows are
+remembered, so a row a refetch drops still counts and still reaches a
+handler.
+
+**Without a total.** A source answering `capabilities.total_count: false`
+lists with `total: null`. The offer then reads "Select all that match", with
+no number, the bar "All matching rows are selected", with no number, and the
+result message reports the count the server answers (`updated`).
+
+### Running an action
+
+Each `bulk_actions` entry is an `ActionDef` of `@jsudc/core`: `kind`,
+`label`, `icon` (`lucide:<name>`), `variant`, `when`, and 0.5.0's `set`,
+`action` and `confirm`. Its button reads the term `ACTION_<KIND>` of the
+collection's section (`TBL_<COLLECTION>`), else `ACTIONS.<kind>`, else the
+def's `label`. It is disabled unless its `when` holds for every selected row
+(`isActionEligibleForAll`); in "all that match" mode rows that are not loaded
+cannot be checked in the browser, so it is offered unless `when` is `false`
+and the server decides.
+
+A click runs the first of these that applies:
+
+1. **A handler for its `kind`**: the view's `actions` prop, else
+   `UdcProvider actions`. It gets `{ kind, def, collection, ids }` in id mode
+   or `{ kind, def, collection, filter, exceptIds }` in "all that match" mode,
+   with `rows` (the selected rows that are loaded) and `clearSelection`. The
+   view does not clear the selection after a handler; call `clearSelection`
+   when you are done. A handler that throws shows its message.
+2. **`delete`**: a confirmation, then `mutate_many` `delete`.
+3. **A def with `set`**: `mutate_many` `update` with that patch.
+4. **Anything else**: the server action the def's `action` names (default its
+   `kind`) with `{ collection, ids }` or `{ collection, filter, except_ids }`
+   — a host action registered on the dispatcher (`@jsudc/server`'s
+   `Dispatcher.register`). An `unsupported_op` answer shows "The server does
+   not support …", naming the action.
+
+The built-in paths ask first when `actionConfirms(def)` says so: `delete` by
+default, any other def with `confirm: true` or a question of its own. They
+change the loaded rows at once (`useUdcMutateMany`), put them back if the
+call fails, refetch the collection's lists and lookups when it settles, and
+report what the server answers: "12 rows deleted", "Mark read: 12 rows", and
+"3 rows could not be changed" for the ids in `failed`, which stay selected.
+
+A mailbox whose view archives through the host's own endpoint, marks read
+with a patch, and deletes with the built-in delete:
+
+```yaml
+# The view of `messages`
+view:
+  columns: [{ field: subject }, { field: from }, { field: received_at }]
+  bulk_actions:
+    - kind: archive
+      label: Archive
+      icon: lucide:archive
+    - kind: mark_read
+      label: Mark read
+      icon: lucide:mail-open
+      set: { read: true }
+      when: { field: read, op: eq, value: false }
+    - kind: delete
+      variant: destructive
+```
+
+```tsx
+import { UdcDataView } from "@jsudc/react";
+
+export function Inbox() {
+  return (
+    <UdcDataView
+      collection="messages"
+      filter={{ field: "folder", op: "eq", value: "inbox" }}
+      actions={{
+        // Id mode: `ids`. "All that match": `filter` (the host's folder, the search, the chips)
+        // and `exceptIds`. `rows` are the selected rows the view has loaded.
+        archive: async ({ ids, filter, exceptIds, clearSelection }) => {
+          await fetch("/api/mail/archive", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify(ids ? { ids } : { filter, except_ids: exceptIds }),
+          });
+          clearSelection();
+        },
+        // mark_read has `set`: a mutate_many update, no handler needed.
+        // delete is built in: a confirmation, then a mutate_many delete.
+      }}
+    />
+  );
+}
+```
+
+**Accessibility.** With selection on and row activation off the table stays a
+table: each row's checkbox is a native checkbox labelled "Select row", the
+header's "Select all rows shown" (`aria-checked="mixed"` when some are). With
+both on the list is ARIA's multi-select grid (`aria-multiselectable="true"`):
+`aria-selected` on a row says whether it is **selected**, and the active row
+is the one holding the focus (the roving tab stop), marked
+`aria-current="true"` and `data-active="true"`. With selection off,
+`aria-selected` marks the active row as in 0.4.0. A selected row carries
+`data-selected="true"` (`.udc-row[data-selected]`, `.udc-card[data-selected]`)
+and the `--selected` background; the bar is `role="toolbar"` and its count is
+announced politely.
+
+**In a host renderer.** `RendererProps.selection` (a `RowSelection`, set
+while the view selects) carries `mode`, `ids`, `exceptIds`, `count`
+(`null` in "all that match" mode without a total), `rows`, `pageState`,
+`isSelected(id)`, `toggle(id, { range })`, `setPage(on)`,
+`selectAllMatching()`, `setIds(ids)` and `clear()`; the view draws the bar.
+`useRowSelection({ rows, total, resetKey })` of `@jsudc/react/headless` is
+the same model for a list of your own, and its pure operations
+(`toggleSelection`, `selectRange`, `setPageSelection`, `selectAllMatching`,
+`selectionCount`, …) range over the rows as loaded, not over the DOM.
+`useRowActivation` takes `isSelected` and `onToggleSelect(row, range)` for
+Space and the ARIA above.
+
+### `useUdcMutateMany` and `useUdcAction`
+
+`useUdcMutateMany(collection)` is `useUdcMutate` for many rows: `mutateAsync({
+op: "update", ids, row })`, `{ op: "delete", ids }`, or by `filter` with
+`except_ids`. The rows it touches are patched (or removed, the total counted
+down) in every cached list at once, put back on an error, and the lists and
+lookups are invalidated when it settles. It resolves to the server's `{
+updated, failed }`: report `failed` yourself.
+
+`useUdcAction(action)` is a mutation over the client's typed `call` for any
+host action. Given the action's definition (`defineHostAction`, in a module
+the server and the browser share), the payload and the answer are typed from
+its schemas and the answer is checked; given a name, you type it
+(`useUdcAction<Res, Req>("mail.flag")`). `invalidates` names the collections
+whose lists to refetch afterwards; every other TanStack mutation option
+passes through.
+
+```ts
+// shared/actions.ts — imported by the server (Dispatcher.register) and by the browser
+import { defineHostAction } from "@jsudc/core";
+import { z } from "zod";
+
+export const snooze = defineHostAction({
+  name: "mail.snooze",
+  request: z.object({ ids: z.array(z.string()), until: z.iso.datetime() }),
+  response: z.object({ snoozed: z.number().int() }),
+});
+```
+
+```tsx
+import { useUdcAction } from "@jsudc/react";
+import { snooze } from "../shared/actions";
+
+export function SnoozeButton({ ids }: { ids: string[] }) {
+  const run = useUdcAction(snooze, { invalidates: ["messages"] });
+  return (
+    <button
+      type="button"
+      disabled={run.isPending}
+      // The payload is typed { ids: string[]; until: string }; data is { snoozed: number }.
+      onClick={() => run.mutate({ ids, until: new Date(Date.now() + 3_600_000).toISOString() })}
+    >
+      {run.data ? `Snoozed ${run.data.snoozed}` : "Snooze an hour"}
+    </button>
+  );
+}
+```
 
 ## Custom cells
 
@@ -1115,7 +1308,13 @@ registry and everything not tied to one renderer. Beyond the above:
 `EmptyState` / `ErrorState` / `NoRendererState`; the `UdcQueryClientOptions` type;
 the row activation `useRowActivation`, `rowActivationEnabled`, `ownsKeys`
 and the `RowActivationProps` / `RowActivation` / `RowActivationRowProps` /
-`UseRowActivationOptions` types; the cells `createCellRegistry`,
+`UseRowActivationOptions` types; the selection `useRowSelection` with its
+pure operations and the `RowSelection` / `RowSelectionState` types; the bulk
+actions `UdcActionsProvider`, `useBulkActionHandlers`, `planBulkAction`,
+`bulkActionEligible`, `selectionTarget`, `MATCH_ALL` and the
+`BulkActionContext` / `BulkActionHandler` / `BulkActionHandlers` /
+`BulkActionPlan` types; the hooks `useUdcMutateMany`, `useUdcAction` and the
+cache helpers `applyToListRows`, `mutateManyTouches`, `callAction`; the cells `createCellRegistry`,
 `cellComponent`, `mergeCellRegistries`, `UdcCellsProvider`, `useCellRegistry`
 and the `CellProps` / `CellComponent` / `CellDefinition` / `CellRegistry`
 types; `mergeMessages`, `makeT`,

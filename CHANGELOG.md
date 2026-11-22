@@ -7,6 +7,82 @@ All notable changes to `@jsudc/react` are recorded here. The format follows
 
 ## [Unreleased]
 
+Selection and bulk actions (R1 + S3, the React part) and host actions in the
+browser (S4). Builds on `@jsudc/core` 0.5.0's `mutate_many`, typed host
+actions, eligibility helpers and the `set` / `action` / `confirm` keys of
+`ActionDef`.
+
+### Added
+
+- Row selection in the data view: on when the view says `multiselect: true`
+  or declares `bulk_actions`, forced on or off by the new `selectable` prop of
+  `UdcDataView`. The table draws a checkbox column pinned at the start, a
+  header checkbox for the loaded rows (with the indeterminate state) and
+  selects a range on shift-click; the cards a checkbox per card; with row
+  activation on, Space toggles the active row (Shift+Space a range). The
+  selection is cleared by a new filter (search, chips, filter tree, the
+  host's `filter`) or collection, kept across a sort, a refetch and more
+  pages. Kanban, tree, calendar, map and chart do not select.
+- "Select all that match": with the loaded rows all selected and more
+  matching, the bar offers "Select all N that match" (no number when the
+  list's `total` is `null`), switching to "every row the filter matches,
+  except these" — the action then goes by filter and the message reports the
+  server's `updated`.
+- The bulk bar: the count (or "all matching"), a button per
+  `view.bulk_actions` entry (label from `ACTION_<KIND>` of the collection's
+  section, `ACTIONS.<kind>`, else the def's `label`; `icon`; `variant`),
+  disabled unless `when` holds for every selected row (offered unless
+  `when: false` in "all that match" mode), and a clear button.
+- Handlers by `kind`: `UdcDataView actions` and `UdcProvider actions` (also
+  `UdcActionsProvider`, `useBulkActionHandlers`) take
+  `{ archive: ({ ids, filter, exceptIds, rows, collection, clearSelection, def, kind }) => … }`
+  (`BulkActionHandlers`, `BulkActionContext`). Without a handler: `delete`
+  asks, then `mutate_many` `delete`; a def with `set` sends `mutate_many`
+  `update`; any other kind calls the server action its `action` names
+  (default `kind`) with `{ collection, ids | filter, except_ids }`. An
+  `unsupported_op` answer is shown naming the action; `failed` ids are
+  reported by count and stay selected (`planBulkAction`,
+  `bulkActionEligible`, `selectionTarget`, `MATCH_ALL`).
+- `RendererProps.selection` (optional `RowSelection`): set while the view
+  selects and the renderer reads the paged list. A renderer written against
+  0.4.0's `RendererProps` still compiles.
+- `@jsudc/react/headless` (and the root): `useRowSelection` and its pure
+  operations `toggleSelection`, `selectRange`, `setPageSelection`,
+  `selectAllMatching`, `pageSelectionState`, `selectionCount`,
+  `selectionHas`, `selectionIsEmpty`, `EMPTY_SELECTION` (types
+  `RowSelection`, `RowSelectionState`, `UseRowSelectionOptions`).
+- `useUdcMutateMany(collection)`: `mutate_many` with the optimistic update
+  `useUdcMutate` does for one row — loaded rows patched or removed (the total
+  counted down) in every cached list at once, rolled back on an error, lists
+  and lookups invalidated when settled; resolves to `{ updated, failed }`.
+  Helpers `applyToListRows`, `mutateManyTouches`; type `UdcMutateManyVars`.
+- `useUdcAction(definitionOrName, options?)` (S4): a mutation over the
+  client's typed `call` for a host action — typed from a `defineHostAction`
+  definition (the answer checked against its schema) or by the caller for a
+  name; `invalidates` refetches collections' lists afterwards
+  (`UseUdcActionOptions`, `callAction`).
+- `useRowActivation` takes `isSelected` and `onToggleSelect(row, range)`;
+  `RowActivationRowProps` gains the optional `aria-current`.
+- i18n terms in `en` and `sr`: `SELECT_ROW`, `SELECT_PAGE`,
+  `SELECTED_COUNT`, `SELECTED_ALL_COUNT`, `SELECTED_ALL_MATCHING`,
+  `SELECT_ALL_MATCHING_COUNT`, `SELECT_ALL_MATCHING`, `SELECTION_CLEAR`,
+  `BULK_ACTIONS`, `BULK_DELETE`, `BULK_NOT_ELIGIBLE`, `BULK_CONFIRM`,
+  `BULK_CONFIRM_DELETE_COUNT`, `BULK_CONFIRM_DELETE_MATCHING`,
+  `BULK_CONFIRM_DELETE_BODY`, `BULK_CONFIRM_ACTION_COUNT`,
+  `BULK_CONFIRM_ACTION_MATCHING`, `BULK_DONE_COUNT`, `BULK_DONE`,
+  `BULK_DELETED_COUNT`, `BULK_FAILED_COUNT`, `BULK_FAILED`,
+  `BULK_UNSUPPORTED`.
+- README section "Selection and bulk actions" (a worked mailbox example,
+  the behaviour without a total, the accessibility of selection next to the
+  active row, `useUdcMutateMany` and `useUdcAction` with a worked example).
+
+### Changed
+
+- With selection on and row activation on, `aria-selected` on a row is its
+  selection (the grid is `aria-multiselectable`) and the active row is marked
+  `aria-current="true"`. With selection off nothing changes: `aria-selected`
+  marks the active row as in 0.4.0.
+
 ## [0.4.0] - 2026-11-22
 
 Sessions (a signed-out state, `onUnauthenticated`), embedding a view in a
