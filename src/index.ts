@@ -141,7 +141,13 @@ export {
   useUdcSource,
 } from "./udc/hooks.js";
 export { type ListKeyParams, type PagingMode, udcKeys } from "./udc/keys.js";
-export { createUdcQueryClient, shouldRetry, UdcProvider, useUdcClient } from "./udc/provider.js";
+export {
+  createUdcQueryClient,
+  shouldRetry,
+  UdcProvider,
+  type UdcQueryClientOptions,
+  useUdcClient,
+} from "./udc/provider.js";
 // The UI kit: the primitives every renderer draws with, from context. The default kit and the
 // primitives themselves are `@jsudc/react/ui`; a host brings its own through the provider.
 export {

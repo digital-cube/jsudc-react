@@ -85,17 +85,17 @@ collections, so each one starts from a fresh view.
 
 ### The providers a host wraps
 
-| Provider                                              | Needed | Why                                                                                                                                                   |
-| ----------------------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `UdcProvider client={new UdcClient(...)}`             | yes    | every hook reads the client from it; `renderers={…}` is what the data view draws its tabs with (none given: every tab says no renderer is registered) |
-| `QueryClientProvider client={createUdcQueryClient()}` | yes    | the hooks are TanStack Query; `createUdcQueryClient` retries transport failures only, never a protocol error                                          |
-| `UdcI18nProvider`                                     | yes    | every string goes through `useI18n()`                                                                                                                 |
-| `TooltipProvider`                                     | yes    | Radix tooltips on headers, chips and buttons; with your own kit, `kit.TooltipProvider` (see [Bring your own primitives](#bring-your-own-primitives))  |
-| `Toaster`                                             | yes    | save, conflict and schema-edit toasts (`useToast`); with your own kit, `kit.Toaster`                                                                  |
-| `UdcUrlStateProvider` / `UdcReactRouterUrlState`      | no     | where search, filters, sort, paging and the tab live; without it `window.location` (see [URL state](#url-state))                                      |
-| `UdcLinksProvider` / `collectionPath`                 | no     | where lookup links and `row_link`s go; without it `/c/<collection>` (see [Lookups and drill-down](#lookups-and-drill-down))                           |
-| `TimezoneProvider`                                    | no     | without it instants are shown in the browser's zone; with it the user's pick, kept in `localStorage` (`udc-tz`)                                       |
-| `ThemeProvider`                                       | no     | `useTheme()` toggles the `dark` class on `<html>` and keeps the choice (`udc-theme`); any other way of setting that class works too                   |
+| Provider                                              | Needed | Why                                                                                                                                                         |
+| ----------------------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `UdcProvider client={new UdcClient(...)}`             | yes    | every hook reads the client from it; `renderers={…}` is what the data view draws its tabs with (none given: every tab says no renderer is registered)       |
+| `QueryClientProvider client={createUdcQueryClient()}` | yes    | the hooks are TanStack Query; `createUdcQueryClient` retries transport failures only, never a protocol error; `onUnauthenticated` see [Sessions](#sessions) |
+| `UdcI18nProvider`                                     | yes    | every string goes through `useI18n()`                                                                                                                       |
+| `TooltipProvider`                                     | yes    | Radix tooltips on headers, chips and buttons; with your own kit, `kit.TooltipProvider` (see [Bring your own primitives](#bring-your-own-primitives))        |
+| `Toaster`                                             | yes    | save, conflict and schema-edit toasts (`useToast`); with your own kit, `kit.Toaster`                                                                        |
+| `UdcUrlStateProvider` / `UdcReactRouterUrlState`      | no     | where search, filters, sort, paging and the tab live; without it `window.location` (see [URL state](#url-state))                                            |
+| `UdcLinksProvider` / `collectionPath`                 | no     | where lookup links and `row_link`s go; without it `/c/<collection>` (see [Lookups and drill-down](#lookups-and-drill-down))                                 |
+| `TimezoneProvider`                                    | no     | without it instants are shown in the browser's zone; with it the user's pick, kept in `localStorage` (`udc-tz`)                                             |
+| `ThemeProvider`                                       | no     | `useTheme()` toggles the `dark` class on `<html>` and keeps the choice (`udc-theme`); any other way of setting that class works too                         |
 
 ## Renderers
 
@@ -524,6 +524,63 @@ const messages: Messages = {
 - `useI18n()` gives `t`, `tMaybe` (`null` when missing), `locale`,
   `intlLocale`, `locales` and `setLocale` to your own components too.
 
+## Sessions
+
+A host with a cookie session and a CSRF token uses the client as it is: the
+`UdcClient` of `@jsudc/core` reads its `headers` per call when they are a
+function, sends cookies to another origin with `credentials: "include"`, and
+turns "not signed in" — an HTTP 401 in front of `/udc`, or the server's
+in-protocol refusal (`forbidden`, `details.reason: "unauthenticated"`) — into
+one error, `isUnauthenticated(err)`. That error is never retried. The library
+does two things with it:
+
+- **`createUdcQueryClient({ onUnauthenticated })`** calls your callback when a
+  query or a mutation fails that way: the one place to send the user to your
+  login. It is called once per burst — the failures that arrive together (every
+  query of a page) make one call — and again only after
+  `unauthenticatedQuietMs` (default 2000) without such a failure.
+  `createUdcQueryClient()` without arguments works as before.
+- **The error state** of every view says the user is signed out
+  (`APP.SIGNED_OUT_TITLE`, `APP.SIGNED_OUT_BODY`, overridable like every other
+  term) instead of the generic failure with Retry.
+
+```tsx
+import { UdcClient } from "@jsudc/core/client";
+import { createUdcQueryClient, UdcDataView, UdcProvider } from "@jsudc/react";
+import { RENDERERS } from "@jsudc/react/all";
+import { QueryClientProvider } from "@tanstack/react-query";
+
+// Django-style: the session cookie travels by itself, the CSRF token is a cookie
+// the page reads and echoes in a header — read on every call, so a new session
+// (and a new token) needs no new client.
+const csrfToken = () => document.cookie.match(/(?:^|; )csrftoken=([^;]*)/)?.[1] ?? "";
+
+const client = new UdcClient({
+  httpUrl: "https://api.example.com",
+  credentials: "include", // cookies to another origin; leave it out on the same origin
+  headers: () => ({ "x-csrftoken": csrfToken() }),
+});
+
+const queryClient = createUdcQueryClient({
+  // once, however many queries of the page were refused together
+  onUnauthenticated: () => {
+    const next = encodeURIComponent(location.pathname + location.search);
+    location.assign(`/login?next=${next}`);
+  },
+});
+
+<UdcProvider client={client} renderers={RENDERERS}>
+  <QueryClientProvider client={queryClient}>
+    {/* …the other providers of the quick start… */}
+    <UdcDataView collection="messages" />
+  </QueryClientProvider>
+</UdcProvider>;
+```
+
+An HTTP 403 is `forbidden` with `details.http_status: 403`: also not retried,
+shown as the generic failure, and not passed to `onUnauthenticated`. Login
+screens, token refresh and storing the session are the host's.
+
 ## Lookups and drill-down
 
 A `lookup` / `lookup_array` field (see `@jsudc/core`) holds the key of a row of
@@ -585,7 +642,7 @@ registry and everything not tied to one renderer. Beyond the above:
 `createRendererRegistry`, `rendererEntry`, `rendererTabs`, `resolveTab`,
 `UdcRenderersProvider`, `useRendererRegistry` and the `RendererProps` /
 `RendererEntry` / `RendererDefinition` / `RendererRegistry` types;
-`EmptyState` / `ErrorState` / `NoRendererState`; `mergeMessages`, `makeT`,
+`EmptyState` / `ErrorState` / `NoRendererState`; the `UdcQueryClientOptions` type; `mergeMessages`, `makeT`,
 `lookup`, `schemaLabelTerms`, `tableSection`, `TRANSLATIONS`, `LOCALES`;
 `cn` (tailwind-merge set up for the `udc:` prefix), `storage`, `humanize`;
 `UdcUrlStateProvider`, `useUrlSearchParams`, `windowLocationAdapter` and the

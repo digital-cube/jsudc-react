@@ -232,6 +232,11 @@ export const TRANSLATIONS: Translations = {
     CLEAR_FILTERS: { en: "Clear all filters", sr: "Obriši sve filtere" },
     ERROR_TITLE: { en: "Could not load the data", sr: "Podaci nisu učitani" },
     RETRY: { en: "Try again", sr: "Pokušaj ponovo" },
+    SIGNED_OUT_TITLE: { en: "You are signed out", sr: "Niste prijavljeni" },
+    SIGNED_OUT_BODY: {
+      en: "Sign in again to see this data.",
+      sr: "Prijavite se ponovo da biste videli ove podatke.",
+    },
     ANY: { en: "Any", sr: "Bilo koje" },
     YES: { en: "Yes", sr: "Da" },
     NO: { en: "No", sr: "Ne" },

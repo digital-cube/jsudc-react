@@ -1,4 +1,5 @@
-import { AlertTriangle, RotateCw, SearchX, Table2 } from "lucide-react";
+import { isUnauthenticated } from "@jsudc/core";
+import { AlertTriangle, LogIn, RotateCw, SearchX, Table2 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useI18n } from "../i18n/i18n.js";
 import { useUiKit } from "../ui-kit/context.js";
@@ -77,9 +78,25 @@ export function EmptyState({
   );
 }
 
+/**
+ * A failed load. "Not signed in" (`isUnauthenticated`: an HTTP 401, or the
+ * server's in-protocol refusal) is a state of the session, not of the data:
+ * it says so (`APP.SIGNED_OUT_TITLE` / `SIGNED_OUT_BODY`) and offers no Retry,
+ * which would only be refused again. Anything else shows its message and Retry.
+ */
 export function ErrorState({ error, onRetry }: { error: Error; onRetry: () => void }) {
   const { Button } = useUiKit();
   const { t } = useI18n();
+  if (isUnauthenticated(error)) {
+    return (
+      <Panel
+        testId="signed-out"
+        icon={<LogIn className="udc:size-5" />}
+        title={t("APP", "SIGNED_OUT_TITLE")}
+        body={t("APP", "SIGNED_OUT_BODY")}
+      />
+    );
+  }
   return (
     <Panel
       testId="table-error"

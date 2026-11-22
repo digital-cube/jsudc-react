@@ -7,7 +7,12 @@ import { UdcUiProvider } from "../ui-kit/context.js";
 import type { UiKit } from "../ui-kit/types.js";
 import { UdcClientContext } from "./client.js";
 
-export { createUdcQueryClient, shouldRetry, useUdcClient } from "./client.js";
+export {
+  createUdcQueryClient,
+  shouldRetry,
+  type UdcQueryClientOptions,
+  useUdcClient,
+} from "./client.js";
 
 /**
  * The root provider: the client, the renderers `UdcDataView` draws its tabs

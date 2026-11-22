@@ -7,6 +7,26 @@ All notable changes to `@jsudc/react` are recorded here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- Sessions: `createUdcQueryClient(options?)` takes `UdcQueryClientOptions` —
+  `onUnauthenticated(error)`, called when a query or a mutation fails with
+  `isUnauthenticated` (an HTTP 401, or the server's in-protocol "not signed
+  in"), once per burst; `unauthenticatedQuietMs` (default 2000) ends a burst.
+  Without arguments it is what it was.
+- `ErrorState` shows "You are signed out" (`APP.SIGNED_OUT_TITLE`,
+  `APP.SIGNED_OUT_BODY`, `en` and `sr`, overridable) without Retry for an
+  unauthenticated error, in every view.
+- README section "Sessions": a cookie session, a CSRF header read per call,
+  `onUnauthenticated` sending the user to the host's login.
+
+### Changed
+
+- With `@jsudc/core` 0.4.0 an HTTP 401 / 403 in front of `/udc` is a `UdcError`
+  (`forbidden`), so it is no longer retried twice and shown as a transport
+  failure with Retry: it shows at once, a 401 as signed out, a 403 as the
+  generic failure. `shouldRetry` itself is unchanged.
+
 ## [0.3.1] - 2026-11-15
 
 Patch release of `@jsudc/react` alone; `@jsudc/core` and `@jsudc/server` stay
