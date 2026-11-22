@@ -5,6 +5,19 @@
 // none of their peers. Hooks and models without markup: `@jsudc/react/headless`. The UI
 // primitives (Radix + Tailwind) and the default kit: `@jsudc/react/ui`.
 
+export {
+  type BulkActionContext,
+  type BulkActionHandler,
+  type BulkActionHandlers,
+  type BulkActionPlan,
+  bulkActionEligible,
+  MATCH_ALL,
+  planBulkAction,
+  selectionTarget,
+  UdcActionsProvider,
+  type UdcActionsProviderProps,
+  useBulkActionHandlers,
+} from "./actions/bulk.js";
 // Custom cells: components a column's `render` names, registered like the renderers.
 export {
   type CellComponent,
@@ -130,6 +143,22 @@ export {
   type UseRowActivationOptions,
   useRowActivation,
 } from "./rows/useRowActivation.js";
+// Row selection and bulk actions (0.5.0; also in `@jsudc/react/headless`).
+export {
+  EMPTY_SELECTION,
+  pageSelectionState,
+  type RowSelection,
+  type RowSelectionState,
+  selectAllMatching,
+  selectionCount,
+  selectionHas,
+  selectionIsEmpty,
+  selectRange,
+  setPageSelection,
+  toggleSelection,
+  type UseRowSelectionOptions,
+  useRowSelection,
+} from "./rows/useRowSelection.js";
 export { EmptyState, ErrorState, NoRendererState } from "./table/states.js";
 export {
   BROWSER_TZ,
@@ -151,22 +180,29 @@ export { i18nKey } from "./tree/model.js";
 // The hooks over @jsudc/core's client, the client context and the TanStack Query client.
 export {
   ALL_ROWS_MAX,
+  applyToListRows,
+  callAction,
   type FetchAllRowsArgs,
   fetchAllRows,
   freshnessOf,
+  mutateManyTouches,
   pageOffset,
   patchRowInList,
   pollInterval,
   type UdcAllRowsResult,
   type UdcCollectionResult,
+  type UdcMutateManyVars,
   type UdcMutateVars,
+  type UseUdcActionOptions,
   type UseUdcAllRowsArgs,
   type UseUdcCollectionArgs,
+  useUdcAction,
   useUdcAllRows,
   useUdcCollection,
   useUdcCollections,
   useUdcDescribe,
   useUdcMutate,
+  useUdcMutateMany,
   useUdcSchema,
   useUdcSource,
 } from "./udc/hooks.js";

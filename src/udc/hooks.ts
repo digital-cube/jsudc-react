@@ -1,7 +1,11 @@
 import {
   type ActionRequest,
   type Capabilities,
+  evaluateFilter,
   type FilterNode,
+  type HostAction,
+  type HostActionPayload,
+  type HostActionResponse,
   isVersionConflict,
   type ListResponse,
   type Row,
@@ -12,6 +16,8 @@ import {
   type InfiniteData,
   keepPreviousData,
   type QueryClient,
+  type UseMutationOptions,
+  type UseMutationResult,
   useInfiniteQuery,
   useMutation,
   useQuery,
@@ -446,4 +452,155 @@ export function useUdcSchema(collection: string) {
     onSuccess,
   });
   return { addField, updateField, softDeleteField };
+}
+
+// mutate_many and host actions (0.5.0) --------------------------------------
+
+export type UdcMutateManyVars = Omit<ActionRequest<"mutate_many">, "collection">;
+
+/**
+ * Which cached row a `mutate_many` request touches: one of its `ids`, or a row
+ * its `filter` matches (evaluated in the browser, `evaluateFilter`) that is
+ * not among `except_ids`. A filter the browser cannot evaluate touches no
+ * cached row: the invalidation after the call brings the server's answer.
+ */
+export function mutateManyTouches(vars: UdcMutateManyVars): (row: Row) => boolean {
+  if (vars.ids) {
+    const ids = new Set(vars.ids);
+    return (row) => ids.has(row.__meta.id);
+  }
+  const except = new Set(vars.except_ids ?? []);
+  const filter = vars.filter;
+  return (row) => {
+    if (except.has(row.__meta.id)) return false;
+    try {
+      return evaluateFilter(filter, row);
+    } catch {
+      return false;
+    }
+  };
+}
+
+/**
+ * `data` with every row `touches` picks patched (`patch` given) or removed
+ * (`patch` absent; each page's `total` goes down by the rows removed from the
+ * whole list).
+ */
+export function applyToListRows(
+  data: ListCache | undefined,
+  touches: (row: Row) => boolean,
+  patch?: (row: Row) => Row,
+): ListCache | undefined {
+  if (!data) return data;
+  const pages = isInfinite(data) ? data.pages : [data];
+  let removed = 0;
+  const next = pages.map((page) => {
+    if (!page.rows.some(touches)) return page;
+    if (patch) return { ...page, rows: page.rows.map((r) => (touches(r) ? patch(r) : r)) };
+    const rows = page.rows.filter((r) => !touches(r));
+    removed += page.rows.length - rows.length;
+    return { ...page, rows };
+  });
+  const counted =
+    removed === 0
+      ? next
+      : next.map((p) => (p.total === null ? p : { ...p, total: Math.max(0, p.total - removed) }));
+  return isInfinite(data) ? { ...data, pages: counted } : (counted[0] as ListResponse);
+}
+
+/**
+ * Change (`update`, the patch in `row`) or delete many rows of a collection in
+ * one `mutate_many` request: by `ids`, or by `filter` with `except_ids` ("all
+ * that match, except these"). Like `useUdcMutate` for one row, the loaded
+ * rows are patched (or removed) in every cached list at once, put back if the
+ * call fails, and the collection's lists and lookups are invalidated once it
+ * settles. Resolves to the server's `{ updated, failed }`: `failed` names the
+ * ids that were not changed, and why.
+ */
+export function useUdcMutateMany(collection: string) {
+  const client = useUdcClient();
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: (vars: UdcMutateManyVars) => client.mutateMany({ collection, ...vars }),
+    onMutate: async (vars) => {
+      await qc.cancelQueries({ queryKey: udcKeys.lists(collection) });
+      const snapshot = qc.getQueriesData<ListCache>({ queryKey: udcKeys.lists(collection) });
+      const touches = mutateManyTouches(vars);
+      const set = vars.row;
+      const patch =
+        vars.op === "update" && set
+          ? (r: Row): Row => ({ ...r, ...set, __meta: r.__meta })
+          : undefined;
+      if (vars.op === "delete" || patch) {
+        qc.setQueriesData<ListCache>({ queryKey: udcKeys.lists(collection) }, (data) =>
+          applyToListRows(data, touches, patch),
+        );
+      }
+      return { snapshot };
+    },
+    onError: (_err, _vars, ctx) => {
+      for (const [key, data] of ctx?.snapshot ?? []) qc.setQueryData(key, data);
+    },
+    onSettled: () =>
+      Promise.all([
+        qc.invalidateQueries({ queryKey: udcKeys.lists(collection) }),
+        qc.invalidateQueries({ queryKey: udcKeys.lookups(collection) }),
+        qc.invalidateQueries({ queryKey: ["udc", "lookup-options", collection] }),
+      ]),
+  });
+}
+
+/** What `useUdcAction` takes besides TanStack's mutation options. */
+export interface UseUdcActionOptions<Res, Req>
+  extends Omit<UseMutationOptions<Res, Error, Req>, "mutationFn"> {
+  /** Collections whose lists and lookups to invalidate once the call settles (the rows it changed). */
+  invalidates?: readonly string[] | undefined;
+}
+
+/**
+ * A mutation over the client's typed `call`, for any host action: pass the
+ * action's definition (`defineHostAction`, shared with the server) and the
+ * payload and the result are typed from its schemas; or pass a name and type
+ * it yourself (`useUdcAction<Res, Req>("mail.snooze")`). `invalidates` names
+ * the collections whose lists to refetch afterwards.
+ */
+export function useUdcAction<H extends HostAction>(
+  action: H,
+  options?: UseUdcActionOptions<HostActionResponse<H>, HostActionPayload<H>>,
+): UseMutationResult<HostActionResponse<H>, Error, HostActionPayload<H>>;
+export function useUdcAction<Res = unknown, Req = Record<string, unknown>>(
+  action: string,
+  options?: UseUdcActionOptions<Res, Req>,
+): UseMutationResult<Res, Error, Req>;
+export function useUdcAction(
+  action: string | HostAction,
+  options: UseUdcActionOptions<unknown, unknown> = {},
+): UseMutationResult<unknown, Error, unknown> {
+  const client = useUdcClient();
+  const qc = useQueryClient();
+  const { invalidates, onSettled, ...rest } = options;
+  return useMutation<unknown, Error, unknown>({
+    ...rest,
+    mutationFn: (payload) => callAction(client, action, payload),
+    onSettled: async (...args) => {
+      await Promise.all(
+        (invalidates ?? []).flatMap((c) => [
+          qc.invalidateQueries({ queryKey: udcKeys.lists(c) }),
+          qc.invalidateQueries({ queryKey: udcKeys.lookups(c) }),
+        ]),
+      );
+      return onSettled?.(...args);
+    },
+  });
+}
+
+/** `client.call` for a host action given by definition or by name (the answer unchecked by name). */
+export function callAction(
+  client: UdcClient,
+  action: string | HostAction,
+  payload: unknown,
+): Promise<unknown> {
+  const call = client.call.bind(client) as (a: string | HostAction, p: unknown) => Promise<unknown>;
+  return call(action, payload);
 }

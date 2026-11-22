@@ -1,5 +1,6 @@
 import type { UdcClient } from "@jsudc/core/client";
 import type { ReactNode } from "react";
+import { type BulkActionHandlers, UdcActionsProvider } from "../actions/bulk.js";
 import { type CellRegistry, UdcCellsProvider } from "../cells/registry.js";
 import { type UdcLinks, UdcLinksProvider } from "../lookup/links.js";
 import { UdcRenderersProvider } from "../renderers/context.js";
@@ -28,6 +29,7 @@ export function UdcProvider({
   renderers,
   links,
   cells,
+  actions,
   children,
 }: {
   client: UdcClient;
@@ -42,11 +44,17 @@ export function UdcProvider({
   renderers?: RendererRegistry;
   /** `createCellRegistry(...)`: the cell components a column's `render` may name (README "Custom cells"). */
   cells?: CellRegistry;
+  /**
+   * The default handlers of the bulk actions of every data view below, by
+   * `kind` (README "Selection and bulk actions"); a view's `actions` win.
+   */
+  actions?: BulkActionHandlers;
   children: ReactNode;
 }) {
   let inner = <UdcClientContext.Provider value={client}>{children}</UdcClientContext.Provider>;
   if (links) inner = <UdcLinksProvider links={links}>{inner}</UdcLinksProvider>;
   if (cells) inner = <UdcCellsProvider cells={cells}>{inner}</UdcCellsProvider>;
+  if (actions) inner = <UdcActionsProvider actions={actions}>{inner}</UdcActionsProvider>;
   if (renderers) inner = <UdcRenderersProvider renderers={renderers}>{inner}</UdcRenderersProvider>;
   return kit ? <UdcUiProvider kit={kit}>{inner}</UdcUiProvider> : inner;
 }

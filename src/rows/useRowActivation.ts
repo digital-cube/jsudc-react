@@ -53,6 +53,15 @@ export interface UseRowActivationOptions extends RowActivationProps {
   fetchNextPage?: (() => unknown) | undefined;
   /** Override the default, `rowActivationEnabled(options)`. */
   enabled?: boolean | undefined;
+  /**
+   * Multiselect is on (0.5.0): `aria-selected` then says whether the row is
+   * selected (ARIA's multi-select grid), and the active row is the one holding
+   * the focus, marked `aria-current="true"` and `data-active`. Absent: as in
+   * 0.4.0, `aria-selected` marks the active row.
+   */
+  isSelected?: ((id: string) => boolean) | undefined;
+  /** Space on a row toggles its selection (Shift+Space: a range from the last toggled row). */
+  onToggleSelect?: ((row: Row, range: boolean) => void) | undefined;
 }
 
 /** What to spread on the element of one row (a `<tr>`, a card, an `<li>`). */
@@ -61,6 +70,8 @@ export interface RowActivationRowProps {
   /** One tab stop for the list: the active row, else the last focused one, else the first. */
   tabIndex: 0 | -1;
   "aria-selected": boolean;
+  /** With `isSelected` (multiselect): `"true"` on the active row, whose `aria-selected` is its selection. */
+  "aria-current"?: "true" | undefined;
   /** `"true"` on the active row: a stable hook for CSS (`.udc-row[data-active]`). */
   "data-active": "true" | undefined;
   onKeyDown: (e: KeyboardEvent<HTMLElement>) => void;
@@ -257,10 +268,19 @@ export function useRowActivation(options: UseRowActivationOptions): RowActivatio
   }, [activeRowId]);
 
   const onKeyDown = (e: KeyboardEvent<HTMLElement>, row: Row) => {
-    if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+    if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey) return;
     // A key from a portalled menu or dialog bubbles through React to here: not the list's.
     if (!within(e.currentTarget, e.target)) return;
     if (ownsKeys(e.target)) return;
+    // Space toggles the row's selection when the list selects (0.5.0); unbound otherwise.
+    const toggleSelect = paging.current.onToggleSelect;
+    if (e.key === " " && toggleSelect) {
+      if (closestOf(e.target, "a,button") !== null && e.target !== e.currentTarget) return;
+      e.preventDefault();
+      toggleSelect(row, e.shiftKey);
+      return;
+    }
+    if (e.shiftKey) return;
     const id = idOf(row);
     switch (e.key) {
       case "ArrowDown":
@@ -308,10 +328,12 @@ export function useRowActivation(options: UseRowActivationOptions): RowActivatio
   const rowProps = (row: Row): RowActivationRowProps | Record<string, never> => {
     if (!enabled) return {};
     const id = idOf(row);
+    const isSelected = paging.current.isSelected;
     return {
       ref: refFor(id),
       tabIndex: id === tabStopId ? 0 : -1,
-      "aria-selected": id === activeRowId,
+      "aria-selected": isSelected ? isSelected(id) : id === activeRowId,
+      ...(isSelected ? { "aria-current": id === activeRowId ? "true" : undefined } : {}),
       "data-active": id === activeRowId ? "true" : undefined,
       onKeyDown: (e) => onKeyDown(e, row),
       onFocus: (e) => {

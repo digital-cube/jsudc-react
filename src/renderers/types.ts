@@ -2,6 +2,7 @@ import type { DescribeResponse, FilterNode, FolderOptions, Row, SortKey } from "
 import type { LucideIcon } from "lucide-react";
 import type { ComponentType } from "react";
 import type { ChartWindowState } from "../chart/useChartWindow.js";
+import type { RowSelection } from "../rows/useRowSelection.js";
 import type { SchemaAction } from "../schema-editor/fieldForm.js";
 import type { UdcCollectionResult } from "../udc/hooks.js";
 import type { PagingMode } from "../udc/keys.js";
@@ -83,6 +84,14 @@ export interface RendererProps {
   activeRowId?: string | null | undefined;
   /** Report the active row moving (keys, a click on another row); set whenever activation is on. */
   onActiveRowChange?: ((row: Row | null) => void) | undefined;
+  /**
+   * Row selection (0.5.0; `useRowSelection` of `@jsudc/react/headless`): set
+   * when the view selects (`view.multiselect`, `view.bulk_actions`, or the
+   * `selectable` prop) and the renderer reads the paged list; absent
+   * otherwise. Draw a checkbox from `isSelected`, drive it with `toggle`,
+   * `setPage`, `selectAllMatching` and `clear`; the view draws the bulk bar.
+   */
+  selection?: RowSelection | undefined;
 }
 
 export interface RendererEntry {

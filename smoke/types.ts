@@ -16,6 +16,7 @@ import {
   type RendererDefinition,
   type RendererProps,
   type RowActivationProps,
+  type RowSelection,
   type UdcCollectionResult,
   UdcDataView,
   type UdcDataViewProps,
@@ -25,11 +26,15 @@ import {
 import { RENDERERS } from "@jsudc/react/all";
 import { cardsRenderer } from "@jsudc/react/cards";
 import {
+  type BulkActionHandlers,
   createCellRegistry as headlessCells,
   createMemoryUrlStateAdapter as headlessMemory,
   prefixUrlStateAdapter as headlessPrefix,
   type useDataViewState,
   useRowActivation,
+  useRowSelection,
+  useUdcAction,
+  useUdcMutateMany,
 } from "@jsudc/react/headless";
 import { UdcReactRouterUrlState } from "@jsudc/react/react-router";
 import { tableRenderer } from "@jsudc/react/table";
@@ -76,6 +81,7 @@ export const rendererContract: Equal<
     onRowActivate?: ((row: Row) => void) | undefined;
     activeRowId?: string | null | undefined;
     onActiveRowChange?: ((row: Row | null) => void) | undefined;
+    selection?: RowSelection | undefined;
   }
 > = true;
 
@@ -203,6 +209,48 @@ export const inMemory: UdcDataViewProps = { collection: "messages", urlState: "m
 export const fromHeadless = [headlessMemory(), headlessPrefix(createMemoryUrlStateAdapter(), "a.")];
 // @ts-expect-error a chrome preset is "full" or "embedded"
 export const badChrome: UdcDataViewProps = { collection: "x", chrome: "minimal" };
+
+// RendererProps exactly as 0.4.0 published it: a host renderer written against it still is a
+// renderer of 0.5.0 (`selection` is optional).
+type RendererProps040 = Omit<RendererProps, "selection">;
+function List040({ data, onRowActivate }: RendererProps040) {
+  return createElement("ol", { onClick: () => onRowActivate?.(data.rows[0] as Row) });
+}
+export const renderer040: RendererDefinition = {
+  name: "r040",
+  component: List040,
+  icon: Inbox,
+  labelKey: "TAB_R040",
+  paging: true,
+  editMode: false,
+};
+
+// Selection and bulk actions (README "Selection and bulk actions").
+function SelectList({ data, selection }: RendererProps) {
+  const items = data.rows.map((row) =>
+    createElement("input", {
+      key: row.__meta.id,
+      type: "checkbox",
+      checked: selection?.isSelected(row.__meta.id) ?? false,
+      onChange: () => selection?.toggle(row.__meta.id, { range: false }),
+    }),
+  );
+  return createElement("div", { "data-count": selection?.count ?? "all" }, items);
+}
+export const bulkHandlers: BulkActionHandlers = {
+  archive: ({ ids, filter, exceptIds, rows, collection, clearSelection }) => {
+    clearSelection();
+    return [ids, filter, exceptIds, rows.length, collection];
+  },
+};
+export const selectable: UdcDataViewProps = {
+  collection: "messages",
+  selectable: true,
+  actions: bulkHandlers,
+};
+// @ts-expect-error a handler is a function of the action's context
+export const badHandlers: BulkActionHandlers = { archive: "archive" };
+export const selectionHooks = [useRowSelection, useUdcMutateMany, useUdcAction, SelectList];
 
 export const used = [
   ActiveList,

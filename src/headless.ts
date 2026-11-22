@@ -3,6 +3,8 @@
 // CSS and no renderer peer is reachable from here (test/entries.test.ts walks the imports):
 // it needs only `react`, `@tanstack/react-query` and `@jsudc/core`.
 
+// Row selection (ids, or all that match except some) and what runs a bulk action (0.5.0).
+export * from "./actions/bulk.js";
 // Each renderer's model and state hook.
 export * from "./calendar/model.js";
 export * from "./calendar/useCalendarUrl.js";
@@ -31,6 +33,7 @@ export type * from "./renderers/types.js";
 export { isFolderRow } from "./renderers/types.js";
 // Row activation and keyboard movement over a list of rows.
 export * from "./rows/useRowActivation.js";
+export * from "./rows/useRowSelection.js";
 export * from "./table/format.js";
 export * from "./table/style.js";
 export * from "./table/transforms.js";

@@ -20,6 +20,7 @@ import { UdcLookupBatch, useLookupBatch } from "../lookup/batch.js";
 import { filterHref, followLink, useUdcLinks } from "../lookup/links.js";
 import type { FolderNav } from "../renderers/types.js";
 import { type RowActivationProps, useRowActivation } from "../rows/useRowActivation.js";
+import type { RowSelection } from "../rows/useRowSelection.js";
 import { ColumnHeaderMenu } from "../schema-editor/ColumnHeaderMenu.js";
 import type { SchemaAction } from "../schema-editor/fieldForm.js";
 import type { UdcCollectionResult } from "../udc/hooks.js";
@@ -36,6 +37,7 @@ import {
 } from "./CellEditor.js";
 import { CellValue } from "./cells.js";
 import { Pager } from "./Pager.js";
+import { SelectCheckbox } from "./SelectCheckbox.js";
 import { EmptyState, ErrorState } from "./states.js";
 import { BG_COLOR, resolveRowColor, TEXT_COLOR } from "./style.js";
 import { useInfiniteSentinel } from "./useInfiniteSentinel.js";
@@ -51,6 +53,8 @@ const SKELETON_ROWS = 12;
 const DEFAULT_ROW_HEIGHT = 40;
 /** The trailing `+` header cell that adds a column at the end. */
 const ADD_COLUMN_WIDTH = 44;
+/** The checkbox column pinned at the start while the view selects. */
+const SELECT_COLUMN_WIDTH = 40;
 
 /** The message a `validation_error` carries for one field, else its overall message. */
 export function fieldProblem(err: UdcError, field: string): string {
@@ -85,6 +89,8 @@ export interface TableRendererProps extends RowActivationProps {
   onSchemaAction?: ((a: SchemaAction) => void) | undefined;
   /** A folder listing: the label column opens folders and previews files. */
   folder?: FolderNav | undefined;
+  /** Row selection (0.5.0): a checkbox column pinned at the start; Space toggles the active row. */
+  selection?: RowSelection | undefined;
 }
 
 type EditTarget = { rowId: string; colId: string };
@@ -145,13 +151,17 @@ export function TableRenderer(props: TableRendererProps) {
     },
   });
 
+  const selection = props.selection;
+  const selectWidth = selection ? SELECT_COLUMN_WIDTH : 0;
   const left = table.getLeftLeafColumns();
   const center = table.getCenterLeafColumns();
   const right = table.getRightLeafColumns();
   const ordered = [...left, ...center, ...right];
   const schemaEdit = capabilities.schema_edit && props.onSchemaAction !== undefined;
   const totalWidth =
-    ordered.reduce((sum, c) => sum + c.getSize(), 0) + (schemaEdit ? ADD_COLUMN_WIDTH : 0);
+    ordered.reduce((sum, c) => sum + c.getSize(), 0) +
+    (schemaEdit ? ADD_COLUMN_WIDTH : 0) +
+    selectWidth;
   const rowHeight = view.row_height ?? DEFAULT_ROW_HEIGHT;
 
   const canEdit = (c: Column<Row, unknown>) =>
@@ -191,6 +201,12 @@ export function TableRenderer(props: TableRendererProps) {
     hasNextPage: mode === "infinite" && hasNextPage,
     isFetchingNextPage,
     fetchNextPage: data.fetchNextPage,
+    ...(selection
+      ? {
+          isSelected: selection.isSelected,
+          onToggleSelect: (row: Row, range: boolean) => selection.toggle(row.__meta.id, { range }),
+        }
+      : {}),
   });
 
   const rowLinkHref = (row: Row) =>
@@ -297,7 +313,7 @@ export function TableRenderer(props: TableRendererProps) {
   const pinStyle = (c: Column<Row, unknown>): CSSProperties => {
     const pin = c.getIsPinned();
     const width = c.getSize();
-    if (pin === "left") return { width, left: c.getStart("left") };
+    if (pin === "left") return { width, left: c.getStart("left") + selectWidth };
     if (pin === "right") return { width, right: c.getAfter("right") };
     return { width };
   };
@@ -439,6 +455,49 @@ export function TableRenderer(props: TableRendererProps) {
     <td key={key} aria-hidden className={cn("udc:p-0", className)} />
   );
 
+  // The checkbox column: pinned at the start, before any column pinned left.
+  const selectClass = cn(
+    "udc:sticky udc:left-0 udc:z-[5] udc:border-b udc:border-border udc:p-0",
+    left.length === 0 &&
+      "udc:after:pointer-events-none udc:after:absolute udc:after:inset-y-0 udc:after:-right-3 udc:after:w-3 udc:after:bg-gradient-to-r udc:after:from-[var(--shadow-pin)] udc:after:to-transparent udc:after:opacity-0 udc:after:transition-opacity",
+    left.length === 0 && edges.left && "udc:after:opacity-100",
+  );
+  const pageState = selection?.pageState ?? "none";
+  const selectHeader = selection ? (
+    <th
+      key="__select"
+      scope="col"
+      data-testid="th-select"
+      style={{ width: SELECT_COLUMN_WIDTH }}
+      className={cn(selectClass, "udc:z-[15] udc:h-9 udc:bg-muted")}
+    >
+      <SelectCheckbox
+        data-testid="select-page"
+        label={t("APP", "SELECT_PAGE")}
+        checked={pageState === "all"}
+        indeterminate={pageState === "some"}
+        disabled={data.rows.length === 0}
+        onToggle={() => selection.setPage(pageState !== "all")}
+      />
+    </th>
+  ) : null;
+  const selectCell = (row: Row, className: string) =>
+    selection ? (
+      <td
+        key="__select"
+        data-testid="cell-select"
+        style={{ width: SELECT_COLUMN_WIDTH }}
+        className={cn(selectClass, className)}
+      >
+        <SelectCheckbox
+          data-testid="select-row"
+          label={t("APP", "SELECT_ROW")}
+          checked={selection.isSelected(row.__meta.id)}
+          onToggle={(range) => selection.toggle(row.__meta.id, { range })}
+        />
+      </td>
+    ) : null;
+
   return (
     <div className="udc:flex udc:min-h-0 udc:flex-1 udc:flex-col">
       <div
@@ -454,15 +513,18 @@ export function TableRenderer(props: TableRendererProps) {
             </div>
           </div>
         ) : null}
+        {/* biome-ignore lint/a11y/useAriaPropsSupportedByRole: aria-multiselectable is set only with role="grid" */}
         <table
           data-testid="udc-table"
           aria-busy={data.isFetching}
           aria-rowcount={total}
           role={activation.enabled ? "grid" : undefined}
+          aria-multiselectable={activation.enabled && selection ? true : undefined}
           className="udc-table udc:border-separate udc:border-spacing-0 udc:text-[13px]"
           style={{ width: totalWidth, minWidth: "100%", tableLayout: "fixed" }}
         >
           <colgroup>
+            {selection ? <col style={{ width: SELECT_COLUMN_WIDTH }} /> : null}
             {[...left, ...center].map((c) => (
               <col key={c.id} style={{ width: c.getSize() }} />
             ))}
@@ -474,6 +536,7 @@ export function TableRenderer(props: TableRendererProps) {
           </colgroup>
           <thead className="udc:sticky udc:top-0 udc:z-30">
             <tr>
+              {selectHeader}
               {[...left, ...center].map(header)}
               {addColumnHeader}
               <th aria-hidden className="udc:border-b udc:border-border udc:bg-muted udc:p-0" />
@@ -486,6 +549,13 @@ export function TableRenderer(props: TableRendererProps) {
                 ? Array.from({ length: SKELETON_ROWS }, (_, i) => (
                     // biome-ignore lint/suspicious/noArrayIndexKey: placeholders
                     <tr key={i} data-testid="skeleton-row" style={{ height: rowHeight }}>
+                      {selection ? (
+                        <td
+                          aria-hidden
+                          style={{ width: SELECT_COLUMN_WIDTH }}
+                          className={cn(selectClass, "udc:bg-surface")}
+                        />
+                      ) : null}
                       {[...left, ...center].map((c, j) => (
                         <td
                           key={c.id}
@@ -522,6 +592,7 @@ export function TableRenderer(props: TableRendererProps) {
                 const row = r.original;
                 const tone = resolveRowColor(row, view.row_color);
                 const active = activation.activeRowId === row.__meta.id;
+                const checked = selection?.isSelected(row.__meta.id) === true;
                 const cell = (c: Column<Row, unknown>) => {
                   const { config, def } = meta(c);
                   const editable = canEdit(c);
@@ -556,7 +627,7 @@ export function TableRenderer(props: TableRendererProps) {
                       className={cn(
                         "udc-cell",
                         "udc:relative udc:border-b udc:border-border udc:px-3 udc:align-middle udc:outline-none",
-                        active
+                        active || checked
                           ? "udc:bg-selected"
                           : bg && bg !== "default"
                             ? BG_COLOR[bg]
@@ -623,6 +694,7 @@ export function TableRenderer(props: TableRendererProps) {
                     data-testid="row"
                     data-row-id={row.__meta.id}
                     data-row-link={rowLink ? rowLinkHref(row) : undefined}
+                    data-selected={checked ? "true" : undefined}
                     {...activation.rowProps(row)}
                     className={cn(
                       "udc-row udc:group/row",
@@ -634,14 +706,22 @@ export function TableRenderer(props: TableRendererProps) {
                     onClick={rowLink || activation.enabled ? (e) => onRowClick(e, row) : undefined}
                     onAuxClick={rowLink ? (e) => onRowLinkClick(e, row) : undefined}
                   >
+                    {selectCell(
+                      row,
+                      active || checked
+                        ? "udc:bg-selected"
+                        : "udc:bg-surface udc:group-hover/row:bg-hover",
+                    )}
                     {[...left, ...center].map(cell)}
                     {addColumnCell(
                       "a",
-                      active ? "udc:bg-selected" : "udc:bg-surface udc:group-hover/row:bg-hover",
+                      active || checked
+                        ? "udc:bg-selected"
+                        : "udc:bg-surface udc:group-hover/row:bg-hover",
                     )}
                     {filler(
                       "f",
-                      active
+                      active || checked
                         ? "udc:border-b udc:border-border udc:bg-selected"
                         : "udc:border-b udc:border-border udc:bg-surface udc:group-hover/row:bg-hover",
                     )}

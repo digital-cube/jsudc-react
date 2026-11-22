@@ -1,6 +1,7 @@
 import type { FilterChipConfig, FilterNode, Row } from "@jsudc/core";
 import { BookOpen, FileCode2, InfinityIcon, Rows3 } from "lucide-react";
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
+import type { BulkActionHandlers } from "../actions/bulk.js";
 import { type CellRegistry, UdcCellsProvider } from "../cells/registry.js";
 import { ChartWindowControl } from "../chart/ChartWindowControl.js";
 import { useChartWindow } from "../chart/useChartWindow.js";
@@ -11,6 +12,7 @@ import { useRendererRegistry } from "../renderers/context.js";
 import { rendererEntry, rendererTabs, resolveTab } from "../renderers/registry.js";
 import type { FolderNav, RendererCount, RendererRegistry } from "../renderers/types.js";
 import { rowActivationEnabled } from "../rows/useRowActivation.js";
+import { useRowSelection } from "../rows/useRowSelection.js";
 import { useSchemaEditor } from "../schema-editor/useSchemaEditor.js";
 import { ErrorState, NoRendererState } from "../table/states.js";
 import { useUdcCollection, useUdcDescribe } from "../udc/hooks.js";
@@ -19,6 +21,7 @@ import { useUiKit } from "../ui-kit/context.js";
 import type { UrlStateAdapter } from "../url-state/adapter.js";
 import { createMemoryUrlStateAdapter, prefixUrlStateAdapter } from "../url-state/adapters.js";
 import { UdcUrlStateProvider, useUrlStateAdapter } from "../url-state/UrlState.js";
+import { BulkBar } from "./BulkBar.js";
 import { composeFilter } from "./compose.js";
 import { DocTab } from "./DocTab.js";
 import { FilePreview } from "./FilePreview.js";
@@ -93,6 +96,18 @@ export interface UdcDataViewProps {
   activeRowId?: string | null | undefined;
   /** The active row changed by the user: the keys (no Enter needed) or a click on another row. */
   onActiveRowChange?: ((row: Row | null) => void) | undefined;
+  /**
+   * Row selection (checkboxes in the table and the cards, the bulk bar):
+   * `true` or `false` forces it on or off. Left out, it is on when the view
+   * says `multiselect: true` or declares `bulk_actions`.
+   */
+  selectable?: boolean | undefined;
+  /**
+   * Handlers of the view's `bulk_actions`, by `kind`, before the provider's
+   * (`UdcProvider actions`). An action without one goes to the server: see
+   * README "Selection and bulk actions".
+   */
+  actions?: BulkActionHandlers | undefined;
 }
 
 /** `full`: today's view, every part drawn. `embedded`: one pane of a host's screen, no part drawn. */
@@ -178,6 +193,8 @@ function DataViewBody({
   onRowActivate,
   activeRowId: activeRowIdProp,
   onActiveRowChange: onActiveRowChangeProp,
+  selectable,
+  actions,
 }: UdcDataViewProps) {
   const chrome = resolveChrome(chromeProp);
   // Row activation: off unless the host passed one of its props. Uncontrolled, the view keeps
@@ -337,6 +354,23 @@ function DataViewBody({
     capabilities: live?.capabilities,
     refetchInterval: view?.refresh_interval_ms,
   });
+
+  // Selection (0.5.0): off unless the view or the host asks. Cleared by a new collection or
+  // filter; kept across a sort, a refetch and more pages (the key holds neither).
+  const bulkDefs = view?.bulk_actions ?? [];
+  const selectionOn =
+    selectable ?? (view?.multiselect === true || (view?.bulk_actions?.length ?? 0) > 0);
+  const selection = useRowSelection({
+    rows: data.rows,
+    total: data.total,
+    resetKey: JSON.stringify([collection, filter ?? null]),
+  });
+  const selecting = selectionOn && paging && Boolean(view);
+  const moreThanLoaded =
+    data.hasNextPage ||
+    (data.total !== null
+      ? data.total > data.rows.length
+      : state.mode === "pages" && data.rows.length >= limit);
 
   const fieldLabel = useCallback((field: string) => t(section, field), [t, section]);
   const chipLabel = useCallback(
@@ -612,6 +646,19 @@ function DataViewBody({
 
         {folderNav && !onPage ? <FolderBar folder={folder} onOpen={folderNav.open} /> : null}
 
+        {selecting && !onPage && !selection.isEmpty ? (
+          <BulkBar
+            collection={collection}
+            section={section}
+            defs={bulkDefs}
+            selection={selection}
+            filter={filter}
+            moreThanLoaded={moreThanLoaded}
+            total={data.total}
+            handlers={actions}
+          />
+        ) : null}
+
         {live && onDoc && docText ? (
           <DocTab markdown={docText} />
         ) : live && onSource ? (
@@ -642,6 +689,7 @@ function DataViewBody({
             onCount={setOwnCount}
             folder={folderNav}
             {...activation}
+            {...(selecting ? { selection } : {})}
           />
         ) : live ? (
           <NoRendererState name={state.tab} />
