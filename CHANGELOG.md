@@ -7,6 +7,19 @@ All notable changes to `@jsudc/react` are recorded here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- A default sort: `UdcDataView` sends the view's `default_sort` (`@jsudc/core`
+  0.5.2), or the new `defaultSort` prop instead of it (`[]`: none), as the
+  list's `sort` while the URL state has no `sort`. The first page is already in
+  that order; the default is shown in the headers (`RendererProps.sort`) and
+  not written into the URL. "No sort" picked from a header is written as an
+  empty `sort=`; picking the default again removes the parameter. While a
+  search answered by the source is typed without a sort of the user's, the
+  default steps aside so the rows come best match first. A view without either
+  behaves exactly as before. Works with `@jsudc/core` ^0.5.0 (the key is read
+  loosely). See README "Default sort".
+
 ## [0.5.1] - 2026-11-22
 
 Patch release of `@jsudc/react` alone; `@jsudc/core` and `@jsudc/server` stay

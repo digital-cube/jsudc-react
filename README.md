@@ -371,6 +371,38 @@ export function NextUrlState({ children }: { children: React.ReactNode }) {
 `[params, setParams]` pair the view uses, over whichever adapter is in effect;
 a function passed to `setParams` receives the query string as it is now.
 
+### Default sort
+
+Without a `sort` in the URL state, a list goes out with the view's
+`default_sort` (`view.yaml`, `@jsudc/core` 0.5.2), or the host's `defaultSort`
+prop instead of it (`[]` turns the view's off):
+
+```yaml
+default_sort:
+  - { field: received_at, dir: desc }
+```
+
+```tsx
+<UdcDataView collection="mail_messages" defaultSort={[{ field: "received_at", dir: "desc" }]} />;
+```
+
+The very first `list` of a fresh page is already in that order, with any URL
+adapter (the address bar, react-router, memory). The default is **not written
+into the URL**: an absent `sort` means it, so a link stays short and a later
+change of the default reaches old links. It is the `sort` renderers get
+(`RendererProps.sort`), so the table's header shows it. A header click starts
+from it (`received_at` desc → none → asc); "none" is written as an empty
+`sort=`, so the default does not come back, and picking the default again
+removes the parameter. While a search answered by the source
+(`capabilities.search: "source"`) is typed and the user has picked no sort, the
+default steps aside: the source answers best match first, and the default
+returns when the box is cleared. A search composed into the filter (`contains`)
+has no order of its own, so the default stays.
+
+The prop and the view key are read by `@jsudc/react` against a `@jsudc/core`
+of 0.5.0 too (whose loose view parse keeps the key); an ill-formed
+`default_sort` reads as none.
+
 Two views on one page, or a view inside a host route with parameters of its
 own: give each a prefix (`urlPrefix`) or keep its state in memory
 (`urlState="memory"`), see [Embedding a view](#embedding-a-view).
@@ -386,6 +418,7 @@ Every prop below is optional; without them the view is what it always was.
 | `filter`                     | a `FilterNode` of the host's (the open folder), ANDed into every list the view and its renderers load and counted in "of M"; not a chip or pill, not in the URL, not removed by "clear filters" |
 | `chrome`                     | which parts of the frame are drawn: `"full"` (default), `"embedded"`, or flags                                                                                                                  |
 | `pagingMode`                 | the paging mode to open in, instead of the view's `pagination`                                                                                                                                  |
+| `defaultSort`                | the order the rows come in until the user picks one, instead of the view's `default_sort` (`[]`: none); see [Default sort](#default-sort)                                                       |
 | `toolbarStart`, `toolbarEnd` | the host's own controls at the start (before the search) and at the end (after the count) of the toolbar                                                                                        |
 | `urlPrefix`                  | a prefix for every parameter the view and its renderers read and write                                                                                                                          |
 | `urlState`                   | `"url"` (default: the adapter in effect), `"memory"`, or any `UrlStateAdapter`                                                                                                                  |

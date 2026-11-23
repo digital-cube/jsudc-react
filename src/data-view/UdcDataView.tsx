@@ -1,4 +1,10 @@
-import { type FilterChipConfig, type FilterNode, type Row, sourceAnswersSearch } from "@jsudc/core";
+import {
+  type FilterChipConfig,
+  type FilterNode,
+  type Row,
+  type SortKey,
+  sourceAnswersSearch,
+} from "@jsudc/core";
 import { BookOpen, FileCode2, InfinityIcon, Rows3 } from "lucide-react";
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import type { BulkActionHandlers } from "../actions/bulk.js";
@@ -61,6 +67,13 @@ export interface UdcDataViewProps {
   chrome?: UdcDataViewChromePreset | UdcDataViewChrome | undefined;
   /** The paging mode to open in, instead of the view's `pagination`. */
   pagingMode?: PagingMode | undefined;
+  /**
+   * The order the rows come in until the user picks one, instead of the view's `default_sort`
+   * (`[]`: none, even if the view has one). Sent as the list's `sort` while the URL state has no
+   * `sort`, shown in the headers, not written into the URL; it steps aside while a search
+   * answered by the source is typed. See README "Default sort".
+   */
+  defaultSort?: readonly SortKey[] | undefined;
   /** Host content at the start of the toolbar, before the search box. */
   toolbarStart?: ReactNode;
   /** Host content at the end of the toolbar, after the row count. */
@@ -206,6 +219,7 @@ function DataViewBody({
   filter: hostFilterProp,
   chrome: chromeProp,
   pagingMode,
+  defaultSort,
   toolbarStart,
   toolbarEnd,
   onRowActivate,
@@ -264,12 +278,16 @@ function DataViewBody({
   const hasSource = live?.capabilities.source_yaml === true;
   const docOn = Boolean(docText) && chrome.docTab;
   const sourceOn = hasSource && chrome.sourceTab;
+  // A source that answers search itself (0.5.0) gets the text as `search`, not as `contains`.
+  const bySource = sourceAnswersSearch(live?.capabilities);
   const state = useDataViewState(collection, view, {
     doc: docOn,
     source: sourceOn,
     renderers: registry,
     ...(pagingMode ? { mode: pagingMode } : {}),
     ...(chrome.pagingToggle ? {} : { fixedMode: true }),
+    defaultSort,
+    sourceSearch: bySource,
   });
   // The README and the source file are pages of their own: no rows, no toolbar.
   const onSource = state.tab === SOURCE_TAB;
@@ -317,8 +335,6 @@ function DataViewBody({
     [folderOpts, userTree, setTree],
   );
 
-  // A source that answers search itself (0.5.0) gets the text as `search`, not as `contains`.
-  const bySource = sourceAnswersSearch(live?.capabilities);
   const listSearch = bySource ? state.search.trim() || undefined : undefined;
   const composedSearch = bySource ? "" : state.search;
   const userFilter = useMemo(
