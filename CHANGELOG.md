@@ -7,6 +7,15 @@ All notable changes to `@jsudc/react` are recorded here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- A column marked `hidden: true` is not drawn by any renderer: `liveView`
+  drops it, so the table, the cards' default title, the map's default popup
+  fields and the detail dialogs skip it even when an older server still
+  serves it. The field stays in every row (`CellProps.row`), the filter builder
+  and search; a `card_options.meta_fields` entry naming it still shows it.
+  `columns_mode: listed` is the server's (`@jsudc/server` `describe`).
+
 ## [0.5.1] - 2026-11-22
 
 Patch release of `@jsudc/react` alone; `@jsudc/core` and `@jsudc/server` stay

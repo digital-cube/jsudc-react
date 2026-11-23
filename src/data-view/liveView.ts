@@ -15,7 +15,8 @@ export function isLiveField(schema: SchemaDoc, field: string): boolean {
 
 /**
  * The view with every reference to a field the schema no longer has (or has
- * soft-deleted) taken out: chips, search fields, card slots, `row_color`.
+ * soft-deleted) taken out: chips, search fields, card slots, `row_color`; and
+ * the columns marked `hidden: true`.
  * `describe` already drops such columns and filter-builder fields; the rest
  * of `view.yaml` is served as written, and a request naming a deleted field
  * would be refused by the server's allowlist.
@@ -24,7 +25,10 @@ export function liveView(view: ViewConfig, schema: SchemaDoc): ViewConfig {
   const live = (f: string | undefined) => f !== undefined && isLiveField(schema, f);
   const out: ViewConfig = {
     ...view,
-    columns: view.columns.filter((c) => live(c.field)),
+    // `hidden: true` (core 0.5.2, read loosely): `describe` of a 0.5.2 server already left it out.
+    columns: view.columns.filter(
+      (c) => live(c.field) && (c as { hidden?: unknown }).hidden !== true,
+    ),
   };
   if (view.filters) out.filters = view.filters.filter((c) => live(c.field));
   if (view.search) out.search = { ...view.search, fields: view.search.fields.filter(live) };
