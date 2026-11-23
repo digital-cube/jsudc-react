@@ -7,6 +7,37 @@ All notable changes to `@jsudc/react` are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-11-23
+
+The client side of the first SQLite set; released together with `@jsudc/core`
+0.7.0 and `@jsudc/server` 0.7.0. Needs `@jsudc/core` 0.7.0. Nothing changes
+for a view or a collection that worked on 0.6.0.
+
+### Added
+
+- The error code `busy` (`@jsudc/core` 0.7.0: another writer held the data's
+  lock longer than the server waits, e.g. another process writing the same
+  SQLite file; nothing was written) is a warning toast that says to try again
+  — "The data is busy" / "Someone else is writing to it right now. Nothing was
+  saved; try again in a moment." (`BUSY_TITLE`, `BUSY_BODY`, English and
+  Serbian) — instead of a red failure carrying the server's text. Every write
+  path shows it: a table cell edit, a kanban drop or card edit, a calendar
+  move, a tree move, a row action and a bulk action. Optimistic changes roll
+  back as for any failed write.
+- A query that fails with `busy` is retried twice, as a transport failure is
+  (`shouldRetry`); every other protocol error still is not.
+
+### Changed
+
+- The `@jsudc/core` peer range is `^0.7.0` (`busy`, `sqlite_table`); `^0.6.0`
+  does not accept 0.7.0. Against 0.6.0 a `describe` of a `sqlite_table`
+  collection does not parse, and a `busy` reply reads as a malformed error
+  (`internal`).
+
+A `sqlite_table` collection needs nothing else here: its `describe` is drawn
+like any other table's, and `sourceGroup` (core) puts it in the sidebar's
+`database` group, so a host's group icon applies as for `postgres_table`.
+
 ## [0.6.0] - 2026-11-23
 
 What a mail client's list views asked for after 0.5.1: an embedded view without
@@ -729,7 +760,9 @@ First tagged version, installed from the GitHub tag.
   Serbian), theme and time-zone providers, the UI primitives.
 - `styles.css`, compiled at build time, and `tokens.css`, its raw source.
 
-[Unreleased]: https://github.com/digital-cube/jsudc-react/compare/v0.5.1...HEAD
+[Unreleased]: https://github.com/digital-cube/jsudc-react/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/digital-cube/jsudc-react/compare/v0.6.0...v0.7.0
+[0.6.0]: https://github.com/digital-cube/jsudc-react/compare/v0.5.1...v0.6.0
 [0.5.1]: https://github.com/digital-cube/jsudc-react/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/digital-cube/jsudc-react/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/digital-cube/jsudc-react/compare/v0.3.1...v0.4.0

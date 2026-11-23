@@ -41,7 +41,7 @@ npm install @jsudc/react @jsudc/core \
 # then the peers of the renderers you register (see Renderers), all of them:
 npm install @tanstack/react-table leaflet recharts @dnd-kit/core @dnd-kit/sortable @dnd-kit/utilities
 # or straight from a GitHub tag:
-npm install github:digital-cube/jsudc-core#v0.6.0 github:digital-cube/jsudc-react#v0.6.0
+npm install github:digital-cube/jsudc-core#v0.7.0 github:digital-cube/jsudc-react#v0.7.0
 ```
 
 ## Quick start
@@ -86,17 +86,17 @@ collections, so each one starts from a fresh view.
 
 ### The providers a host wraps
 
-| Provider                                              | Needed | Why                                                                                                                                                         |
-| ----------------------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `UdcProvider client={new UdcClient(...)}`             | yes    | every hook reads the client from it; `renderers={…}` is what the data view draws its tabs with (none given: every tab says no renderer is registered)       |
-| `QueryClientProvider client={createUdcQueryClient()}` | yes    | the hooks are TanStack Query; `createUdcQueryClient` retries transport failures only, never a protocol error; `onUnauthenticated` see [Sessions](#sessions) |
-| `UdcI18nProvider`                                     | yes    | every string goes through `useI18n()`                                                                                                                       |
-| `TooltipProvider`                                     | yes    | Radix tooltips on headers, chips and buttons; with your own kit, `kit.TooltipProvider` (see [Bring your own primitives](#bring-your-own-primitives))        |
-| `Toaster`                                             | yes    | save, conflict and schema-edit toasts (`useToast`); with your own kit, `kit.Toaster`                                                                        |
-| `UdcUrlStateProvider` / `UdcReactRouterUrlState`      | no     | where search, filters, sort, paging and the tab live; without it `window.location` (see [URL state](#url-state))                                            |
-| `UdcLinksProvider` / `collectionPath`                 | no     | where lookup links and `row_link`s go; without it `/c/<collection>` (see [Lookups and drill-down](#lookups-and-drill-down))                                 |
-| `TimezoneProvider`                                    | no     | without it instants are shown in the browser's zone; with it the user's pick, kept in `localStorage` (`udc-tz`)                                             |
-| `ThemeProvider`                                       | no     | `useTheme()` toggles the `dark` class on `<html>` and keeps the choice (`udc-theme`); any other way of setting that class works too                         |
+| Provider                                              | Needed | Why                                                                                                                                                                          |
+| ----------------------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `UdcProvider client={new UdcClient(...)}`             | yes    | every hook reads the client from it; `renderers={…}` is what the data view draws its tabs with (none given: every tab says no renderer is registered)                        |
+| `QueryClientProvider client={createUdcQueryClient()}` | yes    | the hooks are TanStack Query; `createUdcQueryClient` retries transport failures and `busy` only, never another protocol error; `onUnauthenticated` see [Sessions](#sessions) |
+| `UdcI18nProvider`                                     | yes    | every string goes through `useI18n()`                                                                                                                                        |
+| `TooltipProvider`                                     | yes    | Radix tooltips on headers, chips and buttons; with your own kit, `kit.TooltipProvider` (see [Bring your own primitives](#bring-your-own-primitives))                         |
+| `Toaster`                                             | yes    | save, conflict, busy and schema-edit toasts (`useToast`); with your own kit, `kit.Toaster`                                                                                   |
+| `UdcUrlStateProvider` / `UdcReactRouterUrlState`      | no     | where search, filters, sort, paging and the tab live; without it `window.location` (see [URL state](#url-state))                                                             |
+| `UdcLinksProvider` / `collectionPath`                 | no     | where lookup links and `row_link`s go; without it `/c/<collection>` (see [Lookups and drill-down](#lookups-and-drill-down))                                                  |
+| `TimezoneProvider`                                    | no     | without it instants are shown in the browser's zone; with it the user's pick, kept in `localStorage` (`udc-tz`)                                                              |
+| `ThemeProvider`                                       | no     | `useTheme()` toggles the `dark` class on `<html>` and keeps the choice (`udc-theme`); any other way of setting that class works too                                          |
 
 ## Renderers
 
@@ -1465,7 +1465,7 @@ peer while the default kit is the fallback.
 Everything the components import that a host is likely to have too is a peer,
 so there is one copy of it in the bundle:
 
-- `@jsudc/core` ^0.6.0 — one copy of the protocol, shared with the host's
+- `@jsudc/core` ^0.7.0 — one copy of the protocol, shared with the host's
   own `UdcClient`;
 - `react`, `react-dom` ^19 — one React, or hooks break;
 - `@tanstack/react-query` ^5 — one `QueryClient` context, shared with the
