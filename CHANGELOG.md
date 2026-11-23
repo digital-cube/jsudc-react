@@ -18,6 +18,17 @@ All notable changes to `@jsudc/react` are recorded here. The format follows
   ^0.5.0 (the keys are read loosely). `layoutColumnWidths`, `hiddenAtWidth`,
   `isFillWidth` and `usePaneWidth` are exported from `@jsudc/react/table`. See
   README "Table column widths".
+- Sortable headers: a table header is a sort button only for a field the source
+  sorts on, as `describe.sortable` (`@jsudc/server` 0.5.2) says; any other is a
+  plain header, like a `json` field's. A column marked `sortable: false` is
+  plain too. A sort on a field the source does not sort (from the URL, an old
+  link or a `default_sort`) is dropped before the list goes out, so one header
+  click can no longer turn the list into "Could not load the data". Without
+  `describe.sortable` (an older server) every header sorts, as before.
+  `sourceSortable` and `columnSortable` are exported; `liveSort` takes the
+  sortable set as an optional third argument. Works with `@jsudc/core` ^0.5.0
+  (both keys are read loosely). See README "Sortable headers".
+
 - A default sort: `UdcDataView` sends the view's `default_sort` (`@jsudc/core`
   0.5.2), or the new `defaultSort` prop instead of it (`[]`: none), as the
   list's `sort` while the URL state has no `sort`. The first page is already in

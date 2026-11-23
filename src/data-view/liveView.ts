@@ -1,5 +1,7 @@
 import {
+  type ColumnConfig,
   type DescribeResponse,
+  type FieldDef,
   type FilterNode,
   isCondition,
   isRowIdField,
@@ -51,9 +53,48 @@ export function liveDescribe(d: DescribeResponse): DescribeResponse {
   return { ...d, view: liveView(d.view, d.schema) };
 }
 
-/** Sort keys on live fields only. */
-export function liveSort(sort: readonly SortKey[], schema: SchemaDoc): SortKey[] {
-  return sort.filter((k) => isLiveField(schema, k.field));
+/**
+ * The fields the collection's source sorts on: `describe.sortable.fields`
+ * (core 0.5.2, read loosely so an older core's types carry it too); `null`
+ * when `describe` does not say (a server before 0.5.2), which means every field.
+ */
+export function sourceSortable(
+  d: Pick<DescribeResponse, "schema"> | undefined,
+): ReadonlySet<string> | null {
+  const raw = (d as { sortable?: unknown } | undefined)?.sortable;
+  const fields = (raw as { fields?: unknown } | null | undefined)?.fields;
+  if (!Array.isArray(fields)) return null;
+  return new Set(fields.filter((f): f is string => typeof f === "string"));
+}
+
+/**
+ * Whether a column's header offers a sort: the field is in the schema and not
+ * `json`, the source sorts on it (`sourceSortable`), and the column is not
+ * marked `sortable: false` (core 0.5.2, read loosely).
+ */
+export function columnSortable(
+  config: Pick<ColumnConfig, "field">,
+  def: FieldDef | undefined,
+  sortable: ReadonlySet<string> | null,
+): boolean {
+  if (def === undefined || def.type === "json") return false;
+  if ((config as { sortable?: unknown }).sortable === false) return false;
+  return sortable === null || sortable.has(config.field);
+}
+
+/**
+ * Sort keys on live fields only, and, given `sortable` (`sourceSortable`),
+ * only on fields the source sorts on: a sort in the URL or a default naming
+ * another would make every list fail with `validation_error`.
+ */
+export function liveSort(
+  sort: readonly SortKey[],
+  schema: SchemaDoc,
+  sortable: ReadonlySet<string> | null = null,
+): SortKey[] {
+  return sort.filter(
+    (k) => isLiveField(schema, k.field) && (sortable === null || sortable.has(k.field)),
+  );
 }
 
 /**
