@@ -9,6 +9,15 @@ All notable changes to `@jsudc/react` are recorded here. The format follows
 
 ### Added
 
+- Table columns sized to the table's pane: a column `width: fill` takes the
+  free width left by the fixed columns (never under its `min_width`, default
+  `default_column_width`; several share it by `grow`), and `hide_below: N`
+  leaves a column out while the table's pane is narrower than N px. The pane
+  is measured with a `ResizeObserver`, only when a column uses either key; a
+  view without them renders exactly as before. Works with `@jsudc/core`
+  ^0.5.0 (the keys are read loosely). `layoutColumnWidths`, `hiddenAtWidth`,
+  `isFillWidth` and `usePaneWidth` are exported from `@jsudc/react/table`. See
+  README "Table column widths".
 - A default sort: `UdcDataView` sends the view's `default_sort` (`@jsudc/core`
   0.5.2), or the new `defaultSort` prop instead of it (`[]`: none), as the
   list's `sort` while the URL state has no `sort`. The first page is already in

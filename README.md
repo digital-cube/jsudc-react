@@ -144,6 +144,32 @@ peer is optional, builds and the import throws
 when the module loads. The root, `/table`, `/cards`, `/calendar` and
 `/headless` load without it.
 
+### Table column widths: `fill` and narrow panes
+
+A column's `width` is pixels, or `fill` (`@jsudc/core` 0.5.2): the table lays
+itself out to its pane (the scroll box it renders in, measured with a
+`ResizeObserver`, not the window). A `fill` column takes what is left after the
+fixed columns and the checkbox / actions / add-column columns, never less than
+its `min_width` (default `default_column_width`); several `fill` columns share
+it by `grow`. Below the floors the table scrolls sideways, as before.
+`hide_below: N` leaves a column out, header and cells, while the pane is under
+N px; the room goes to the `fill` columns. A view with neither key renders
+exactly as before (and the pane is not measured):
+
+```yaml
+# a message list in a pane between the folders and the reading pane
+columns:
+  - { field: from, width: 210, hide_below: 560 }
+  - { field: subject, width: fill, min_width: 240 }
+  - { field: date, width: 84, align: right }
+```
+
+At 1000 px the subject is 706 px wide; at 420 px the sender is gone and the
+subject takes 336 px, the date still on screen. The keys are read loosely, so
+the table honours them from a server on `@jsudc/core` 0.5.2 while the host is
+still on core ^0.5.0. `layoutColumnWidths`, `hiddenAtWidth` and `usePaneWidth`
+(`@jsudc/react/table`) are the pieces, for a renderer of your own.
+
 ### Writing a renderer: the `RendererProps` contract
 
 A host draws rows its own way (a message list, a timeline) by registering a
