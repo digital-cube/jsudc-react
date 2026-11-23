@@ -1,4 +1,4 @@
-// Column sizing against the table's pane (0.5.2): `width: fill` takes the pane's free width
+// Column sizing against the table's pane (0.6.0): `width: fill` takes the pane's free width
 // (`grow`, `min_width`), `hide_below` drops a column on a narrow pane. The keys are read loosely,
 // so the table works with `@jsudc/core` ^0.5.0, whose schema does not know them.
 import { type ColumnConfig, type DescribeResponse, type Row, ViewConfigSchema } from "@jsudc/core";

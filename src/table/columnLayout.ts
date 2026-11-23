@@ -1,4 +1,4 @@
-// Column sizing against the table's pane (0.5.2): a column's `width` is pixels or `fill`, a
+// Column sizing against the table's pane (0.6.0): a column's `width` is pixels or `fill`, a
 // `fill` column takes what the pane has left after the fixed columns (never less than its
 // `min_width`, several sharing it by `grow`), and `hide_below` drops a column while the pane is
 // narrower than that. The keys are read loosely, so this works with `@jsudc/core` ^0.5.0, whose

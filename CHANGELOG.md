@@ -7,6 +7,14 @@ All notable changes to `@jsudc/react` are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-23
+
+What a mail client's list views asked for after 0.5.1: an embedded view without
+a toolbar, a view's default order, hidden columns, headers that sort only what
+the source sorts, column widths that follow the pane and an empty state per
+collection; released together with `@jsudc/core` 0.6.0 and `@jsudc/server`
+0.6.0. A view that uses none of the new keys renders exactly as before.
+
 ### Added
 
 - One collection's empty state can be reworded: `EMPTY_TITLE`, `EMPTY_PLAIN`
@@ -27,7 +35,7 @@ All notable changes to `@jsudc/react` are recorded here. The format follows
   `isFillWidth` and `usePaneWidth` are exported from `@jsudc/react/table`. See
   README "Table column widths".
 - Sortable headers: a table header is a sort button only for a field the source
-  sorts on, as `describe.sortable` (`@jsudc/server` 0.5.2) says; any other is a
+  sorts on, as `describe.sortable` (`@jsudc/server` 0.6.0) says; any other is a
   plain header, like a `json` field's. A column marked `sortable: false` is
   plain too. A sort on a field the source does not sort (from the URL, an old
   link or a `default_sort`) is dropped before the list goes out, so one header
@@ -36,9 +44,8 @@ All notable changes to `@jsudc/react` are recorded here. The format follows
   `sourceSortable` and `columnSortable` are exported; `liveSort` takes the
   sortable set as an optional third argument. Works with `@jsudc/core` ^0.5.0
   (both keys are read loosely). See README "Sortable headers".
-
 - A default sort: `UdcDataView` sends the view's `default_sort` (`@jsudc/core`
-  0.5.2), or the new `defaultSort` prop instead of it (`[]`: none), as the
+  0.6.0), or the new `defaultSort` prop instead of it (`[]`: none), as the
   list's `sort` while the URL state has no `sort`. The first page is already in
   that order; the default is shown in the headers (`RendererProps.sort`) and
   not written into the URL. "No sort" picked from a header is written as an
@@ -62,6 +69,13 @@ All notable changes to `@jsudc/react` are recorded here. The format follows
   pills and the bulk bar still show when in use. The flags are on in either
   preset, so every view without them renders as before; `resolveChrome`
   returns the six new keys, each control `false` when `toolbar` is.
+
+### Changed
+
+- The `@jsudc/core` peer range is `^0.6.0` (`default_sort`, `hidden` and
+  `columns_mode`, `describe.sortable`, `width: fill` with `grow`, `min_width`
+  and `hide_below`); `^0.5.0` does not accept 0.6.0. The new keys are still
+  read loosely.
 
 ## [0.5.1] - 2026-11-22
 

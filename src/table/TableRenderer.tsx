@@ -153,7 +153,7 @@ export function TableRenderer(props: TableRendererProps) {
   const links = useUdcLinks();
   const cells = useCellRegistry();
   const rowLink = view.row_link;
-  // The fields the source sorts on (describe.sortable, 0.5.2); the others get a plain header.
+  // The fields the source sorts on (describe.sortable, 0.6.0); the others get a plain header.
   const sourceSorts = useMemo(() => sourceSortable(describe), [describe]);
   // One lookup batch per lookup column for the rows on screen, not one call per cell.
   const lookupFields = useMemo(() => view.columns.map((c) => c.field), [view.columns]);
@@ -199,7 +199,7 @@ export function TableRenderer(props: TableRendererProps) {
   const actionsWidth = rowActions ? rowActionsColumnWidth(rowActions) : 0;
   const schemaEdit = capabilities.schema_edit && props.onSchemaAction !== undefined;
 
-  // Column sizing (0.5.2): `width: fill` shares the pane's free width, `hide_below` drops a
+  // Column sizing (0.6.0): `width: fill` shares the pane's free width, `hide_below` drops a
   // column on a narrow pane. The pane is measured only when a column asks for either.
   const responsive = live.some((c) => {
     const s = c as ColumnSizing;

@@ -1,4 +1,4 @@
-// Sortable fields (0.5.2): `describe.sortable` lists the fields the source sorts on. A header on
+// Sortable fields (0.6.0): `describe.sortable` lists the fields the source sorts on. A header on
 // any other field is plain text, not a sort button, and a sort naming one (from the URL, a default
 // or an old link) never goes out, so one click cannot turn the list into "Could not load the data".
 // A column's `sortable: false` takes the button off a field the source does sort.

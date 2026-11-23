@@ -27,7 +27,7 @@ export function liveView(view: ViewConfig, schema: SchemaDoc): ViewConfig {
   const live = (f: string | undefined) => f !== undefined && isLiveField(schema, f);
   const out: ViewConfig = {
     ...view,
-    // `hidden: true` (core 0.5.2, read loosely): `describe` of a 0.5.2 server already left it out.
+    // `hidden: true` (core 0.6.0, read loosely): `describe` of a 0.6.0 server already left it out.
     columns: view.columns.filter(
       (c) => live(c.field) && (c as { hidden?: unknown }).hidden !== true,
     ),
@@ -55,8 +55,8 @@ export function liveDescribe(d: DescribeResponse): DescribeResponse {
 
 /**
  * The fields the collection's source sorts on: `describe.sortable.fields`
- * (core 0.5.2, read loosely so an older core's types carry it too); `null`
- * when `describe` does not say (a server before 0.5.2), which means every field.
+ * (core 0.6.0, read loosely so an older core's types carry it too); `null`
+ * when `describe` does not say (a server before 0.6.0), which means every field.
  */
 export function sourceSortable(
   d: Pick<DescribeResponse, "schema"> | undefined,
@@ -70,7 +70,7 @@ export function sourceSortable(
 /**
  * Whether a column's header offers a sort: the field is in the schema and not
  * `json`, the source sorts on it (`sourceSortable`), and the column is not
- * marked `sortable: false` (core 0.5.2, read loosely).
+ * marked `sortable: false` (core 0.6.0, read loosely).
  */
 export function columnSortable(
   config: Pick<ColumnConfig, "field">,
