@@ -19,6 +19,12 @@ All notable changes to `@jsudc/react` are recorded here. The format follows
   default steps aside so the rows come best match first. A view without either
   behaves exactly as before. Works with `@jsudc/core` ^0.5.0 (the key is read
   loosely). See README "Default sort".
+- A column marked `hidden: true` is not drawn by any renderer: `liveView`
+  drops it, so the table, the cards' default title, the map's default popup
+  fields and the detail dialogs skip it even when an older server still
+  serves it. The field stays in every row (`CellProps.row`), the filter builder
+  and search; a `card_options.meta_fields` entry naming it still shows it.
+  `columns_mode: listed` is the server's (`@jsudc/server` `describe`).
 - `UdcDataView chrome` gains toolbar flags: `toolbar`, and per control
   `search`, `chips`, `filterBuilder`, `freshness` and `count`.
   `chrome={{ preset: "embedded", toolbar: false }}` embeds the rows alone, for
