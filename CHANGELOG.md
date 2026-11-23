@@ -9,6 +9,12 @@ All notable changes to `@jsudc/react` are recorded here. The format follows
 
 ### Added
 
+- A column marked `hidden: true` is not drawn by any renderer: `liveView`
+  drops it, so the table, the cards' default title, the map's default popup
+  fields and the detail dialogs skip it even when an older server still
+  serves it. The field stays in every row (`CellProps.row`), the filter builder
+  and search; a `card_options.meta_fields` entry naming it still shows it.
+  `columns_mode: listed` is the server's (`@jsudc/server` `describe`).
 - `UdcDataView chrome` gains toolbar flags: `toolbar`, and per control
   `search`, `chips`, `filterBuilder`, `freshness` and `count`.
   `chrome={{ preset: "embedded", toolbar: false }}` embeds the rows alone, for

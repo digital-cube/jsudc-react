@@ -38,6 +38,18 @@ describe("liveView", () => {
     expect(live.row_color).toBeUndefined();
   });
 
+  it("drops a column marked hidden, and keeps the field in card slots and search", () => {
+    const view = ViewConfigSchema.parse({
+      columns: [{ field: "name" }, { field: "note", hidden: true }, { field: "website" }],
+      search: { fields: ["name", "note"] },
+      card_options: { meta_fields: ["note"] },
+    });
+    const live = liveView(view, schema);
+    expect(live.columns.map((c) => c.field)).toEqual(["name", "website"]);
+    expect(live.search?.fields).toEqual(["name", "note"]);
+    expect(live.card_options?.meta_fields).toEqual(["note"]);
+  });
+
   it("prunes sort keys and filter conditions on gone fields", () => {
     expect(
       liveSort(
