@@ -417,6 +417,26 @@ left out takes the preset's value (`full`: all on, `embedded`: all off):
 keep their [stable classes](#stable-classes); `data-testid="data-view-frame"`
 carries `data-framed`.
 
+The toolbar is not part of the frame: its flags are on in either preset, so
+`"embedded"` keeps it. A host whose screen has a toolbar of its own turns it
+off:
+
+| Flag            | The part                                                                                                                                                                                             |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `toolbar`       | the toolbar row as a whole; `false` leaves no toolbar element, with every control below, the renderer's own controls, the live indicator, the chart window control and `toolbarStart` / `toolbarEnd` |
+| `search`        | the search box (when the view has `search`)                                                                                                                                                          |
+| `chips`         | the filter chips (when the view has `filters`)                                                                                                                                                       |
+| `filterBuilder` | the "Filter" button that opens the filter builder                                                                                                                                                    |
+| `freshness`     | "Updated …" and the stale pill                                                                                                                                                                       |
+| `count`         | the row count                                                                                                                                                                                        |
+
+`chrome={{ preset: "embedded", toolbar: false }}` draws the rows alone. The
+filter pills and the bulk bar are rows of their own, not the toolbar: they
+still show when there is a filter or a selection. What the toolbar showed is
+in the renderer's `data` (`rows.length`, `total`, `isFetching`, `fetchedAt`),
+for a renderer of the host's to lift into the host's own toolbar. A filter,
+search or chip in the URL still applies with its control off.
+
 **URL state per view.** By default the view's parameters are the page's own
 (`?q=`, `?sort=`, …), which is right for a view that is the page. A pane
 shares the query string with its host and maybe with other views, so:

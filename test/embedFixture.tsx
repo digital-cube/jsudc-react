@@ -75,13 +75,23 @@ export const messages: Row[] = [
 export interface MountOptions {
   rows?: Row[];
   total?: number;
+  /** The list's `fetched_at`, which draws the toolbar's freshness ("Updated …"). */
+  fetchedAt?: string;
 }
 
 /** Render `ui` under the providers a data view needs, with a `fetch` that records every call. */
-export function mountWith(ui: ReactNode, { rows = messages, total = 5 }: MountOptions = {}) {
+export function mountWith(
+  ui: ReactNode,
+  { rows = messages, total = 5, fetchedAt }: MountOptions = {},
+) {
   const mock = mockUdcFetch({
     describe: () => ({ ok: describeMessages }),
-    list: () => ({ ok: listOf(rows, rows.length === 0 ? 0 : total) }),
+    list: () => ({
+      ok: {
+        ...listOf(rows, rows.length === 0 ? 0 : total),
+        ...(fetchedAt ? { fetched_at: fetchedAt } : {}),
+      },
+    }),
     source: () => ({ ok: { path: "messages/source.yaml", text: "kind: postgres_jsonb\n" } }),
   });
   const client = new UdcClient({ httpUrl: "http://api", fetch: mock.fetch });
