@@ -41,7 +41,7 @@ npm install @jsudc/react @jsudc/core \
 # then the peers of the renderers you register (see Renderers), all of them:
 npm install @tanstack/react-table leaflet recharts @dnd-kit/core @dnd-kit/sortable @dnd-kit/utilities
 # or straight from a GitHub tag:
-npm install github:digital-cube/jsudc-core#v0.7.0 github:digital-cube/jsudc-react#v0.7.0
+npm install github:digital-cube/jsudc-core#v0.8.0 github:digital-cube/jsudc-react#v0.8.0
 ```
 
 ## Quick start
@@ -1465,7 +1465,7 @@ peer while the default kit is the fallback.
 Everything the components import that a host is likely to have too is a peer,
 so there is one copy of it in the bundle:
 
-- `@jsudc/core` ^0.7.0 — one copy of the protocol, shared with the host's
+- `@jsudc/core` ^0.8.0 — one copy of the protocol, shared with the host's
   own `UdcClient`;
 - `react`, `react-dom` ^19 — one React, or hooks break;
 - `@tanstack/react-query` ^5 — one `QueryClient` context, shared with the
@@ -1767,7 +1767,7 @@ only stores and filters keys.
   is a `lookup_array`. In an `editable` cell a plain click on a label stays in
   the cell (double-click edits) and Cmd / Ctrl-click opens the target. A filter
   pill on a lookup field shows the labels too.
-- **Coloured chips.** With `lookup.color_field` (`@jsudc/core`, the release after 0.7.0) each
+- **Coloured chips.** With `lookup.color_field` (`@jsudc/core` 0.8.0) each
   chip of a `lookup_array` takes the colour of its target row: the value of that
   field, a named palette value, is the chip's `data-color`. A tone of the
   palette (`accent`, `success`, `warning`, `danger`, `info`, `muted`,
