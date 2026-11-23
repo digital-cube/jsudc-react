@@ -1767,6 +1767,20 @@ only stores and filters keys.
   is a `lookup_array`. In an `editable` cell a plain click on a label stays in
   the cell (double-click edits) and Cmd / Ctrl-click opens the target. A filter
   pill on a lookup field shows the labels too.
+- **Coloured chips.** With `lookup.color_field` (`@jsudc/core`, the release after 0.7.0) each
+  chip of a `lookup_array` takes the colour of its target row: the value of that
+  field, a named palette value, is the chip's `data-color`. A tone of the
+  palette (`accent`, `success`, `warning`, `danger`, `info`, `muted`,
+  `default`) draws as that tone's badge, in both themes. Any other name is the
+  host's to map, through two variables on the chip (class `udc-lookup-chip`):
+
+  ```css
+  .udc-lookup-chip[data-color="red"] { --udc-chip-bg: oklch(0.95 0.04 25); --udc-chip-fg: oklch(0.5 0.19 25); }
+  .dark .udc-lookup-chip[data-color="red"] { --udc-chip-bg: oklch(0.32 0.08 25); --udc-chip-fg: oklch(0.85 0.09 25); }
+  ```
+
+  A name the host does not map, and a row with no value there, draw the
+  default chip. A single `lookup` stays a plain link.
 - **One call per lookup field**, not per cell: the table (and the kanban
   board) resolve the keys of the rows on screen with `useLookupBatch` and hand
   them down through `<UdcLookupBatch>`. A `LookupValue` outside a batch
