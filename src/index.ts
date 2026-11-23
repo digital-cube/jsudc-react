@@ -106,7 +106,7 @@ export {
 export { LookupCombobox } from "./lookup/LookupCombobox.js";
 export { LookupSelectChip } from "./lookup/LookupSelectChip.js";
 export { LookupValue, useLookupLabels, useLookupRows } from "./lookup/LookupValue.js";
-export { lookupExtras, lookupLabel } from "./lookup/label.js";
+export { lookupColor, lookupExtras, lookupLabel } from "./lookup/label.js";
 export {
   defaultUdcLinks,
   filterHref,

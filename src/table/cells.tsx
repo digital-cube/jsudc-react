@@ -1,10 +1,4 @@
-import {
-  type ColumnColor,
-  type ColumnConfig,
-  type FieldDef,
-  lookupOf,
-  type Row,
-} from "@jsudc/core";
+import { type ColumnConfig, type FieldDef, lookupOf, type Row } from "@jsudc/core";
 import { Check, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { type CellRegistry, cellComponent } from "../cells/registry.js";
@@ -27,7 +21,7 @@ export {
   renderKind,
 } from "./format.js";
 
-import { badgeTone, displayText, formatNumber, isBlank, renderKind } from "./format.js";
+import { BADGE_TONE, badgeTone, displayText, formatNumber, isBlank, renderKind } from "./format.js";
 
 function BoolValue({ value, style }: { value: unknown; style: unknown }) {
   const on = value === true;
@@ -62,17 +56,6 @@ function BoolValue({ value, style }: { value: unknown; style: unknown }) {
   );
 }
 
-/** Badge tone → classes. Literal strings so Tailwind sees them. */
-const BADGE: Record<ColumnColor, string> = {
-  default: "udc:bg-muted udc:text-foreground",
-  accent: "udc:bg-sem-accent-bg udc:text-sem-accent",
-  success: "udc:bg-sem-success-bg udc:text-sem-success",
-  warning: "udc:bg-sem-warning-bg udc:text-sem-warning",
-  danger: "udc:bg-sem-danger-bg udc:text-sem-danger",
-  info: "udc:bg-sem-info-bg udc:text-sem-info",
-  muted: "udc:bg-muted udc:text-muted-foreground",
-};
-
 /** One pill per value (a `string_array` is several), toned by `render_options.map`. */
 export function Badges({ value, column }: { value: unknown; column: ColumnConfig }) {
   const values = (Array.isArray(value) ? value : [value]).filter((v) => !isBlank(v));
@@ -88,7 +71,7 @@ export function Badges({ value, column }: { value: unknown; column: ColumnConfig
             data-tone={tone}
             className={cn(
               "udc:inline-flex udc:h-5 udc:shrink-0 udc:items-center udc:rounded-full udc:px-2 udc:text-[11px] udc:font-medium udc:whitespace-nowrap",
-              BADGE[tone],
+              BADGE_TONE[tone],
             )}
           >
             {typeof v === "object" ? JSON.stringify(v) : String(v)}

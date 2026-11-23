@@ -6,10 +6,11 @@ import {
   ROW_ID,
   type Row,
 } from "@jsudc/core";
-import type { MouseEvent } from "react";
+import type { CSSProperties, MouseEvent } from "react";
 import { cn } from "../lib/utils.js";
+import { BADGE_TONE, isTone } from "../table/format.js";
 import { batchCovers, useLookupBatchContext } from "./batch.js";
-import { lookupExtras, lookupLabel } from "./label.js";
+import { lookupColor, lookupExtras, lookupLabel } from "./label.js";
 import { filterHref, followLink, useUdcLinks } from "./links.js";
 import { keyString, useUdcLookup, valueKeys } from "./useUdcLookup.js";
 
@@ -45,6 +46,17 @@ export function useLookupLabels(
   return keys.map((k) => lookupLabel(row(k), lookup) ?? k);
 }
 
+/**
+ * The fill of a chip whose colour is no tone: the host maps the name to
+ * `--udc-chip-bg` / `--udc-chip-fg`, e.g.
+ * `.udc-lookup-chip[data-color="red"] { --udc-chip-bg: …; --udc-chip-fg: …; }`
+ * (and again under `.dark`); a name it does not map draws as the default chip.
+ */
+const NAMED_CHIP: CSSProperties = {
+  backgroundColor: "var(--udc-chip-bg, var(--muted))",
+  color: "var(--udc-chip-fg, var(--foreground))",
+};
+
 function LookupLink({
   lookup,
   keyValue,
@@ -60,6 +72,10 @@ function LookupLink({
 }) {
   const links = useUdcLinks();
   const label = lookupLabel(row, lookup);
+  // A chip takes the colour of its row (`lookup.color_field`): a tone draws as
+  // that tone's badge, any other name is the host's (`data-color`, NAMED_CHIP).
+  const color = chip ? lookupColor(row, lookup) : undefined;
+  const tone = isTone(color) ? color : undefined;
   const field = lookupKeyField(lookup);
   const href = filterHref(links, lookup.collection, {
     field: field === ROW_ID ? ROW_ID : field,
@@ -84,13 +100,19 @@ function LookupLink({
       data-testid="lookup-link"
       data-key={keyValue}
       data-resolved={label !== undefined || undefined}
+      data-color={color}
+      data-tone={tone}
       title={lookupExtras(row, lookup) ?? label ?? keyValue}
       className={cn(
         "udc:min-w-0 udc:truncate udc:text-foreground udc:underline-offset-2 udc:hover:text-primary udc:hover:underline udc:focus-visible:underline udc:focus-visible:outline-none",
         chip &&
-          "udc:inline-flex udc:h-5 udc:shrink-0 udc:items-center udc:rounded-full udc:bg-muted udc:px-2 udc:text-[11px] udc:font-medium udc:hover:no-underline udc:hover:bg-primary/12",
+          "udc-lookup-chip udc:inline-flex udc:h-5 udc:shrink-0 udc:items-center udc:rounded-full udc:px-2 udc:text-[11px] udc:font-medium udc:hover:no-underline",
+        chip && color === undefined && "udc:bg-muted udc:hover:bg-primary/12",
+        chip && color !== undefined && "udc:hover:opacity-80",
+        tone && BADGE_TONE[tone],
         label === undefined && "udc:font-mono udc:text-muted-foreground",
       )}
+      style={color !== undefined && !tone ? NAMED_CHIP : undefined}
     >
       {label ?? keyValue}
     </a>
@@ -101,7 +123,9 @@ function LookupLink({
  * A `lookup` cell: the target's `label_field` as a link to the target
  * collection filtered by the key (`?f=` `{field: <key field>, op: eq}`), the
  * bare key until the label arrives or when the target has no such row. A
- * `lookup_array` is a list of such chips.
+ * `lookup_array` is a list of such chips; with `lookup.color_field` each chip
+ * takes its row's colour (`data-color`; a tone such as `danger` draws as that
+ * badge, any other name through the host's `--udc-chip-bg` / `--udc-chip-fg`).
  */
 export function LookupValue({
   def,

@@ -91,8 +91,20 @@ export function formatBytes(v: unknown, intlLocale: string): string {
   return `${text} ${BYTE_UNITS[unit]}`;
 }
 
-const isTone = (v: unknown): v is ColumnColor =>
+/** Whether `v` is one of the palette's tones (`COLUMN_COLORS`). */
+export const isTone = (v: unknown): v is ColumnColor =>
   typeof v === "string" && (COLUMN_COLORS as readonly string[]).includes(v);
+
+/** Badge tone → classes (a badge cell, a toned lookup chip). Literal strings so Tailwind sees them. */
+export const BADGE_TONE: Record<ColumnColor, string> = {
+  default: "udc:bg-muted udc:text-foreground",
+  accent: "udc:bg-sem-accent-bg udc:text-sem-accent",
+  success: "udc:bg-sem-success-bg udc:text-sem-success",
+  warning: "udc:bg-sem-warning-bg udc:text-sem-warning",
+  danger: "udc:bg-sem-danger-bg udc:text-sem-danger",
+  info: "udc:bg-sem-info-bg udc:text-sem-info",
+  muted: "udc:bg-muted udc:text-muted-foreground",
+};
 
 /** The tone of one badge value: `render_options.map[value]`, else `render_options.default`, else muted. */
 export function badgeTone(value: unknown, options: ColumnConfig["render_options"]): ColumnColor {

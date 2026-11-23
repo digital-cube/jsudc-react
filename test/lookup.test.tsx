@@ -24,7 +24,7 @@ import { UdcDataView } from "../src/data-view/UdcDataView";
 import { decodeFilterParam } from "../src/data-view/urlState";
 import { UdcI18nProvider } from "../src/i18n/i18n";
 import { LookupValue, useLookupLabels } from "../src/lookup/LookupValue";
-import { lookupExtras, lookupLabel } from "../src/lookup/label";
+import { lookupColor, lookupExtras, lookupLabel } from "../src/lookup/label";
 import { defaultUdcLinks, filterHref, followLink, type UdcLinks } from "../src/lookup/links";
 import { optionsFilter } from "../src/lookup/options";
 import { keyString, lookupKeys, useUdcLookup } from "../src/lookup/useUdcLookup";
@@ -39,8 +39,13 @@ const BOARDS = [
   row("b1", 1, { name: "Roadmap", key: "ROA" }),
   row("b2", 1, { name: "Support", key: "SUP" }),
 ];
+const COLORS: Record<number, string> = { 1: "danger", 2: "red" };
 const PEOPLE = Array.from({ length: 60 }, (_, i) =>
-  row(`p${i}`, 1, { name: `Person ${String(i).padStart(2, "0")}`, title: `T${i}` }),
+  row(`p${i}`, 1, {
+    name: `Person ${String(i).padStart(2, "0")}`,
+    title: `T${i}`,
+    ...(COLORS[i] ? { color: COLORS[i] } : {}),
+  }),
 );
 const TICKETS = [
   row("t1", 3, { title: "One", board_id: "b1", assignees: ["p1", "p2"] }),
@@ -187,6 +192,17 @@ describe("helpers", () => {
     expect(lookupExtras(PEOPLE[0], { collection: "org", label_field: "name" })).toBeUndefined();
   });
 
+  it("read the colour of a row from color_field", () => {
+    const lookup = { collection: "org", label_field: "name", color_field: "color" };
+    expect(lookupColor(PEOPLE[1], lookup)).toBe("danger");
+    expect(lookupColor(row("z", 1, { color: " red " }), lookup)).toBe("red");
+    expect(lookupColor(row("z", 1, { color: "" }), lookup)).toBeUndefined();
+    expect(lookupColor(row("z", 1, { color: null }), lookup)).toBeUndefined();
+    expect(lookupColor(PEOPLE[0], lookup)).toBeUndefined();
+    expect(lookupColor(undefined, lookup)).toBeUndefined();
+    expect(lookupColor(PEOPLE[1], { collection: "org", label_field: "name" })).toBeUndefined();
+  });
+
   it("builds the search filter of a picker", () => {
     const lookup = { collection: "org", label_field: "name" };
     expect(optionsFilter(lookup, "  ")).toBeUndefined();
@@ -289,6 +305,43 @@ describe("a lookup outside a renderer", () => {
     expect(link).toHaveAttribute("href", "/udc/boards");
     fireEvent.click(link);
     expect(links.navigate).toHaveBeenCalledWith("/udc/boards");
+  });
+
+  it("colours a chip from color_field: a tone as its badge, another name by the host's variables", async () => {
+    const { wrapper } = setup();
+    const def = {
+      type: "lookup_array",
+      lookup: { collection: "org", label_field: "name", color_field: "color" },
+    };
+    render(<LookupValue def={def as never} value={["p1", "p2", "p3"]} />, { wrapper });
+    await screen.findByText("Person 03");
+    const [toned, named, plain] = screen.getAllByTestId("lookup-link") as HTMLElement[];
+    expect(toned).toHaveAttribute("data-color", "danger");
+    expect(toned).toHaveAttribute("data-tone", "danger");
+    expect(toned?.className).toContain("udc:bg-sem-danger-bg");
+    expect(toned?.className).not.toContain("udc:bg-muted");
+    expect(toned).not.toHaveAttribute("style");
+    expect(named).toHaveAttribute("data-color", "red");
+    expect(named).not.toHaveAttribute("data-tone");
+    expect(named?.className).toContain("udc-lookup-chip");
+    expect(named?.getAttribute("style")).toContain("var(--udc-chip-bg, var(--muted))");
+    expect(named?.getAttribute("style")).toContain("var(--udc-chip-fg, var(--foreground))");
+    // No colour on the row: the chip as it always was.
+    expect(plain).not.toHaveAttribute("data-color");
+    expect(plain?.className).toContain("udc:bg-muted");
+    expect(plain).not.toHaveAttribute("style");
+  });
+
+  it("a single lookup is a link, not a chip, and takes no colour", async () => {
+    const { wrapper } = setup();
+    const def = {
+      type: "lookup",
+      lookup: { collection: "org", label_field: "name", color_field: "color" },
+    };
+    render(<LookupValue def={def as never} value="p1" />, { wrapper });
+    const link = await screen.findByText("Person 01");
+    expect(link).not.toHaveAttribute("data-color");
+    expect(link.className).not.toContain("udc-lookup-chip");
   });
 
   it("gives the labels as strings, the key where none is known", async () => {
