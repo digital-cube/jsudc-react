@@ -141,12 +141,17 @@ export interface UdcDataViewProps {
   virtualize?: TableVirtualizeProp | undefined;
 }
 
-/** `full`: today's view, every part drawn. `embedded`: one pane of a host's screen, no part drawn. */
+/**
+ * `full`: today's view, every part drawn. `embedded`: one pane of a host's screen, no part of
+ * the frame drawn (the toolbar is not part of the frame: it stays unless `toolbar: false`).
+ */
 export type UdcDataViewChromePreset = "full" | "embedded";
 
 /**
- * The view's frame, part by part: `true` draws the part. A flag left out takes
- * the preset's value (`full`: all `true`; `embedded`: all `false`).
+ * The view's frame, part by part: `true` draws the part. A frame flag left out takes
+ * the preset's value (`full`: all `true`; `embedded`: all `false`). The toolbar flags
+ * (`toolbar`, `search`, `chips`, `filterBuilder`, `freshness`, `count`) are `true` in
+ * either preset, and every control is off when `toolbar` is.
  */
 export interface UdcDataViewChrome {
   preset?: UdcDataViewChromePreset;
@@ -165,6 +170,24 @@ export interface UdcDataViewChrome {
   sourceTab?: boolean;
   /** The card around the toolbar and rows: its border, shadow, rounding and outer margins. */
   frame?: boolean;
+  /**
+   * The toolbar row as a whole. `false` leaves no toolbar element at all: none of its
+   * controls, the renderer's own toolbar controls, the live indicator, the chart window
+   * control, nor `toolbarStart` / `toolbarEnd`. The filter pills and the bulk bar are
+   * rows of their own and still show when in use. For a host with a toolbar of its own;
+   * the renderer gets the loaded count, the total and `isFetching` in `data`.
+   */
+  toolbar?: boolean;
+  /** The search box (drawn when the view has `search`). */
+  search?: boolean;
+  /** The filter chips (drawn when the view has `filters`). */
+  chips?: boolean;
+  /** The "Filter" button that opens the filter builder. */
+  filterBuilder?: boolean;
+  /** "Updated …" and the stale pill. */
+  freshness?: boolean;
+  /** The row count ("Showing 1–50 of 1,234"). */
+  count?: boolean;
 }
 
 /** Every flag of `chrome` resolved against its preset. */
@@ -173,6 +196,7 @@ export function resolveChrome(
 ): Required<Omit<UdcDataViewChrome, "preset">> {
   const flags: UdcDataViewChrome = typeof chrome === "string" ? { preset: chrome } : (chrome ?? {});
   const on = flags.preset !== "embedded";
+  const toolbar = flags.toolbar ?? true;
   return {
     header: flags.header ?? on,
     tabs: flags.tabs ?? on,
@@ -180,6 +204,12 @@ export function resolveChrome(
     docTab: flags.docTab ?? on,
     sourceTab: flags.sourceTab ?? on,
     frame: flags.frame ?? on,
+    toolbar,
+    search: toolbar && (flags.search ?? true),
+    chips: toolbar && (flags.chips ?? true),
+    filterBuilder: toolbar && (flags.filterBuilder ?? true),
+    freshness: toolbar && (flags.freshness ?? true),
+    count: toolbar && (flags.count ?? true),
   };
 }
 
@@ -600,115 +630,123 @@ function DataViewBody({
             : "udc:flex udc:min-h-0 udc:flex-1 udc:flex-col udc:overflow-hidden"
         }
       >
-        <div
-          data-testid="toolbar"
-          className={cn(
-            "udc-toolbar",
-            onPage
-              ? "udc:hidden"
-              : "udc:flex udc:flex-wrap udc:items-center udc:gap-2 udc:border-b udc:border-border udc:px-3 udc:py-2.5",
-          )}
-        >
-          {toolbarStart != null && toolbarStart !== false ? (
-            <div data-testid="toolbar-start" className="udc:flex udc:items-center udc:gap-2">
-              {toolbarStart}
-            </div>
-          ) : null}
-          {view ? (
-            <>
-              {/* A view without a `search` block has nothing to search: no box. */}
-              {view.search ? (
-                <SearchBox
-                  value={state.search}
-                  onChange={onSearch}
-                  placeholder={
-                    tMaybe(section, "SEARCH_PLACEHOLDER") ??
-                    view.search.placeholder ??
-                    t("APP", "SEARCH")
-                  }
-                />
-              ) : null}
-              {/* Its natural width: on a narrow screen the chips wrap as one group, under the search. */}
-              <div className="udc:flex udc:flex-wrap udc:items-center udc:gap-1.5">
-                {view.filters?.length ? (
-                  <FilterChips
-                    configs={view.filters}
-                    state={state.chips}
-                    onChange={state.setChips}
-                    label={chipLabel}
-                    schema={schema}
+        {chrome.toolbar ? (
+          <div
+            data-testid="toolbar"
+            className={cn(
+              "udc-toolbar",
+              onPage
+                ? "udc:hidden"
+                : "udc:flex udc:flex-wrap udc:items-center udc:gap-2 udc:border-b udc:border-border udc:px-3 udc:py-2.5",
+            )}
+          >
+            {toolbarStart != null && toolbarStart !== false ? (
+              <div data-testid="toolbar-start" className="udc:flex udc:items-center udc:gap-2">
+                {toolbarStart}
+              </div>
+            ) : null}
+            {view ? (
+              <>
+                {/* A view without a `search` block has nothing to search: no box. */}
+                {view.search && chrome.search ? (
+                  <SearchBox
+                    value={state.search}
+                    onChange={onSearch}
+                    placeholder={
+                      tMaybe(section, "SEARCH_PLACEHOLDER") ??
+                      view.search.placeholder ??
+                      t("APP", "SEARCH")
+                    }
                   />
                 ) : null}
-                {live?.filterable.fields.length ? (
-                  <FilterBuilder
-                    fields={live.filterable.fields}
-                    tree={userTree}
-                    onChange={setUserTree}
-                    fieldLabel={fieldLabel}
-                  />
-                ) : null}
+                {/* Its natural width: on a narrow screen the chips wrap as one group, under the search. */}
+                <div className="udc:flex udc:flex-wrap udc:items-center udc:gap-1.5">
+                  {view.filters?.length && chrome.chips ? (
+                    <FilterChips
+                      configs={view.filters}
+                      state={state.chips}
+                      onChange={state.setChips}
+                      label={chipLabel}
+                      schema={schema}
+                    />
+                  ) : null}
+                  {live?.filterable.fields.length && chrome.filterBuilder ? (
+                    <FilterBuilder
+                      fields={live.filterable.fields}
+                      tree={userTree}
+                      onChange={setUserTree}
+                      fieldLabel={fieldLabel}
+                    />
+                  ) : null}
+                </div>
+                <div className="udc:ml-auto udc:flex udc:items-center udc:gap-2">
+                  {entry?.toolbar && live ? (
+                    <entry.toolbar collection={collection} describe={live} />
+                  ) : null}
+                  {chartWindow ? (
+                    <ChartWindowControl win={chartWindow} clearable={!onChart} />
+                  ) : null}
+                  {liveIndicator ? <LiveIndicator status={feed.status} /> : null}
+                  {chrome.freshness ? (
+                    <Freshness fetchedAt={fetchedAt} stale={stale} source={live?.source} />
+                  ) : null}
+                  {chrome.count ? (
+                    <span
+                      className="udc:text-xs udc:whitespace-nowrap udc:text-muted-foreground udc:tabular-nums"
+                      data-testid="row-count"
+                      data-shown={shown}
+                      data-total={total ?? undefined}
+                      data-loading={total === null && countPending ? true : undefined}
+                    >
+                      {total === null ? (
+                        countPending ? (
+                          <Skeleton className="udc:h-3 udc:w-24" />
+                        ) : paging && data.error && shown === 0 ? null : paging &&
+                          state.mode === "pages" &&
+                          shown > 0 ? (
+                          t("APP", "SHOWING_RANGE_OPEN", {
+                            from: fmt(pageFrom),
+                            to: fmt(pageFrom + shown - 1),
+                          })
+                        ) : paging && moreThanLoaded ? (
+                          t("APP", "SHOWING_MORE", { shown: fmt(shown) })
+                        ) : (
+                          t("APP", "SHOWING_LOADED", { shown: fmt(shown) })
+                        )
+                      ) : ownCount?.unit === "nodes" && !paging ? (
+                        shown === total ? (
+                          t("APP", "TREE_NODES", { count: fmt(total) })
+                        ) : (
+                          t("APP", "TREE_NODES_OF", { shown: fmt(shown), total: fmt(total) })
+                        )
+                      ) : ownCount?.unit === "map" && !paging ? (
+                        t("APP", "MAP_ON_MAP", { shown: fmt(shown), total: fmt(total) })
+                      ) : ownCount?.unit === "chart" && !paging ? (
+                        t("APP", "CHART_IN_WINDOW", { shown: fmt(shown), total: fmt(total) })
+                      ) : (
+                        t("APP", "SHOWING", { shown: fmt(shown), total: fmt(total) })
+                      )}
+                    </span>
+                  ) : null}
+                </div>
+              </>
+            ) : (
+              <>
+                <Skeleton className="udc:h-8 udc:w-80" />
+                <Skeleton className="udc:h-7 udc:w-20 udc:rounded-full" />
+                <Skeleton className="udc:h-7 udc:w-24 udc:rounded-full" />
+              </>
+            )}
+            {toolbarEnd != null && toolbarEnd !== false ? (
+              <div
+                data-testid="toolbar-end"
+                className={cn("udc:flex udc:items-center udc:gap-2", !view && "udc:ml-auto")}
+              >
+                {toolbarEnd}
               </div>
-              <div className="udc:ml-auto udc:flex udc:items-center udc:gap-2">
-                {entry?.toolbar && live ? (
-                  <entry.toolbar collection={collection} describe={live} />
-                ) : null}
-                {chartWindow ? <ChartWindowControl win={chartWindow} clearable={!onChart} /> : null}
-                {liveIndicator ? <LiveIndicator status={feed.status} /> : null}
-                <Freshness fetchedAt={fetchedAt} stale={stale} source={live?.source} />
-                <span
-                  className="udc:text-xs udc:whitespace-nowrap udc:text-muted-foreground udc:tabular-nums"
-                  data-testid="row-count"
-                  data-shown={shown}
-                  data-total={total ?? undefined}
-                  data-loading={total === null && countPending ? true : undefined}
-                >
-                  {total === null ? (
-                    countPending ? (
-                      <Skeleton className="udc:h-3 udc:w-24" />
-                    ) : paging && data.error && shown === 0 ? null : paging &&
-                      state.mode === "pages" &&
-                      shown > 0 ? (
-                      t("APP", "SHOWING_RANGE_OPEN", {
-                        from: fmt(pageFrom),
-                        to: fmt(pageFrom + shown - 1),
-                      })
-                    ) : paging && moreThanLoaded ? (
-                      t("APP", "SHOWING_MORE", { shown: fmt(shown) })
-                    ) : (
-                      t("APP", "SHOWING_LOADED", { shown: fmt(shown) })
-                    )
-                  ) : ownCount?.unit === "nodes" && !paging ? (
-                    shown === total ? (
-                      t("APP", "TREE_NODES", { count: fmt(total) })
-                    ) : (
-                      t("APP", "TREE_NODES_OF", { shown: fmt(shown), total: fmt(total) })
-                    )
-                  ) : ownCount?.unit === "map" && !paging ? (
-                    t("APP", "MAP_ON_MAP", { shown: fmt(shown), total: fmt(total) })
-                  ) : ownCount?.unit === "chart" && !paging ? (
-                    t("APP", "CHART_IN_WINDOW", { shown: fmt(shown), total: fmt(total) })
-                  ) : (
-                    t("APP", "SHOWING", { shown: fmt(shown), total: fmt(total) })
-                  )}
-                </span>
-              </div>
-            </>
-          ) : (
-            <>
-              <Skeleton className="udc:h-8 udc:w-80" />
-              <Skeleton className="udc:h-7 udc:w-20 udc:rounded-full" />
-              <Skeleton className="udc:h-7 udc:w-24 udc:rounded-full" />
-            </>
-          )}
-          {toolbarEnd != null && toolbarEnd !== false ? (
-            <div
-              data-testid="toolbar-end"
-              className={cn("udc:flex udc:items-center udc:gap-2", !view && "udc:ml-auto")}
-            >
-              {toolbarEnd}
-            </div>
-          ) : null}
-        </div>
+            ) : null}
+          </div>
+        ) : null}
 
         {live && userTree && !onPage ? (
           <div

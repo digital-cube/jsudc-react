@@ -19,6 +19,15 @@ All notable changes to `@jsudc/react` are recorded here. The format follows
   default steps aside so the rows come best match first. A view without either
   behaves exactly as before. Works with `@jsudc/core` ^0.5.0 (the key is read
   loosely). See README "Default sort".
+- `UdcDataView chrome` gains toolbar flags: `toolbar`, and per control
+  `search`, `chips`, `filterBuilder`, `freshness` and `count`.
+  `chrome={{ preset: "embedded", toolbar: false }}` embeds the rows alone, for
+  a host whose screen has a toolbar of its own: no toolbar element is
+  rendered (with it go the renderer's toolbar controls, the live indicator,
+  the chart window control and `toolbarStart` / `toolbarEnd`). The filter
+  pills and the bulk bar still show when in use. The flags are on in either
+  preset, so every view without them renders as before; `resolveChrome`
+  returns the six new keys, each control `false` when `toolbar` is.
 
 ## [0.5.1] - 2026-11-22
 
