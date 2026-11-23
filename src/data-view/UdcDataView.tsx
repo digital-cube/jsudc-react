@@ -41,7 +41,7 @@ import { FolderBar } from "./FolderBar.js";
 import { Freshness } from "./Freshness.js";
 import { joinFolder, splitFolder } from "./folder.js";
 import { LiveIndicator } from "./LiveIndicator.js";
-import { liveDescribe, liveSort, pruneTree } from "./liveView.js";
+import { liveDescribe, liveSort, pruneTree, sourceSortable } from "./liveView.js";
 import { SearchBox } from "./SearchBox.js";
 import { SourceTab } from "./SourceTab.js";
 import { cycleSort } from "./urlState.js";
@@ -330,9 +330,12 @@ function DataViewBody({
     if (schema) setSectionTerms(section, schemaLabelTerms(schema));
   }, [schema, section, setSectionTerms]);
 
+  // A sort the source does not take (describe.sortable, 0.5.2) never goes out: from the URL, a
+  // default or an old link, it would turn the whole list into an error.
+  const sortable = useMemo(() => sourceSortable(live), [live]);
   const sort = useMemo(
-    () => (schema ? liveSort(state.sort, schema) : state.sort),
-    [state.sort, schema],
+    () => (schema ? liveSort(state.sort, schema, sortable) : state.sort),
+    [state.sort, schema, sortable],
   );
   const tree = useMemo(
     () => (schema ? pruneTree(state.tree, schema) : state.tree),

@@ -38,6 +38,7 @@ import {
 import type { RowActions } from "../actions/row.js";
 import { useCellRegistry } from "../cells/registry.js";
 import { FolderEntry } from "../data-view/FolderEntry.js";
+import { columnSortable, sourceSortable } from "../data-view/liveView.js";
 import { tableSection, useI18n } from "../i18n/i18n.js";
 import { cn } from "../lib/utils.js";
 import { UdcLookupBatch, useLookupBatch } from "../lookup/batch.js";
@@ -60,6 +61,13 @@ import {
   sameValue,
 } from "./CellEditor.js";
 import { CellValue } from "./cells.js";
+import {
+  type ColumnSizing,
+  hiddenAtWidth,
+  isFillWidth,
+  layoutColumnWidths,
+  usePaneWidth,
+} from "./columnLayout.js";
 import { Pager } from "./Pager.js";
 import { SelectCheckbox } from "./SelectCheckbox.js";
 import { EmptyState, ErrorState } from "./states.js";
@@ -145,6 +153,8 @@ export function TableRenderer(props: TableRendererProps) {
   const links = useUdcLinks();
   const cells = useCellRegistry();
   const rowLink = view.row_link;
+  // The fields the source sorts on (describe.sortable, 0.5.2); the others get a plain header.
+  const sourceSorts = useMemo(() => sourceSortable(describe), [describe]);
   // One lookup batch per lookup column for the rows on screen, not one call per cell.
   const lookupFields = useMemo(() => view.columns.map((c) => c.field), [view.columns]);
   const lookups = useLookupBatch(data.rows, schema, lookupFields);
@@ -158,17 +168,19 @@ export function TableRenderer(props: TableRendererProps) {
   const [editError, setEditError] = useState<{ message: string; seq: number } | null>(null);
   const [saving, setSaving] = useState(false);
 
+  const live = useMemo(
+    () => view.columns.filter((c) => schema.fields[c.field]?.deleted !== true),
+    [view.columns, schema.fields],
+  );
+
   const columns = useMemo<ColumnDef<Row>[]>(
     () =>
-      view.columns
-        .filter((c) => schema.fields[c.field]?.deleted !== true)
-        .map((c) => ({
-          id: c.id ?? c.field,
-          accessorFn: (r: Row) => r[c.field],
-          size: c.width ?? view.default_column_width,
-          meta: { config: c, def: schema.fields[c.field] } satisfies ColMeta,
-        })),
-    [view.columns, view.default_column_width, schema.fields],
+      live.map((c) => ({
+        id: c.id ?? c.field,
+        accessorFn: (r: Row) => r[c.field],
+        meta: { config: c, def: schema.fields[c.field] } satisfies ColMeta,
+      })),
+    [live, schema.fields],
   );
 
   const columnPinning = useMemo(
@@ -179,6 +191,40 @@ export function TableRenderer(props: TableRendererProps) {
     [view.columns],
   );
 
+  const selection = props.selection;
+  const selectWidth = selection ? SELECT_COLUMN_WIDTH : 0;
+  // Row actions (0.5.0): a column pinned at the end, after any column pinned right.
+  const rowActions = props.rowActions;
+  const rowMenu = useRowMenu();
+  const actionsWidth = rowActions ? rowActionsColumnWidth(rowActions) : 0;
+  const schemaEdit = capabilities.schema_edit && props.onSchemaAction !== undefined;
+
+  // Column sizing (0.5.2): `width: fill` shares the pane's free width, `hide_below` drops a
+  // column on a narrow pane. The pane is measured only when a column asks for either.
+  const responsive = live.some((c) => {
+    const s = c as ColumnSizing;
+    return isFillWidth(s) || s.hide_below !== undefined;
+  });
+  const paneWidth = usePaneWidth(scrollRef, responsive);
+  const columnVisibility = useMemo(
+    () =>
+      Object.fromEntries(
+        live.map((c) => [c.id ?? c.field, !hiddenAtWidth(c as ColumnSizing, paneWidth)]),
+      ),
+    [live, paneWidth],
+  );
+  const reserved = selectWidth + actionsWidth + (schemaEdit ? ADD_COLUMN_WIDTH : 0);
+  const columnSizing = useMemo(
+    () =>
+      layoutColumnWidths(
+        live
+          .filter((c) => columnVisibility[c.id ?? c.field])
+          .map((c) => ({ id: c.id ?? c.field, config: c as ColumnSizing })),
+        { paneWidth, reserved, defaultWidth: view.default_column_width },
+      ),
+    [live, columnVisibility, paneWidth, reserved, view.default_column_width],
+  );
+
   const table = useReactTable({
     data: data.rows,
     columns,
@@ -186,28 +232,21 @@ export function TableRenderer(props: TableRendererProps) {
     getRowId: (r) => r.__meta.id,
     manualSorting: true,
     manualPagination: true,
+    // A column's width is the layout's; the bounds would otherwise clamp it (20 .. MAX_SAFE).
+    defaultColumn: { minSize: 1 },
     state: {
       columnPinning,
+      columnVisibility,
+      columnSizing,
       sorting: sort.map((k) => ({ id: k.field, desc: k.dir === "desc" })),
     },
   });
 
-  const selection = props.selection;
-  const selectWidth = selection ? SELECT_COLUMN_WIDTH : 0;
-  // Row actions (0.5.0): a column pinned at the end, after any column pinned right.
-  const rowActions = props.rowActions;
-  const rowMenu = useRowMenu();
-  const actionsWidth = rowActions ? rowActionsColumnWidth(rowActions) : 0;
-  const left = table.getLeftLeafColumns();
-  const center = table.getCenterLeafColumns();
-  const right = table.getRightLeafColumns();
+  const left = table.getLeftVisibleLeafColumns();
+  const center = table.getCenterVisibleLeafColumns();
+  const right = table.getRightVisibleLeafColumns();
   const ordered = [...left, ...center, ...right];
-  const schemaEdit = capabilities.schema_edit && props.onSchemaAction !== undefined;
-  const totalWidth =
-    ordered.reduce((sum, c) => sum + c.getSize(), 0) +
-    (schemaEdit ? ADD_COLUMN_WIDTH : 0) +
-    selectWidth +
-    actionsWidth;
+  const totalWidth = ordered.reduce((sum, c) => sum + c.getSize(), 0) + reserved;
   const rowHeight = view.row_height ?? DEFAULT_ROW_HEIGHT;
 
   // Long lists (0.5.0): infinite mode past the threshold mounts the rows near the viewport.
@@ -427,7 +466,7 @@ export function TableRenderer(props: TableRendererProps) {
     const { config, def } = meta(c);
     const label = t(section, config.field);
     const key = sort.find((k) => k.field === config.field);
-    const sortable = def !== undefined && def.type !== "json";
+    const sortable = columnSortable(config, def, sourceSorts);
     const dir = key ? (key.dir ?? "asc") : null;
     const Icon = dir === "asc" ? ArrowUp : dir === "desc" ? ArrowDown : ChevronsUpDown;
     const menu = schemaEdit && def !== undefined && props.onSchemaAction;

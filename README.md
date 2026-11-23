@@ -144,6 +144,32 @@ peer is optional, builds and the import throws
 when the module loads. The root, `/table`, `/cards`, `/calendar` and
 `/headless` load without it.
 
+### Table column widths: `fill` and narrow panes
+
+A column's `width` is pixels, or `fill` (`@jsudc/core` 0.5.2): the table lays
+itself out to its pane (the scroll box it renders in, measured with a
+`ResizeObserver`, not the window). A `fill` column takes what is left after the
+fixed columns and the checkbox / actions / add-column columns, never less than
+its `min_width` (default `default_column_width`); several `fill` columns share
+it by `grow`. Below the floors the table scrolls sideways, as before.
+`hide_below: N` leaves a column out, header and cells, while the pane is under
+N px; the room goes to the `fill` columns. A view with neither key renders
+exactly as before (and the pane is not measured):
+
+```yaml
+# a message list in a pane between the folders and the reading pane
+columns:
+  - { field: from, width: 210, hide_below: 560 }
+  - { field: subject, width: fill, min_width: 240 }
+  - { field: date, width: 84, align: right }
+```
+
+At 1000 px the subject is 706 px wide; at 420 px the sender is gone and the
+subject takes 336 px, the date still on screen. The keys are read loosely, so
+the table honours them from a server on `@jsudc/core` 0.5.2 while the host is
+still on core ^0.5.0. `layoutColumnWidths`, `hiddenAtWidth` and `usePaneWidth`
+(`@jsudc/react/table`) are the pieces, for a renderer of your own.
+
 ### Writing a renderer: the `RendererProps` contract
 
 A host draws rows its own way (a message list, a timeline) by registering a
@@ -398,6 +424,26 @@ removes the parameter. While a search answered by the source
 default steps aside: the source answers best match first, and the default
 returns when the box is cleared. A search composed into the filter (`contains`)
 has no order of its own, so the default stays.
+
+### Sortable headers
+
+A table header is a sort button (`data-testid="sort-<field>"`) only when the
+source sorts on its field. `describe.sortable.fields` (`@jsudc/server` 0.5.2)
+lists those fields: a `postgres_table` field declared `sortable: false` is not
+in it, and its header is drawn as plain text, as a `json` field's already was.
+A sort naming such a field never goes out, whether it comes from the URL, an
+old link or a `default_sort`, so it cannot turn the list into an error. A
+server before 0.5.2 sends no `sortable`; every header then sorts, as before.
+
+A view can also take the button off a column whose field the source does sort:
+
+```yaml
+columns:
+  - { field: snippet, sortable: false }
+```
+
+`columnSortable(config, def, sourceSortable(describe))` answers the same
+question for a renderer of your own.
 
 The prop and the view key are read by `@jsudc/react` against a `@jsudc/core`
 of 0.5.0 too (whose loose view parse keeps the key); an ill-formed

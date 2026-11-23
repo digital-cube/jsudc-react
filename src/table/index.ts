@@ -4,6 +4,15 @@ import type { RendererDefinition } from "../renderers/types.js";
 import { TableRenderer } from "./TableRenderer.js";
 
 export { CellValue, displayText, renderKind } from "./cells.js";
+export {
+  type ColumnSizing,
+  hiddenAtWidth,
+  isFillWidth,
+  type LayoutInput,
+  type LayoutOptions,
+  layoutColumnWidths,
+  usePaneWidth,
+} from "./columnLayout.js";
 export { Pager } from "./Pager.js";
 export { TableRenderer, type TableRendererProps } from "./TableRenderer.js";
 export type { TableVirtualization, TableVirtualizeProp } from "./useRowWindow.js";
