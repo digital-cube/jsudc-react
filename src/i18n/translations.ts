@@ -293,6 +293,11 @@ export const TRANSLATIONS: Translations = {
       sr: "Vaša izmena nije sačuvana. Tabela sada prikazuje najnoviju vrednost.",
     },
     SAVE_FAILED: { en: "Could not save", sr: "Čuvanje nije uspelo" },
+    BUSY_TITLE: { en: "The data is busy", sr: "Podaci su trenutno zauzeti" },
+    BUSY_BODY: {
+      en: "Someone else is writing to it right now. Nothing was saved; try again in a moment.",
+      sr: "Neko drugi upravo upisuje. Ništa nije sačuvano; pokušajte ponovo za trenutak.",
+    },
     NOT_FOUND_TITLE: { en: "Collection not found", sr: "Kolekcija nije pronađena" },
     OP_EQ: { en: "equals", sr: "jednako" },
     OP_NEQ: { en: "not equal", sr: "nije jednako" },

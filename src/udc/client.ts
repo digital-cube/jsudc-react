@@ -1,4 +1,4 @@
-import { isUdcError, isUnauthenticated, type UdcError } from "@jsudc/core";
+import { isBusy, isUdcError, isUnauthenticated, type UdcError } from "@jsudc/core";
 import type { UdcClient } from "@jsudc/core/client";
 import { MutationCache, QueryCache, QueryClient } from "@tanstack/react-query";
 import { createContext, useContext } from "react";
@@ -15,10 +15,11 @@ export function useUdcClient(): UdcClient {
 
 /**
  * A protocol error is the server's answer, not a hiccup: asking again gives
- * the same answer. Only transport failures are retried, twice.
+ * the same answer. Only transport failures and `busy` (another writer held the
+ * lock past the server's wait; @jsudc/core 0.7.0) are retried, twice.
  */
 export function shouldRetry(failureCount: number, error: unknown): boolean {
-  return !isUdcError(error) && failureCount < 2;
+  return (!isUdcError(error) || isBusy(error)) && failureCount < 2;
 }
 
 export interface UdcQueryClientOptions {

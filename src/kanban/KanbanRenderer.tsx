@@ -35,6 +35,7 @@ import { UdcLookupBatch, useLookupBatch } from "../lookup/batch.js";
 import { AllRowsStatus } from "../renderers/AllRowsStatus.js";
 import type { RendererProps } from "../renderers/types.js";
 import { EmptyState, ErrorState } from "../table/states.js";
+import { busyToast } from "../udc/busy.js";
 import { useUdcAllRows, useUdcCollection, useUdcMutate } from "../udc/hooks.js";
 import { udcKeys } from "../udc/keys.js";
 import { useUdcClient } from "../udc/provider.js";
@@ -217,7 +218,10 @@ function Board({
 
   const fail = useCallback(
     (err: unknown, title: string) => {
-      if (isVersionConflict(err)) {
+      const busy = busyToast(err, t);
+      if (busy) {
+        toast(busy);
+      } else if (isVersionConflict(err)) {
         toast({
           variant: "warning",
           title: t("APP", "KANBAN_CONFLICT_TITLE"),

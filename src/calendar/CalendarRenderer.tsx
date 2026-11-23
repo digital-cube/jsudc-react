@@ -15,6 +15,7 @@ import type { RendererProps } from "../renderers/types.js";
 import { EmptyState, ErrorState } from "../table/states.js";
 import { useTimezone } from "../time/timezone.js";
 import { dayKey, dayOf, offsetLabel, offsetMinutes, zoneCity } from "../time/zoned.js";
+import { busyToast } from "../udc/busy.js";
 import { useUdcAllRows, useUdcMutate } from "../udc/hooks.js";
 import { useUiKit } from "../ui-kit/context.js";
 import { EventDetail } from "./EventDetail.js";
@@ -155,7 +156,10 @@ function Calendar({
 
   const fail = useCallback(
     (err: unknown, title: string) => {
-      if (isVersionConflict(err)) {
+      const busy = busyToast(err, t);
+      if (busy) {
+        toast(busy);
+      } else if (isVersionConflict(err)) {
         toast({
           variant: "warning",
           title: t("APP", "CAL_CONFLICT_TITLE"),
