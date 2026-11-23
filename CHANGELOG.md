@@ -7,6 +7,24 @@ All notable changes to `@jsudc/react` are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-11-23
+
+Coloured lookup chips; released together with `@jsudc/core` 0.8.0 (which
+defines `lookup.color_field`) and `@jsudc/server` 0.8.0. The `@jsudc/core`
+peer range is `^0.8.0`. Nothing changes for a view or a collection that worked
+on 0.7.0.
+
+### Added
+
+- A `lookup_array` chip takes the colour of its target row when the lookup
+  names a `color_field` (`@jsudc/core`: `LookupDef.color_field`): the row's
+  value is the chip's `data-color`. A palette tone (`accent`, `success`,
+  `warning`, `danger`, `info`, `muted`, `default`) draws as that tone's badge;
+  any other name (e.g. `red`) is the host's to map with
+  `.udc-lookup-chip[data-color="red"] { --udc-chip-bg: …; --udc-chip-fg: … }`,
+  per theme. Without a value, or without `color_field`, the chip is unchanged.
+  `lookupColor(row, lookup)` gives the value.
+
 ## [0.7.0] - 2026-11-23
 
 The client side of the first SQLite set; released together with `@jsudc/core`
@@ -760,7 +778,8 @@ First tagged version, installed from the GitHub tag.
   Serbian), theme and time-zone providers, the UI primitives.
 - `styles.css`, compiled at build time, and `tokens.css`, its raw source.
 
-[Unreleased]: https://github.com/digital-cube/jsudc-react/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/digital-cube/jsudc-react/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/digital-cube/jsudc-react/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/digital-cube/jsudc-react/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/digital-cube/jsudc-react/compare/v0.5.1...v0.6.0
 [0.5.1]: https://github.com/digital-cube/jsudc-react/compare/v0.5.0...v0.5.1
