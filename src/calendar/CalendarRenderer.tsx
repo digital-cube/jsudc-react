@@ -315,7 +315,7 @@ function Calendar({
       <AllRowsStatus result={q} />
       {filtered && !q.isFetching && events.length === 0 ? (
         <div className="udc:border-b udc:border-border">
-          <EmptyState filtered onClear={onClearFilters} />
+          <EmptyState collection={collection} filtered onClear={onClearFilters} />
         </div>
       ) : null}
       {preset === "month" ? (

@@ -10,7 +10,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { render } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { RENDERERS } from "../src/all";
-import { UdcI18nProvider } from "../src/i18n/i18n";
+import { type Messages, UdcI18nProvider } from "../src/i18n/i18n";
 import { createUdcQueryClient, UdcProvider } from "../src/udc/provider";
 import { Toaster, TooltipProvider } from "../src/ui-kit/ui";
 import { type Call, listOf, mockUdcFetch, row } from "./fetchMock";
@@ -77,12 +77,14 @@ export interface MountOptions {
   total?: number;
   /** The list's `fetched_at`, which draws the toolbar's freshness ("Updated …"). */
   fetchedAt?: string;
+  /** The host's `UdcI18nProvider messages`. */
+  messages?: Messages;
 }
 
 /** Render `ui` under the providers a data view needs, with a `fetch` that records every call. */
 export function mountWith(
   ui: ReactNode,
-  { rows = messages, total = 5, fetchedAt }: MountOptions = {},
+  { rows = messages, total = 5, fetchedAt, messages: hostMessages }: MountOptions = {},
 ) {
   const mock = mockUdcFetch({
     describe: () => ({ ok: describeMessages }),
@@ -97,7 +99,7 @@ export function mountWith(
   const client = new UdcClient({ httpUrl: "http://api", fetch: mock.fetch });
   const qc = createUdcQueryClient();
   const wrapper = ({ children }: { children: ReactNode }) => (
-    <UdcI18nProvider>
+    <UdcI18nProvider messages={hostMessages}>
       <UdcProvider client={client} renderers={RENDERERS}>
         <QueryClientProvider client={qc}>
           <TooltipProvider>

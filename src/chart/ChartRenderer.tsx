@@ -146,7 +146,12 @@ function ChartTab({
           />
         </div>
       ) : empty ? (
-        <EmptyState filtered={filtered} onClear={onClearFilters} body={opts.empty_label} />
+        <EmptyState
+          collection={collection}
+          filtered={filtered}
+          onClear={onClearFilters}
+          body={opts.empty_label}
+        />
       ) : (
         <ChartView
           collection={collection}
@@ -542,7 +547,14 @@ function PieView({ collection, describe, rows, opts }: ChartViewProps) {
   const radius = Math.max(60, Math.min(opts.height_px / 2 - 40, width / 4));
 
   if (slices.length === 0) {
-    return <EmptyState filtered={false} onClear={() => {}} body={opts.empty_label} />;
+    return (
+      <EmptyState
+        collection={collection}
+        filtered={false}
+        onClear={() => {}}
+        body={opts.empty_label}
+      />
+    );
   }
   return (
     <div

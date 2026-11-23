@@ -9,6 +9,14 @@ All notable changes to `@jsudc/react` are recorded here. The format follows
 
 ### Added
 
+- One collection's empty state can be reworded: `EMPTY_TITLE`, `EMPTY_PLAIN`
+  and `EMPTY_BODY` are looked up in `TBL_<COLLECTION>` before `APP`, as
+  `SEARCH_PLACEHOLDER` already is, in every renderer (table, cards, kanban,
+  tree, calendar, map, chart). `messages.TBL_MAIL_MESSAGES.EMPTY_PLAIN` makes
+  an empty mail folder say "No messages here." while the app's other views
+  keep "This collection has no rows yet.". `EmptyState` takes an optional
+  `collection` for the same lookup in a host's own renderer. Without such
+  terms nothing changes. See README "i18n".
 - Table columns sized to the table's pane: a column `width: fill` takes the
   free width left by the fixed columns (never under its `min_width`, default
   `default_column_width`; several share it by `grow`), and `hide_below: N`

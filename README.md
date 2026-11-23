@@ -1673,7 +1673,18 @@ const messages: Messages = {
 
 - Sections are `COLLECTIONS` (titles), `TBL_<COLLECTION>` (a collection's
   field labels — term = field name upper-cased — plus `__DESCRIPTION` under
-  the title and `SEARCH_PLACEHOLDER`) and `APP`.
+  the title, `SEARCH_PLACEHOLDER` and the empty state) and `APP`.
+- **One collection's empty state**: `EMPTY_TITLE`, `EMPTY_PLAIN` (no rows) and
+  `EMPTY_BODY` (no rows match the user's filters) are looked up in
+  `TBL_<COLLECTION>` first, then in `APP`. Reword one collection there and
+  every other view keeps the app's wording; a term the section leaves out
+  comes from `APP`. A chart's `empty_label` still wins over both.
+
+  ```tsx
+  const messages: Messages = {
+    TBL_MAIL_MESSAGES: { EMPTY_PLAIN: { en: "No messages here.", sr: "Ovde nema poruka." } },
+  };
+  ```
 - **Another locale** is just strings in it: add `de` to the terms you translate
   and it is offered (`useI18n().locales` is `en`, `sr` and every locale your
   messages use); missing terms fall back to English. `Intl` formats with the

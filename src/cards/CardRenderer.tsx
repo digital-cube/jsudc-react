@@ -177,7 +177,13 @@ export function CardRenderer(props: CardRendererProps) {
         ) : null}
 
         {showError && data.error ? <ErrorState error={data.error} onRetry={data.refetch} /> : null}
-        {showEmpty ? <EmptyState filtered={props.filtered} onClear={props.onClearFilters} /> : null}
+        {showEmpty ? (
+          <EmptyState
+            collection={collection}
+            filtered={props.filtered}
+            onClear={props.onClearFilters}
+          />
+        ) : null}
 
         {mode === "infinite" && data.rows.length > 0 ? (
           <div

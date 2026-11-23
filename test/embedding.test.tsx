@@ -52,6 +52,18 @@ describe("a host filter", () => {
     expect(screen.getByTestId("row-count")).toHaveAttribute("data-total", "0");
   });
 
+  it("says the collection's own TBL_<COLLECTION>.EMPTY_PLAIN, not the app-wide one", async () => {
+    mountWith(<UdcDataView collection="messages" filter={INBOX} />, {
+      rows: [],
+      messages: { TBL_MESSAGES: { EMPTY_PLAIN: { en: "No messages here." } } },
+    });
+    const empty = await screen.findByTestId("table-empty");
+    expect(empty).toHaveTextContent("No messages here.");
+    expect(empty).not.toHaveTextContent("This collection has no rows yet.");
+    // A term the section leaves out still comes from APP.
+    expect(empty).toHaveTextContent("Nothing matches");
+  });
+
   it("a new but equal filter object each render asks once", async () => {
     const { calls, rerender } = mountWith(
       <UdcDataView collection="messages" filter={{ ...INBOX }} />,
