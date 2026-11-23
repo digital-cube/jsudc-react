@@ -13,6 +13,7 @@ import { type ReactNode, useCallback, useMemo, useRef, useState } from "react";
 import { useI18n } from "../i18n/i18n.js";
 import { humanize } from "../lib/utils.js";
 import type { RowSelection } from "../rows/useRowSelection.js";
+import { busyToast } from "../udc/busy.js";
 import { useUdcClient } from "../udc/client.js";
 import { callAction, useUdcMutate, useUdcMutateMany } from "../udc/hooks.js";
 import { udcKeys } from "../udc/keys.js";
@@ -82,6 +83,11 @@ export function useRowActionRunner({
 
   const failedToast = useCallback(
     (name: string, err: unknown, plan: BulkActionPlan) => {
+      const busy = busyToast(err, t);
+      if (busy) {
+        toast(busy);
+        return;
+      }
       if (isUdcError(err) && err.code === "unsupported_op") {
         toast({
           variant: "danger",

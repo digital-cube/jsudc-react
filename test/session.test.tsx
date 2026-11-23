@@ -163,6 +163,13 @@ describe("createUdcQueryClient and shouldRetry", () => {
       ),
     ).toBe(false);
   });
+
+  it("retries busy (another writer held the lock) twice, and no other protocol error", () => {
+    expect(shouldRetry(0, new UdcError("busy", "database main is busy"))).toBe(true);
+    expect(shouldRetry(1, new UdcError("busy", "database main is busy"))).toBe(true);
+    expect(shouldRetry(2, new UdcError("busy", "database main is busy"))).toBe(false);
+    expect(shouldRetry(0, new UdcError("internal", "boom"))).toBe(false);
+  });
 });
 
 describe("ErrorState signed out", () => {

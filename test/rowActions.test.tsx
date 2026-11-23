@@ -377,6 +377,29 @@ describe("running one", () => {
     );
   });
 
+  it("`busy` (another writer held the lock) is a try-again warning, and rolls back", async () => {
+    mount(
+      {},
+      {
+        describe: describeWith({ row_action_defs: DEFS }),
+        rows: ROWS(),
+        handlers: {
+          mutate: () => ({
+            err: { code: "busy", message: "database main is busy", details: { waited_ms: 5000 } },
+          }),
+        },
+      },
+    );
+    await loaded();
+    fireEvent.click(inRow("m1").getByTestId("row-action-mark_read"));
+    await screen.findByText("The data is busy");
+    expect(screen.getByText(/Nothing was saved; try again in a moment/)).toBeTruthy();
+    expect(screen.queryByText("database main is busy")).toBeNull();
+    await waitFor(() =>
+      expect(kinds(rowEl("m1"), "row-action-")).toEqual(["mark_read", "archive", "snooze"]),
+    );
+  });
+
   it("another kind calls the server action its def names, with the one id", async () => {
     const { calls } = mount(
       {},

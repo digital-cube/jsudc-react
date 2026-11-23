@@ -79,15 +79,23 @@ export interface MountOptions {
   fetchedAt?: string;
   /** The host's `UdcI18nProvider messages`. */
   messages?: Messages;
+  /** The `describe` answer; default `describeMessages`. */
+  describe?: DescribeResponse;
 }
 
 /** Render `ui` under the providers a data view needs, with a `fetch` that records every call. */
 export function mountWith(
   ui: ReactNode,
-  { rows = messages, total = 5, fetchedAt, messages: hostMessages }: MountOptions = {},
+  {
+    rows = messages,
+    total = 5,
+    fetchedAt,
+    messages: hostMessages,
+    describe = describeMessages,
+  }: MountOptions = {},
 ) {
   const mock = mockUdcFetch({
-    describe: () => ({ ok: describeMessages }),
+    describe: () => ({ ok: describe }),
     list: () => ({
       ok: {
         ...listOf(rows, rows.length === 0 ? 0 : total),

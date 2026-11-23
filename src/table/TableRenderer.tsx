@@ -48,6 +48,7 @@ import { type RowActivationProps, useRowActivation } from "../rows/useRowActivat
 import type { RowSelection } from "../rows/useRowSelection.js";
 import { ColumnHeaderMenu } from "../schema-editor/ColumnHeaderMenu.js";
 import type { SchemaAction } from "../schema-editor/fieldForm.js";
+import { busyToast } from "../udc/busy.js";
 import type { UdcCollectionResult } from "../udc/hooks.js";
 import { useUdcMutate } from "../udc/hooks.js";
 import type { PagingMode } from "../udc/keys.js";
@@ -408,7 +409,10 @@ export function TableRenderer(props: TableRendererProps) {
       }
       setEdit(null);
       setEditError(null);
-      if (isVersionConflict(err)) {
+      const busy = busyToast(err, t);
+      if (busy) {
+        toast(busy);
+      } else if (isVersionConflict(err)) {
         toast({
           variant: "warning",
           title: t("APP", "CONFLICT_TITLE"),
