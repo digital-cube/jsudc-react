@@ -1,7 +1,12 @@
-// A default sort (0.5.2): the view's `default_sort`, or the host's `defaultSort` prop, is the
+// A default sort (0.6.0): the view's `default_sort`, or the host's `defaultSort` prop, is the
 // list's `sort` while the URL state has none. It is shown in the headers, never written into the
 // URL, and steps aside while a search answered by the source is typed.
-import { type DescribeResponse, type SortKey, ViewConfigSchema } from "@jsudc/core";
+import {
+  type DescribeResponse,
+  type SortKey,
+  type ViewConfig,
+  ViewConfigSchema,
+} from "@jsudc/core";
 import { UdcClient } from "@jsudc/core/client";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
@@ -25,9 +30,12 @@ describe("viewDefaultSort", () => {
     expect(viewDefaultSort(view)).toEqual(NEWEST);
     expect(viewDefaultSort(ViewConfigSchema.parse({}))).toEqual([]);
     expect(viewDefaultSort(undefined)).toEqual([]);
-    expect(
-      viewDefaultSort(ViewConfigSchema.parse({ default_sort: [{ field: "a", dir: "up" }] })),
-    ).toEqual([]);
+    // Core 0.6.0's ViewConfigSchema refuses it at parse; a view built without the parse reads as none.
+    const illFormed = { default_sort: [{ field: "a", dir: "up" }] };
+    expect(() => ViewConfigSchema.parse(illFormed)).toThrow();
+    expect(viewDefaultSort({ ...ViewConfigSchema.parse({}), ...illFormed } as ViewConfig)).toEqual(
+      [],
+    );
   });
 });
 
