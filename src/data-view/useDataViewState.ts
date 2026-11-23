@@ -32,7 +32,7 @@ export function resolvePagingMode(
 }
 
 /**
- * The view's `default_sort` (`@jsudc/core` 0.5.2), `[]` when it has none. Read loosely, so that
+ * The view's `default_sort` (`@jsudc/core` 0.6.0), `[]` when it has none. Read loosely, so that
  * a core of 0.5.0 (whose `ViewConfig` type lacks the key, but whose loose parse keeps it) works
  * as well; an ill-formed value reads as none.
  */

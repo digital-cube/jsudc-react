@@ -41,7 +41,7 @@ npm install @jsudc/react @jsudc/core \
 # then the peers of the renderers you register (see Renderers), all of them:
 npm install @tanstack/react-table leaflet recharts @dnd-kit/core @dnd-kit/sortable @dnd-kit/utilities
 # or straight from a GitHub tag:
-npm install github:digital-cube/jsudc-core#v0.5.0 github:digital-cube/jsudc-react#v0.5.1
+npm install github:digital-cube/jsudc-core#v0.6.0 github:digital-cube/jsudc-react#v0.6.0
 ```
 
 ## Quick start
@@ -146,7 +146,7 @@ when the module loads. The root, `/table`, `/cards`, `/calendar` and
 
 ### Table column widths: `fill` and narrow panes
 
-A column's `width` is pixels, or `fill` (`@jsudc/core` 0.5.2): the table lays
+A column's `width` is pixels, or `fill` (`@jsudc/core` 0.6.0): the table lays
 itself out to its pane (the scroll box it renders in, measured with a
 `ResizeObserver`, not the window). A `fill` column takes what is left after the
 fixed columns and the checkbox / actions / add-column columns, never less than
@@ -166,8 +166,8 @@ columns:
 
 At 1000 px the subject is 706 px wide; at 420 px the sender is gone and the
 subject takes 336 px, the date still on screen. The keys are read loosely, so
-the table honours them from a server on `@jsudc/core` 0.5.2 while the host is
-still on core ^0.5.0. `layoutColumnWidths`, `hiddenAtWidth` and `usePaneWidth`
+the table honours them even in a view parsed by an older core.
+`layoutColumnWidths`, `hiddenAtWidth` and `usePaneWidth`
 (`@jsudc/react/table`) are the pieces, for a renderer of your own.
 
 ### Writing a renderer: the `RendererProps` contract
@@ -400,7 +400,7 @@ a function passed to `setParams` receives the query string as it is now.
 ### Default sort
 
 Without a `sort` in the URL state, a list goes out with the view's
-`default_sort` (`view.yaml`, `@jsudc/core` 0.5.2), or the host's `defaultSort`
+`default_sort` (`view.yaml`, `@jsudc/core` 0.6.0), or the host's `defaultSort`
 prop instead of it (`[]` turns the view's off):
 
 ```yaml
@@ -428,12 +428,12 @@ has no order of its own, so the default stays.
 ### Sortable headers
 
 A table header is a sort button (`data-testid="sort-<field>"`) only when the
-source sorts on its field. `describe.sortable.fields` (`@jsudc/server` 0.5.2)
+source sorts on its field. `describe.sortable.fields` (`@jsudc/server` 0.6.0)
 lists those fields: a `postgres_table` field declared `sortable: false` is not
 in it, and its header is drawn as plain text, as a `json` field's already was.
 A sort naming such a field never goes out, whether it comes from the URL, an
 old link or a `default_sort`, so it cannot turn the list into an error. A
-server before 0.5.2 sends no `sortable`; every header then sorts, as before.
+server before 0.6.0 sends no `sortable`; every header then sorts, as before.
 
 A view can also take the button off a column whose field the source does sort:
 
@@ -1465,7 +1465,7 @@ peer while the default kit is the fallback.
 Everything the components import that a host is likely to have too is a peer,
 so there is one copy of it in the bundle:
 
-- `@jsudc/core` ^0.5.0 — one copy of the protocol, shared with the host's
+- `@jsudc/core` ^0.6.0 — one copy of the protocol, shared with the host's
   own `UdcClient`;
 - `react`, `react-dom` ^19 — one React, or hooks break;
 - `@tanstack/react-query` ^5 — one `QueryClient` context, shared with the

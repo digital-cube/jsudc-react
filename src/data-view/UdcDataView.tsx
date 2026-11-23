@@ -330,7 +330,7 @@ function DataViewBody({
     if (schema) setSectionTerms(section, schemaLabelTerms(schema));
   }, [schema, section, setSectionTerms]);
 
-  // A sort the source does not take (describe.sortable, 0.5.2) never goes out: from the URL, a
+  // A sort the source does not take (describe.sortable, 0.6.0) never goes out: from the URL, a
   // default or an old link, it would turn the whole list into an error.
   const sortable = useMemo(() => sourceSortable(live), [live]);
   const sort = useMemo(
