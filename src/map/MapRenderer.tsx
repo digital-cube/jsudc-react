@@ -346,7 +346,7 @@ function MapView({
               {error ? (
                 <ErrorState error={error} onRetry={() => void q.refetch()} />
               ) : (
-                <EmptyState filtered={filtered} onClear={onClearFilters} />
+                <EmptyState collection={collection} filtered={filtered} onClear={onClearFilters} />
               )}
             </div>
           </div>

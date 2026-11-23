@@ -493,7 +493,7 @@ function Tree({
               ))}
             </div>
           ) : topRows.length === 0 ? (
-            <EmptyState filtered={filtered} onClear={onClearFilters} />
+            <EmptyState collection={collection} filtered={filtered} onClear={onClearFilters} />
           ) : (
             <DndContext
               sensors={sensors}

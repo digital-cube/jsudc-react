@@ -1,7 +1,7 @@
 import { isUnauthenticated } from "@jsudc/core";
 import { AlertTriangle, LogIn, RotateCw, SearchX, Table2 } from "lucide-react";
 import type { ReactNode } from "react";
-import { useI18n } from "../i18n/i18n.js";
+import { tableSection, useI18n } from "../i18n/i18n.js";
 import { useUiKit } from "../ui-kit/context.js";
 
 function Panel({
@@ -44,24 +44,35 @@ function Panel({
   );
 }
 
-/** `body` replaces the default text (a view's `empty_label`). */
+/**
+ * No rows. Its strings are looked up in the collection's own section first
+ * (`TBL_<COLLECTION>.EMPTY_TITLE` / `EMPTY_BODY` / `EMPTY_PLAIN`, as
+ * `SEARCH_PLACEHOLDER` is), then in `APP`: an empty mail folder can say "No
+ * messages here." without every other view of the app saying it too. `body`
+ * replaces the default text (a view's `empty_label`) and wins over both.
+ */
 export function EmptyState({
   filtered,
   onClear,
   body,
+  collection,
 }: {
   filtered: boolean;
   onClear: () => void;
   body?: string | undefined;
+  /** The collection whose `TBL_<COLLECTION>` section is asked first. */
+  collection?: string | undefined;
 }) {
   const { Button } = useUiKit();
-  const { t } = useI18n();
+  const { t, tMaybe } = useI18n();
+  const term = (key: string) =>
+    (collection ? tMaybe(tableSection(collection), key) : null) ?? t("APP", key);
   return filtered ? (
     <Panel
       testId="table-empty"
       icon={<SearchX className="udc:size-5" />}
-      title={t("APP", "EMPTY_TITLE")}
-      body={body ?? t("APP", "EMPTY_BODY")}
+      title={term("EMPTY_TITLE")}
+      body={body ?? term("EMPTY_BODY")}
       action={
         <Button size="sm" onClick={onClear}>
           {t("APP", "CLEAR_FILTERS")}
@@ -72,8 +83,8 @@ export function EmptyState({
     <Panel
       testId="table-empty"
       icon={<Table2 className="udc:size-5" />}
-      title={t("APP", "EMPTY_TITLE")}
-      body={body ?? t("APP", "EMPTY_PLAIN")}
+      title={term("EMPTY_TITLE")}
+      body={body ?? term("EMPTY_PLAIN")}
     />
   );
 }

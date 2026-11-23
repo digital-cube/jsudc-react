@@ -495,7 +495,7 @@ function Board({
         <AllRowsStatus result={cardsQ} />
         {noMatches ? (
           <div className="udc:border-b udc:border-border">
-            <EmptyState filtered onClear={onClearFilters} />
+            <EmptyState collection={collection} filtered onClear={onClearFilters} />
           </div>
         ) : null}
         <div

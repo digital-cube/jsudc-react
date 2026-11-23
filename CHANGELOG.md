@@ -9,6 +9,14 @@ All notable changes to `@jsudc/react` are recorded here. The format follows
 
 ### Added
 
+- One collection's empty state can be reworded: `EMPTY_TITLE`, `EMPTY_PLAIN`
+  and `EMPTY_BODY` are looked up in `TBL_<COLLECTION>` before `APP`, as
+  `SEARCH_PLACEHOLDER` already is, in every renderer (table, cards, kanban,
+  tree, calendar, map, chart). `messages.TBL_MAIL_MESSAGES.EMPTY_PLAIN` makes
+  an empty mail folder say "No messages here." while the app's other views
+  keep "This collection has no rows yet.". `EmptyState` takes an optional
+  `collection` for the same lookup in a host's own renderer. Without such
+  terms nothing changes. See README "i18n".
 - A default sort: `UdcDataView` sends the view's `default_sort` (`@jsudc/core`
   0.5.2), or the new `defaultSort` prop instead of it (`[]`: none), as the
   list's `sort` while the URL state has no `sort`. The first page is already in
