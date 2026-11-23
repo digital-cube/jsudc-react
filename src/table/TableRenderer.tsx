@@ -324,8 +324,9 @@ export function TableRenderer(props: TableRendererProps) {
       : {}),
   });
 
+  // `null`: the host has no view of the linked collection, and a click stays.
   const rowLinkHref = (row: Row) =>
-    rowLink ? filterHref(links, rowLink.collection, rowLinkCondition(row, rowLink)) : "";
+    rowLink ? filterHref(links, rowLink.collection, rowLinkCondition(row, rowLink)) : null;
   /**
    * A click on a row of a view with `row_link` opens the linked collection;
    * Cmd / Ctrl / the middle button opens it in a new tab. A click in an
@@ -336,7 +337,8 @@ export function TableRenderer(props: TableRendererProps) {
     if (!rowLink || edit || (e.type === "auxclick" && e.button !== 1)) return;
     const target = e.target as HTMLElement;
     if (target.closest("a,button,input,select,textarea,label,[data-editable]")) return;
-    followLink(e, rowLinkHref(row), links);
+    const href = rowLinkHref(row);
+    if (href !== null) followLink(e, href, links);
   };
   /**
    * With `onRowActivate` a plain click activates the row; Cmd / Ctrl-click and
@@ -753,7 +755,7 @@ export function TableRenderer(props: TableRendererProps) {
         data-testid="row"
         data-row-id={row.__meta.id}
         aria-rowindex={virtual ? index + 1 : undefined}
-        data-row-link={rowLink ? rowLinkHref(row) : undefined}
+        data-row-link={(rowLink && rowLinkHref(row)) || undefined}
         data-selected={checked ? "true" : undefined}
         {...rowProps}
         {...(rowActions

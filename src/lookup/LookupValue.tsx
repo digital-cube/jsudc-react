@@ -57,18 +57,30 @@ const NAMED_CHIP: CSSProperties = {
   color: "var(--udc-chip-fg, var(--foreground))",
 };
 
+/**
+ * How fast chip `index` of a `lookup_array` gives up width when the chips do
+ * not fit: each chip a million times faster than the one before it, so the
+ * first chips keep their width and the last visible one ends in "…" (down to
+ * its minimum, then the one before it). Capped so the factor stays a finite
+ * single-precision float; chips that far along are past the cell's edge.
+ */
+const chipShrink = (index: number): number => 1e6 ** Math.min(index, 6);
+
 function LookupLink({
   lookup,
   keyValue,
   row,
   chip,
   editable,
+  shrink,
 }: {
   lookup: LookupDef;
   keyValue: string;
   row: Row | undefined;
   chip: boolean;
   editable: boolean;
+  /** A chip's `flex-shrink` in its row of chips. */
+  shrink?: number;
 }) {
   const links = useUdcLinks();
   const label = lookupLabel(row, lookup);
@@ -77,12 +89,15 @@ function LookupLink({
   const color = chip ? lookupColor(row, lookup) : undefined;
   const tone = isTone(color) ? color : undefined;
   const field = lookupKeyField(lookup);
+  // `null`: the host has no view of the target (`UdcLinks.href`), so the value
+  // is plain text and a click on it is the row's.
   const href = filterHref(links, lookup.collection, {
     field: field === ROW_ID ? ROW_ID : field,
     op: "eq",
     value: keyValue,
   });
   const onClick = (e: MouseEvent) => {
+    if (href === null) return;
     // In an editable cell a plain click belongs to the cell (double-click edits);
     // Cmd / Ctrl-click still opens the target.
     if (editable && !(e.metaKey || e.ctrlKey || e.button === 1)) {
@@ -93,28 +108,50 @@ function LookupLink({
     e.stopPropagation();
     followLink(e, href, links);
   };
-  return (
-    <a
-      href={href}
-      onClick={onClick}
-      data-testid="lookup-link"
-      data-key={keyValue}
-      data-resolved={label !== undefined || undefined}
-      data-color={color}
-      data-tone={tone}
-      title={lookupExtras(row, lookup) ?? label ?? keyValue}
-      className={cn(
-        "udc:min-w-0 udc:truncate udc:text-foreground udc:underline-offset-2 udc:hover:text-primary udc:hover:underline udc:focus-visible:underline udc:focus-visible:outline-none",
-        chip &&
-          "udc-lookup-chip udc:inline-flex udc:h-5 udc:shrink-0 udc:items-center udc:rounded-full udc:px-2 udc:text-[11px] udc:font-medium udc:hover:no-underline",
-        chip && color === undefined && "udc:bg-muted udc:hover:bg-primary/12",
-        chip && color !== undefined && "udc:hover:opacity-80",
-        tone && BADGE_TONE[tone],
-        label === undefined && "udc:font-mono udc:text-muted-foreground",
-      )}
-      style={color !== undefined && !tone ? NAMED_CHIP : undefined}
-    >
-      {label ?? keyValue}
+  const text = label ?? keyValue;
+  const style: CSSProperties = {
+    ...(color !== undefined && !tone ? NAMED_CHIP : {}),
+    ...(shrink !== undefined ? { flexShrink: shrink } : {}),
+  };
+  const props = {
+    "data-testid": "lookup-link",
+    "data-key": keyValue,
+    "data-resolved": label !== undefined || undefined,
+    "data-color": color,
+    "data-tone": tone,
+    "data-link": href !== null || undefined,
+    title: lookupExtras(row, lookup) ?? label ?? keyValue,
+    className: cn(
+      "udc:min-w-0 udc:truncate udc:text-foreground",
+      href !== null &&
+        "udc:underline-offset-2 udc:hover:text-primary udc:hover:underline udc:focus-visible:underline udc:focus-visible:outline-none",
+      // The chip's box is a flex container, whose text would be an anonymous flex
+      // item that `text-overflow` does not reach: the text is a span of its own
+      // that truncates, inside a box at most `--udc-chip-max-width` wide that may
+      // shrink to `--udc-chip-min-width` (default 2.5rem, "K…") but keeps its rounded ends.
+      chip &&
+        "udc-lookup-chip udc:inline-flex udc:h-5 udc:justify-center udc:max-w-[var(--udc-chip-max-width,12em)] udc:min-w-[min(var(--udc-chip-min-width,2.5rem),var(--udc-chip-max-width,12em))] udc:items-center udc:rounded-full udc:px-2 udc:text-[length:var(--udc-chip-font-size,11px)] udc:font-[number:var(--udc-chip-font-weight,500)]",
+      chip && href !== null && "udc:hover:no-underline",
+      chip && color === undefined && "udc:bg-muted",
+      chip && color === undefined && href !== null && "udc:hover:bg-primary/12",
+      chip && color !== undefined && href !== null && "udc:hover:opacity-80",
+      tone && BADGE_TONE[tone],
+      label === undefined && "udc:font-mono udc:text-muted-foreground",
+    ),
+    style: Object.keys(style).length > 0 ? style : undefined,
+  };
+  const body = chip ? (
+    <span data-testid="lookup-chip-text" className="udc:min-w-0 udc:truncate">
+      {text}
+    </span>
+  ) : (
+    text
+  );
+  return href === null ? (
+    <span {...props}>{body}</span>
+  ) : (
+    <a {...props} href={href} onClick={onClick}>
+      {body}
     </a>
   );
 }
@@ -126,6 +163,10 @@ function LookupLink({
  * `lookup_array` is a list of such chips; with `lookup.color_field` each chip
  * takes its row's colour (`data-color`; a tone such as `danger` draws as that
  * badge, any other name through the host's `--udc-chip-bg` / `--udc-chip-fg`).
+ * A long chip ends in "…" inside its rounded box, at most
+ * `--udc-chip-max-width` (default `12em`) wide; when the chips do not fit, the
+ * first keep their width and the last visible one shrinks. Where `UdcLinks.href`
+ * gives `null` for the target, the label and the chips are plain text.
  */
 export function LookupValue({
   def,
@@ -148,8 +189,16 @@ export function LookupValue({
         data-testid="lookup-chips"
         className="udc:flex udc:min-w-0 udc:items-center udc:gap-1 udc:overflow-hidden"
       >
-        {keys.map((k) => (
-          <LookupLink key={k} lookup={lookup} keyValue={k} row={row(k)} chip editable={editable} />
+        {keys.map((k, i) => (
+          <LookupLink
+            key={k}
+            lookup={lookup}
+            keyValue={k}
+            row={row(k)}
+            chip
+            editable={editable}
+            shrink={chipShrink(i)}
+          />
         ))}
       </span>
     );
