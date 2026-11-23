@@ -38,6 +38,7 @@ import {
 import type { RowActions } from "../actions/row.js";
 import { useCellRegistry } from "../cells/registry.js";
 import { FolderEntry } from "../data-view/FolderEntry.js";
+import { columnSortable, sourceSortable } from "../data-view/liveView.js";
 import { tableSection, useI18n } from "../i18n/i18n.js";
 import { cn } from "../lib/utils.js";
 import { UdcLookupBatch, useLookupBatch } from "../lookup/batch.js";
@@ -145,6 +146,8 @@ export function TableRenderer(props: TableRendererProps) {
   const links = useUdcLinks();
   const cells = useCellRegistry();
   const rowLink = view.row_link;
+  // The fields the source sorts on (describe.sortable, 0.5.2); the others get a plain header.
+  const sourceSorts = useMemo(() => sourceSortable(describe), [describe]);
   // One lookup batch per lookup column for the rows on screen, not one call per cell.
   const lookupFields = useMemo(() => view.columns.map((c) => c.field), [view.columns]);
   const lookups = useLookupBatch(data.rows, schema, lookupFields);
@@ -427,7 +430,7 @@ export function TableRenderer(props: TableRendererProps) {
     const { config, def } = meta(c);
     const label = t(section, config.field);
     const key = sort.find((k) => k.field === config.field);
-    const sortable = def !== undefined && def.type !== "json";
+    const sortable = columnSortable(config, def, sourceSorts);
     const dir = key ? (key.dir ?? "asc") : null;
     const Icon = dir === "asc" ? ArrowUp : dir === "desc" ? ArrowDown : ChevronsUpDown;
     const menu = schemaEdit && def !== undefined && props.onSchemaAction;

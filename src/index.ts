@@ -52,6 +52,8 @@ export {
   useCellRegistry,
 } from "./cells/registry.js";
 export { LiveIndicator } from "./data-view/LiveIndicator.js";
+// Which headers offer a sort (0.5.2): `describe.sortable` and a column's `sortable: false`.
+export { columnSortable, sourceSortable } from "./data-view/liveView.js";
 // One collection: the tabs its view declares, each drawn by a registered renderer.
 export {
   resolveChrome,
