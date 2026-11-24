@@ -7,6 +7,38 @@ All notable changes to `@jsudc/react` are recorded here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- A long `lookup_array` chip ends in "…" inside its rounded box instead of
+  being cut off at the cell's edge. Its text is a span of its own that
+  truncates (the bare text of an `inline-flex` box is an anonymous flex item
+  that `text-overflow` never reaches), and the chip is no longer `shrink-0`:
+  it is at most `--udc-chip-max-width` wide (default `12em`) and may shrink
+  down to `--udc-chip-min-width` (default `2.5rem`, e.g. "K…"). When the chips
+  do not fit, the first ones keep their width and the last visible one
+  shrinks first (each chip's `flex-shrink` is a million times the one before
+  it). A 150 px column with "Klijent Petrović — ugovor 2026" now shows
+  "Klijent Petrović — …" in a 132 px chip (before: a 172 px chip cut hard).
+
+### Added
+
+- A lookup chip or label can be plain text instead of a link: when
+  `UdcLinks.href` returns `null` for the target collection (the host has no
+  view of it), the chip is a `<span>` with no hover underline, and a click on
+  it falls through to the row (`onRowActivate`, a `row_link`). The same `null`
+  makes a `row_link` to that collection do nothing. `collectionPath` of
+  `UdcReactRouterUrlState` may return `null` to the same effect. A link chip
+  carries `data-link`.
+- The chip's weight and size are host variables: `--udc-chip-font-weight`
+  (default `500`) and `--udc-chip-font-size` (default `11px`), next to
+  `--udc-chip-max-width` and `--udc-chip-min-width`.
+
+### Changed
+
+- `UdcLinks.href` and `filterHref` are typed `string | null`. A host's
+  `UdcLinks` that returns a string needs no change; code that calls
+  `filterHref` itself and needs a string has to handle `null`.
+
 ## [0.8.0] - 2026-11-23
 
 Coloured lookup chips; released together with `@jsudc/core` 0.8.0 (which

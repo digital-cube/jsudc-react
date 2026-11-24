@@ -9,8 +9,13 @@ import { encodeFilterParam, PARAM } from "../data-view/urlState.js";
  * where `<UdcDataView collection>` is mounted.
  */
 export interface UdcLinks {
-  /** The address of `collection`'s view with `search` as its query string. */
-  href(collection: string, search: URLSearchParams): string;
+  /**
+   * The address of `collection`'s view with `search` as its query string, or
+   * `null` when the host has no view of `collection`: a lookup chip or label
+   * to it is then plain text (a click on it falls through to the row), and a
+   * `row_link` to it does nothing.
+   */
+  href(collection: string, search: URLSearchParams): string | null;
   /** Go to `href` inside the app. */
   navigate(href: string): void;
 }
@@ -42,8 +47,11 @@ export function useUdcLinks(): UdcLinks {
   return useContext(UdcLinksContext);
 }
 
-/** The address of `collection` opened with `filter` as its filter tree (`?f=`). */
-export function filterHref(links: UdcLinks, collection: string, filter: FilterNode): string {
+/**
+ * The address of `collection` opened with `filter` as its filter tree (`?f=`);
+ * `null` when the host has no view of `collection` (`UdcLinks.href`).
+ */
+export function filterHref(links: UdcLinks, collection: string, filter: FilterNode): string | null {
   const search = new URLSearchParams();
   const f = encodeFilterParam(filter);
   if (f) search.set(PARAM.filter, f);

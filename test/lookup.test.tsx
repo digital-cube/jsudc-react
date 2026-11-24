@@ -96,6 +96,14 @@ const describes: Record<string, DescribeResponse> = {
     }),
     filterable: { fields: [] },
   },
+  notes: {
+    collection: "notes",
+    capabilities: caps,
+    source_kind: "postgres_jsonb",
+    schema: ticketsSchema,
+    view: ViewConfigSchema.parse({ columns: [{ field: "title" }, { field: "assignees" }] }),
+    filterable: { fields: [] },
+  },
   boards: {
     collection: "boards",
     capabilities: caps,
@@ -220,8 +228,8 @@ describe("helpers", () => {
       op: "eq",
       value: "b1",
     });
-    expect(href.startsWith("/c/tickets?f=")).toBe(true);
-    const f = new URL(href, "http://x").searchParams.get("f");
+    expect(href?.startsWith("/c/tickets?f=")).toBe(true);
+    const f = new URL(href ?? "", "http://x").searchParams.get("f");
     expect(decodeFilterParam(f)).toEqual({ field: "board_id", op: "eq", value: "b1" });
     expect(defaultUdcLinks.href("a b", new URLSearchParams())).toBe("/c/a%20b");
   });
@@ -320,7 +328,7 @@ describe("a lookup outside a renderer", () => {
     expect(toned).toHaveAttribute("data-tone", "danger");
     expect(toned?.className).toContain("udc:bg-sem-danger-bg");
     expect(toned?.className).not.toContain("udc:bg-muted");
-    expect(toned).not.toHaveAttribute("style");
+    expect(toned?.getAttribute("style") ?? "").not.toContain("--udc-chip-bg");
     expect(named).toHaveAttribute("data-color", "red");
     expect(named).not.toHaveAttribute("data-tone");
     expect(named?.className).toContain("udc-lookup-chip");
@@ -329,7 +337,75 @@ describe("a lookup outside a renderer", () => {
     // No colour on the row: the chip as it always was.
     expect(plain).not.toHaveAttribute("data-color");
     expect(plain?.className).toContain("udc:bg-muted");
-    expect(plain).not.toHaveAttribute("style");
+    expect(plain?.getAttribute("style") ?? "").not.toContain("--udc-chip-bg");
+  });
+
+  it("a long chip ends in an ellipsis inside its box; the last chips give up width first", async () => {
+    const { wrapper } = setup();
+    const def = { type: "lookup_array", lookup: { collection: "org", label_field: "name" } };
+    render(<LookupValue def={def as never} value={["p1", "p2", "p3"]} />, { wrapper });
+    await screen.findByText("Person 03");
+    const chips = screen.getAllByTestId("lookup-link") as HTMLElement[];
+    for (const chip of chips) {
+      // At most --udc-chip-max-width wide, allowed below its text's width, never
+      // shrink-0 (which kept a chip as wide as its text and let the cell cut it).
+      expect(chip.className).toContain("udc:max-w-[var(--udc-chip-max-width,12em)]");
+      expect(chip.className).toContain(
+        "udc:min-w-[min(var(--udc-chip-min-width,2.5rem),var(--udc-chip-max-width,12em))]",
+      );
+      expect(chip.className).not.toContain("udc:shrink-0");
+      // The weight and the size are the host's to set.
+      expect(chip.className).toContain("udc:font-[number:var(--udc-chip-font-weight,500)]");
+      expect(chip.className).toContain("udc:text-[length:var(--udc-chip-font-size,11px)]");
+      // The text is a block of its own, so text-overflow reaches it: an inline-flex
+      // box's bare text is an anonymous flex item that never gets the "…".
+      const text = within(chip).getByTestId("lookup-chip-text");
+      expect(text.className).toContain("udc:truncate");
+      expect(text.className).toContain("udc:min-w-0");
+    }
+    expect(within(chips[1] as HTMLElement).getByTestId("lookup-chip-text")).toHaveTextContent(
+      "Person 02",
+    );
+    // Each chip shrinks a million times faster than the one before it.
+    const shrink = chips.map((c) => Number(c.style.flexShrink));
+    expect(shrink).toEqual([1, 1e6, 1e12]);
+  });
+
+  it("is plain text, not a link, where the host's links have no route to the target", async () => {
+    const links: UdcLinks = {
+      href: (c, search) => (c === "org" ? null : `/udc/${c}?${search}`),
+      navigate: vi.fn(),
+    };
+    const { wrapper } = setup({ links });
+    const def = { type: "lookup_array", lookup: { collection: "org", label_field: "name" } };
+    const onRowClick = vi.fn();
+    render(
+      // biome-ignore lint/a11y/useKeyWithClickEvents lint/a11y/noStaticElementInteractions: a stand-in for a row
+      <div onClick={onRowClick}>
+        <LookupValue def={def as never} value={["p1", "p2"]} />
+        <LookupValue def={ticketsSchema.fields.board_id as never} value="b1" />
+      </div>,
+      { wrapper },
+    );
+    await screen.findByText("Person 02");
+    const [chip, , board] = screen.getAllByTestId("lookup-link") as HTMLElement[];
+    expect(chip?.tagName).toBe("SPAN");
+    expect(chip).not.toHaveAttribute("href");
+    expect(chip).not.toHaveAttribute("data-link");
+    expect(chip?.className).toContain("udc-lookup-chip");
+    expect(chip?.className).not.toContain("udc:hover:underline");
+    expect(chip?.className).not.toContain("udc:hover:bg-primary/12");
+    // The click is the row's.
+    fireEvent.click(chip as HTMLElement);
+    expect(onRowClick).toHaveBeenCalledTimes(1);
+    expect(links.navigate).not.toHaveBeenCalled();
+    // Another target still has its route: a link, whose click stays its own.
+    await waitFor(() => expect(board).toHaveTextContent("Roadmap"));
+    expect(board?.tagName).toBe("A");
+    expect(board).toHaveAttribute("data-link", "true");
+    fireEvent.click(board as HTMLElement);
+    expect(links.navigate).toHaveBeenCalledTimes(1);
+    expect(onRowClick).toHaveBeenCalledTimes(1);
   });
 
   it("a single lookup is a link, not a chip, and takes no colour", async () => {
@@ -357,6 +433,35 @@ describe("a lookup outside a renderer", () => {
 });
 
 describe("the table over lookup fields", () => {
+  it("a click on a chip with no route activates the row (the chip is no link)", async () => {
+    const links: UdcLinks = { href: (c) => (c === "org" ? null : `/c/${c}`), navigate: vi.fn() };
+    const s = setup({ links });
+    const onRowActivate = vi.fn();
+    render(<UdcDataView collection="notes" onRowActivate={onRowActivate} />, {
+      wrapper: s.wrapper,
+    });
+    const rows = await screen.findAllByTestId("row");
+    const chip = await within(rows[0] as HTMLElement).findByText("Person 02");
+    expect(chip.closest("a")).toBeNull();
+    fireEvent.click(chip);
+    expect(onRowActivate).toHaveBeenCalledTimes(1);
+    expect(onRowActivate.mock.calls[0]?.[0]?.__meta.id).toBe("t1");
+    expect(links.navigate).not.toHaveBeenCalled();
+  });
+
+  it("a row_link to a collection with no route does nothing", async () => {
+    const links: UdcLinks = {
+      href: (c) => (c === "tickets" ? null : `/c/${c}`),
+      navigate: vi.fn(),
+    };
+    const s = setup({ links });
+    render(<UdcDataView collection="boards" />, { wrapper: s.wrapper });
+    const rows = await screen.findAllByTestId("row");
+    expect(rows[0]).not.toHaveAttribute("data-row-link");
+    fireEvent.click(within(rows[0] as HTMLElement).getByText("ROA"));
+    expect(links.navigate).not.toHaveBeenCalled();
+  });
+
   async function mountTickets(links?: UdcLinks) {
     const s = setup(links ? { links } : {});
     window.history.replaceState(null, "", "/c/tickets");

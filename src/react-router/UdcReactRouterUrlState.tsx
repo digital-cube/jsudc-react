@@ -19,9 +19,10 @@ export function UdcReactRouterUrlState({
   children?: ReactNode;
   /**
    * The route of a collection's view, e.g. `` (c) => `/udc/${c}` ``. With it, lookup
-   * links and `row_link`s go there through the router's `navigate`.
+   * links and `row_link`s go there through the router's `navigate`; `null` for a
+   * collection with no view in the app makes its lookup chips plain text.
    */
-  collectionPath?: (collection: string) => string;
+  collectionPath?: (collection: string) => string | null;
 }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -30,8 +31,10 @@ export function UdcReactRouterUrlState({
       collectionPath
         ? {
             href: (collection, search) => {
+              const path = collectionPath(collection);
+              if (path === null) return null;
               const qs = search.toString();
-              return `${collectionPath(collection)}${qs ? `?${qs}` : ""}`;
+              return `${path}${qs ? `?${qs}` : ""}`;
             },
             navigate: (href) => void navigate(href),
           }

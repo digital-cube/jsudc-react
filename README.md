@@ -1781,6 +1781,25 @@ only stores and filters keys.
 
   A name the host does not map, and a row with no value there, draw the
   default chip. A single `lookup` stays a plain link.
+- **Chip size.** A long chip ends in "…" inside its rounded box. The chip is
+  at most `--udc-chip-max-width` wide (default `12em`); when the chips do not
+  fit in the cell, the first keep their width and the last visible one
+  shrinks, down to `--udc-chip-min-width` (default `2.5rem`). The text is
+  `--udc-chip-font-weight` (default `500`) at `--udc-chip-font-size` (default
+  `11px`):
+
+  ```css
+  .udc-lookup-chip { --udc-chip-max-width: 10em; --udc-chip-font-weight: 600; --udc-chip-font-size: 11.5px; }
+  ```
+- **Chips that are not links.** A host with no view of the target collection
+  (one embedded table, no `/c/<target>`) returns `null` from `UdcLinks.href`
+  (or `collectionPath`) for it: the chips and labels of that lookup are then
+  plain text, and a click on one is the row's (`onRowActivate`, `row_link`).
+  A `row_link` to such a collection does nothing.
+
+  ```tsx
+  <UdcProvider client={client} links={{ href: () => null, navigate: () => {} }}>…</UdcProvider>
+  ```
 - **One call per lookup field**, not per cell: the table (and the kanban
   board) resolve the keys of the rows on screen with `useLookupBatch` and hand
   them down through `<UdcLookupBatch>`. A `LookupValue` outside a batch
@@ -1818,7 +1837,9 @@ where a collection's view is mounted. Under react-router:
 
 Otherwise pass `links={{ href, navigate }}` to `UdcProvider` (`UdcLinks`).
 Without either, links go to `/c/<collection>` and are followed with
-`history.pushState` and a `popstate` event (`defaultUdcLinks`).
+`history.pushState` and a `popstate` event (`defaultUdcLinks`). An `href` (or
+`collectionPath`) that returns `null` says the app has no view of that
+collection: its lookups are plain text and a `row_link` to it does nothing.
 
 ## API
 
