@@ -7,6 +7,15 @@ All notable changes to `@jsudc/react` are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.8.1] - 2026-11-25
+
+The `hover` display of the row actions and plain-text lookup chips; released
+together with `@jsudc/core` 0.8.1 (which defines `row_actions_display: hover`,
+`row_actions_max` and an action's `placement`). The `@jsudc/core` peer range
+is now `^0.8.1`. `@jsudc/server` is not released: 0.9.0 keeps its
+`@jsudc/core` range `^0.8.0`, which takes 0.8.1. Nothing changes for a view
+or a collection that worked on 0.8.0.
+
 ### Fixed
 
 - A long `lookup_array` chip ends in "…" inside its rounded box instead of
@@ -836,7 +845,8 @@ First tagged version, installed from the GitHub tag.
   Serbian), theme and time-zone providers, the UI primitives.
 - `styles.css`, compiled at build time, and `tokens.css`, its raw source.
 
-[Unreleased]: https://github.com/digital-cube/jsudc-react/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/digital-cube/jsudc-react/compare/v0.8.1...HEAD
+[0.8.1]: https://github.com/digital-cube/jsudc-react/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/digital-cube/jsudc-react/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/digital-cube/jsudc-react/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/digital-cube/jsudc-react/compare/v0.5.1...v0.6.0
