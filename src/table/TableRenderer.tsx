@@ -36,6 +36,7 @@ import {
   useRowMenu,
 } from "../actions/RowActionsMenu.js";
 import type { RowActions } from "../actions/row.js";
+import { effectiveRowActionsDisplay, useCanHover } from "../actions/useCanHover.js";
 import { useCellRegistry } from "../cells/registry.js";
 import { FolderEntry } from "../data-view/FolderEntry.js";
 import { columnSortable, sourceSortable } from "../data-view/liveView.js";
@@ -194,10 +195,14 @@ export function TableRenderer(props: TableRendererProps) {
 
   const selection = props.selection;
   const selectWidth = selection ? SELECT_COLUMN_WIDTH : 0;
-  // Row actions (0.5.0): a column pinned at the end, after any column pinned right.
+  // Row actions (0.5.0): a column pinned at the end, after any column pinned right. `hover`
+  // (0.8.1): a zero-width column whose bar lies over the trailing cells (`menu` on touch).
   const rowActions = props.rowActions;
   const rowMenu = useRowMenu();
-  const actionsWidth = rowActions ? rowActionsColumnWidth(rowActions) : 0;
+  const canHover = useCanHover();
+  const actionsDisplay = effectiveRowActionsDisplay(rowActions?.display ?? "inline", canHover);
+  const hoverBar = rowActions !== undefined && actionsDisplay === "hover";
+  const actionsWidth = rowActions ? rowActionsColumnWidth(rowActions, actionsDisplay) : 0;
   const schemaEdit = capabilities.schema_edit && props.onSchemaAction !== undefined;
 
   // Column sizing (0.6.0): `width: fill` shares the pane's free width, `hide_below` drops a
@@ -624,7 +629,9 @@ export function TableRenderer(props: TableRendererProps) {
       "udc:before:pointer-events-none udc:before:absolute udc:before:inset-y-0 udc:before:-left-3 udc:before:w-3 udc:before:bg-gradient-to-l udc:before:from-[var(--shadow-pin)] udc:before:to-transparent udc:before:opacity-0 udc:before:transition-opacity",
     right.length === 0 && edges.right && "udc:before:opacity-100",
   );
-  const actionsHeader = rowActions ? (
+  const actionsHeader = hoverBar ? (
+    <th key="__actions" aria-hidden style={{ width: 0 }} className="udc:p-0" />
+  ) : rowActions ? (
     <th
       key="__actions"
       scope="col"
@@ -635,15 +642,41 @@ export function TableRenderer(props: TableRendererProps) {
       <span className="udc:sr-only">{t("APP", "ROW_ACTIONS")}</span>
     </th>
   ) : null;
-  const actionsCell = (row: Row, className: string) =>
-    rowActions ? (
+  // `hover`: a zero-width cell stuck at the pane's right edge, above the cells the bar covers
+  // (right-pinned ones too); the bar wears the row's background so the text under it hides.
+  const hoverCell = (row: Row, rowBg: string) => (
+    <td
+      key="__actions"
+      data-testid="cell-actions"
+      data-display="hover"
+      style={{ width: 0 }}
+      className="udc:sticky udc:right-0 udc:z-[6] udc:p-0"
+    >
+      <RowActionsControls
+        row={row}
+        rowActions={rowActions as RowActions}
+        menu={rowMenu}
+        display="hover"
+        className={cn("udc:absolute udc:top-0 udc:right-0 udc:bottom-px", rowBg)}
+      />
+    </td>
+  );
+  const actionsCell = (row: Row, className: string, barBg: string) =>
+    hoverBar ? (
+      hoverCell(row, barBg)
+    ) : rowActions ? (
       <td
         key="__actions"
         data-testid="cell-actions"
         style={{ width: actionsWidth }}
         className={cn(actionsClass, "udc:px-1.5", className)}
       >
-        <RowActionsControls row={row} rowActions={rowActions} menu={rowMenu} />
+        <RowActionsControls
+          row={row}
+          rowActions={rowActions}
+          menu={rowMenu}
+          display={actionsDisplay}
+        />
       </td>
     ) : null;
 
@@ -654,7 +687,7 @@ export function TableRenderer(props: TableRendererProps) {
     const checked = selection?.isSelected(row.__meta.id) === true;
     const rowProps = activation.rowProps(row);
     const menuKeys = rowMenuHandlers(rowActions, rowMenu, row, {
-      contextMenu: rowActions?.display === "menu",
+      contextMenu: actionsDisplay !== "inline",
     });
     const cell = (c: Column<Row, unknown>) => {
       const { config, def } = meta(c);
@@ -795,6 +828,11 @@ export function TableRenderer(props: TableRendererProps) {
         {actionsCell(
           row,
           active || checked ? "udc:bg-selected" : "udc:bg-surface udc:group-hover/row:bg-hover",
+          active || checked
+            ? "udc:bg-selected"
+            : tone?.bg && tone.bg !== "default"
+              ? BG_COLOR[tone.bg]
+              : "udc:bg-surface udc:group-hover/row:bg-hover",
         )}
       </tr>
     );
@@ -952,7 +990,9 @@ export function TableRenderer(props: TableRendererProps) {
                           <Skeleton className="udc:h-3 udc:w-2/3" />
                         </td>
                       ))}
-                      {rowActions ? (
+                      {hoverBar ? (
+                        <td aria-hidden style={{ width: 0 }} className="udc:p-0" />
+                      ) : rowActions ? (
                         <td
                           aria-hidden
                           style={{ width: actionsWidth }}

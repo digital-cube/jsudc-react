@@ -22,6 +22,32 @@ All notable changes to `@jsudc/react` are recorded here. The format follows
 
 ### Added
 
+- `row_actions_display: hover`, a third way to draw a view's row actions (the
+  mail-list pattern): no action column at rest, and a compact bar of round icon
+  buttons over the row's trailing cells while the row is hovered, holds the
+  focus, has its menu open or runs an action. The column layout is exactly the
+  one of the same view without row actions (`rowActionsColumnWidth` answers 0);
+  the bar is stuck to the pane's right edge, above right-pinned columns, on the
+  row's own background (hovered, selected or its `row_color` tone) with a fade
+  at its left edge. Each button is `size-8`, round, with a hover / focus
+  highlight, a tooltip and an `aria-label`; destructive ones keep the danger
+  colours. Eligible actions with an icon and not `placement: menu` are buttons,
+  up to `row_actions_max` (default 4); the rest go to a round ⋮ dropdown at the
+  bar's end (no ⋮ when nothing is left over). Right-click on the row and the
+  menu key open every eligible action. A hidden bar takes no pointer but stays
+  in the Tab order. On a device that cannot hover (`@media (hover: none)`) it
+  draws exactly as `menu`; the cards draw the menu as before. **Needs
+  `@jsudc/core` 0.8.1 on the server and in the client**: an older core refuses
+  a view that says `hover` (no fallback). A view with `inline`, `menu` or no
+  display draws what it drew in 0.8.0.
+- Headless: `splitRowActions(eligible, { hasIcon, max })` (`{ bar, overflow }`),
+  `rowActionsMax(view)`, `rowActionPlacement(def)`, `DEFAULT_ROW_ACTIONS_MAX`,
+  `useCanHover()` and `effectiveRowActionsDisplay(display, canHover)`;
+  `RowActions.split(row)` next to `eligible(row)`. `rowActionsDisplay` answers
+  `hover` and reads the view loosely, so it types against `@jsudc/core` 0.8.0.
+  `RowActionsControls`' `display` takes `"hover"`; `rowActionsColumnWidth`
+  takes the drawn display as an optional second argument.
+
 - A lookup chip or label can be plain text instead of a link: when
   `UdcLinks.href` returns `null` for the target collection (the host has no
   view of it), the chip is a `<span>` with no hover underline, and a click on

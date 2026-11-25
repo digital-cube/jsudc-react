@@ -24,7 +24,14 @@ import {
   planBulkAction,
   useBulkActionHandlers,
 } from "./bulk.js";
-import { eligibleRowActions, type RowActions, type RowActionsDisplay } from "./row.js";
+import {
+  DEFAULT_ROW_ACTIONS_MAX,
+  eligibleRowActions,
+  type RowActions,
+  type RowActionsDisplay,
+  splitRowActions,
+} from "./row.js";
+import { rowActionHasIcon } from "./rowIcon.js";
 
 export interface UseRowActionRunnerOptions {
   collection: string;
@@ -33,6 +40,8 @@ export interface UseRowActionRunnerOptions {
   /** What the view declares (`rowActionDefs(view)`); empty: no row actions. */
   defs: readonly ActionDef[];
   display: RowActionsDisplay;
+  /** The most buttons of the `hover` bar (`rowActionsMax(view)`); default 4. */
+  max?: number | undefined;
   capabilities: Pick<Capabilities, "mutate" | "mutate_many"> | undefined;
   /** The view's own handlers (`UdcDataView actions`), before the provider's. */
   handlers?: BulkActionHandlers | undefined;
@@ -53,6 +62,7 @@ export function useRowActionRunner({
   section,
   defs,
   display,
+  max = DEFAULT_ROW_ACTIONS_MAX,
   capabilities,
   handlers,
   selection,
@@ -194,11 +204,13 @@ export function useRowActionRunner({
             display,
             defs,
             eligible: (row: Row) => eligibleRowActions(defs, row),
+            split: (row: Row) =>
+              splitRowActions(eligibleRowActions(defs, row), { hasIcon: rowActionHasIcon, max }),
             label,
             run,
             runningOn: (rowId: string) => (running?.id === rowId ? running.kind : null),
           },
-    [defs, display, label, run, running],
+    [defs, display, max, label, run, running],
   );
 
   const confirmTitle = (p: Pending) => {

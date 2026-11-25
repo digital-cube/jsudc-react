@@ -1122,14 +1122,46 @@ shows nothing.
   alternatives (only the widest), so it does not jump as rows change.
 - `menu`: one "more" button per row opening a dropdown, and the same menu on
   right-click anywhere on the row.
+- `hover` (0.8.1; the mail-list pattern): at rest the row shows no action
+  column, so the last column sits at the right edge. While the pointer is over
+  the row, while the focus is inside it, and while its menu is open or one of
+  its actions runs, a compact bar of round icon buttons appears over the row's
+  trailing cells, stuck to the pane's right edge when the table scrolls
+  sideways and above right-pinned columns. It wears the row's background
+  (hovered, selected, or its `row_color` tone) with a short fade at its left
+  edge, so the text under it is covered; the row's height and the column
+  layout are exactly those of the same view without row actions. Each button
+  has a round highlight on hover and focus, its name in a tooltip and as its
+  accessible name; `variant: destructive` and the kind `delete` keep the
+  danger colours. A hidden bar takes no pointer but stays in the Tab order,
+  and tabbing into it shows it. Right-click on the row and the menu key open
+  the full menu (every eligible action).
+
+  Which actions are buttons: in declared order, each eligible action that has
+  an icon (a known `icon`, or the kind `delete`) and is not `placement: menu`,
+  up to `row_actions_max` (default 4). Every other eligible action (no icon,
+  `placement: menu`, past the cap) goes to a round "more" (⋮) button at the
+  end of the bar; with nothing left over there is no ⋮. While an action runs,
+  its button (the ⋮ for one from the dropdown) shows a spinner and the others
+  are disabled. `placement` and `row_actions_max` are read for `hover` only:
+  `inline`, `menu` and the bulk bar ignore them.
+
+  On a device that cannot hover (`@media (hover: none)`, a touch screen),
+  `hover` draws exactly as `menu`: the 40 px column with an always visible ⋮.
+  **It needs `@jsudc/core` 0.8.1 on the server and in the client**: up to
+  0.8.0 `row_actions_display` is a strict `inline | menu` enum on both sides
+  (the server reads `view.yaml` with it, the client parses the `describe`
+  answer with it), so an older core refuses a view that says `hover` at load,
+  with no fallback. `placement` and `row_actions_max` pass an older core
+  untouched.
 
 The cards draw the same actions as a "more" menu on each card (right-click
-opens it too), whatever the display. Kanban, tree, calendar, map and chart
-draw no row actions.
+opens it too), whatever the display, `hover` included. Kanban, tree,
+calendar, map and chart draw no row actions.
 
 **The keyboard.** With row activation on, the focused row opens its menu from
-the context-menu key, Shift+F10 or `.` (`isRowMenuKey`); in the inline
-display the keys open the same actions as a menu. Arrow keys move in the
+the context-menu key, Shift+F10 or `.` (`isRowMenuKey`); in the inline and
+hover displays the keys open the same actions as a menu (all of them). Arrow keys move in the
 menu, Enter runs, Escape closes, and the focus goes back to the row. Opened
 from the "more" button, the focus goes back to that button.
 
@@ -1158,24 +1190,41 @@ is shown as a toast. A row action names its button with the term
 `ACTION_<KIND>` of the collection's section, else `ACTIONS.<kind>`, else the
 def's `label`, else the kind made readable.
 
-A mailbox whose rows mark themselves read through a patch and archive through
-the host's own endpoint, each hidden where it does not apply:
+A mailbox drawn the way a webmail draws it: the actions appear over the row
+under the pointer. Its rows mark themselves read or unread through a patch
+and archive through the host's own endpoint, each hidden where it does not
+apply:
 
 ```yaml
 # The view of `messages`
 view:
-  columns: [{ field: subject }, { field: from }, { field: received_at }]
-  row_actions_display: inline # or `menu`
+  columns: [{ field: from }, { field: subject }, { field: received_at }]
+  row_actions_display: hover # or `inline`, `menu`
+  row_actions_max: 4 # the default
   row_action_defs:
+    - kind: archive
+      label: Archive
+      icon: lucide:archive
+      when: { field: folder, op: neq, value: archive }
+    - kind: delete # the bin icon and the danger colours; asks first
+    # A toggle is two defs with opposite `when`s: a row shows one of them.
     - kind: mark_read
       label: Mark read
       icon: lucide:mail-open
       set: { read: true } # no handler needed: an optimistic update
       when: { field: read, op: eq, value: false }
-    - kind: archive
-      label: Archive
-      icon: lucide:archive
-      when: { field: folder, op: neq, value: archive }
+    - kind: mark_unread
+      label: Mark unread
+      icon: lucide:mail
+      set: { read: false }
+      when: { field: read, op: eq, value: true }
+    - kind: snooze # no icon: in the ⋮ dropdown
+      label: Snooze
+      action: mail.snooze
+    - kind: move
+      label: Move to…
+      icon: lucide:folder-input
+      placement: menu # always in the ⋮ dropdown
 ```
 
 ```tsx
@@ -1204,19 +1253,26 @@ export function Inbox() {
 }
 ```
 
-An unread message in the inbox shows both; a read one only "Archive"; a read
-one already archived, none. Clicking "Mark read" shows the row read at once (and so
-"Mark read" goes from it); clicking the row itself still opens the message.
+Hovering an unread message in the inbox shows Archive, Delete and Mark read
+as buttons and a ⋮ with Snooze and Move to…; a read one shows Mark unread in
+place of Mark read; an archived one, Delete and the toggle. Clicking "Mark
+read" shows the row read at once, and the button under the pointer becomes
+"Mark unread"; clicking the row itself still opens the message.
 
 **In a host renderer.** `RendererProps.rowActions` (a `RowActions`, set when
 the view declares row actions) carries `display`, `defs` (every declared
-action, before `when`), `eligible(row)`, `label(def)`, `run(def, row)` (the
+action, before `when`), `eligible(row)`, `split(row)` (for `hover`: `{ bar,
+overflow }`, the bar's buttons and the ⋮ dropdown's rest), `label(def)`, `run(def, row)` (the
 path above; it shows its errors and does not reject) and `runningOn(id)`
 (the kind running on that row, else `null`). `RowActionsControls` with
-`useRowMenu()` draws the built-in buttons and menu; `rowMenuHandlers` gives a
+`useRowMenu()` draws the built-in buttons and menu (its `display` takes
+`hover` too: the bar, shown while an ancestor marked `udc:group/row` is
+hovered or holds the focus, positioned by your `className`); `rowMenuHandlers` gives a
 row element its menu key and right-click. The headless parts —
-`rowActionDefs(view)`, `rowActionsDisplay(view)`, `eligibleRowActions(defs,
-row)`, `isRowMenuKey(e)` — are in `@jsudc/react/headless`. A UI kit's
+`rowActionDefs(view)`, `rowActionsDisplay(view)`, `rowActionsMax(view)`,
+`eligibleRowActions(defs, row)`, `splitRowActions(eligible, { hasIcon, max })`,
+`isRowMenuKey(e)`, and `useCanHover()` with `effectiveRowActionsDisplay`
+(`hover` becomes `menu` on touch) — are in `@jsudc/react/headless`. A UI kit's
 `DropdownMenu` may take the optional `open` / `onOpenChange` and its content
 `onCloseAutoFocus` (the default kit does); a kit that ignores them still
 opens the menu from its trigger, but not from the keys or a right-click.

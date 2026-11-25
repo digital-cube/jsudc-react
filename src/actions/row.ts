@@ -4,8 +4,16 @@
 // exports it).
 import { type ActionDef, isActionEligible, type Row, type ViewConfig } from "@jsudc/core";
 
-/** How a view draws its row actions: icon buttons in a trailing column, or one "more" menu. */
-export type RowActionsDisplay = "inline" | "menu";
+/**
+ * How a view draws its row actions: icon buttons in a trailing column
+ * (`inline`), one "more" menu in a trailing column (`menu`), or a bar of icon
+ * buttons over the row's trailing cells while the row is hovered or focused,
+ * with no column of its own (`hover`, 0.8.1).
+ */
+export type RowActionsDisplay = "inline" | "menu" | "hover";
+
+/** How many buttons the `hover` bar shows when the view sets no `row_actions_max`. */
+export const DEFAULT_ROW_ACTIONS_MAX = 4;
 
 /**
  * The actions a view declares for one row, read as udc-js reads them: the
@@ -21,11 +29,60 @@ export function rowActionDefs(
   return (view.row_actions ?? []).map((kind) => ({ kind }));
 }
 
-/** `view.row_actions_display`; absent: `inline`, as in udc-js. */
-export function rowActionsDisplay(
-  view: Pick<ViewConfig, "row_actions_display">,
-): RowActionsDisplay {
-  return view.row_actions_display === "menu" ? "menu" : "inline";
+/**
+ * `view.row_actions_display`; absent (or a value this version does not know):
+ * `inline`, as in udc-js. Read loosely, so a view typed by an older
+ * `@jsudc/core` (whose enum has no `hover`) passes too.
+ */
+export function rowActionsDisplay(view: { row_actions_display?: unknown }): RowActionsDisplay {
+  const display = view.row_actions_display;
+  return display === "menu" || display === "hover" ? display : "inline";
+}
+
+/**
+ * `view.row_actions_max`: the most buttons the `hover` bar shows. Absent, or
+ * not a positive integer: `DEFAULT_ROW_ACTIONS_MAX` (4). Read loosely, like
+ * `rowActionsDisplay`.
+ */
+export function rowActionsMax(view: object): number {
+  const max = (view as { row_actions_max?: unknown }).row_actions_max;
+  return typeof max === "number" && Number.isInteger(max) && max > 0
+    ? max
+    : DEFAULT_ROW_ACTIONS_MAX;
+}
+
+/** Where a row action goes in the `hover` display: `def.placement`, `bar` when absent. */
+export function rowActionPlacement(def: ActionDef): "bar" | "menu" {
+  return (def as { placement?: unknown }).placement === "menu" ? "menu" : "bar";
+}
+
+/** One row's eligible actions as the `hover` display draws them. */
+export interface RowActionSplit {
+  /** The icon buttons of the bar, in declared order. */
+  bar: ActionDef[];
+  /** The rest, in declared order: the dropdown of the ⋮ button at the bar's end. */
+  overflow: ActionDef[];
+}
+
+/**
+ * Split one row's eligible actions (`eligibleRowActions`) for the `hover`
+ * bar: `bar` takes, in declared order, each one that has an icon (`hasIcon`)
+ * and is not `placement: menu`, up to `max` (default 4); every other one goes
+ * to `overflow`, in declared order. Pure: `hasIcon` is the renderer's answer
+ * (the styled renderer's is a known `icon`, or the kind `delete`).
+ */
+export function splitRowActions(
+  eligible: readonly ActionDef[],
+  opts: { hasIcon: (def: ActionDef) => boolean; max?: number | undefined },
+): RowActionSplit {
+  const max = opts.max ?? DEFAULT_ROW_ACTIONS_MAX;
+  const bar: ActionDef[] = [];
+  const overflow: ActionDef[] = [];
+  for (const def of eligible) {
+    if (bar.length < max && rowActionPlacement(def) === "bar" && opts.hasIcon(def)) bar.push(def);
+    else overflow.push(def);
+  }
+  return { bar, overflow };
 }
 
 /** The actions `row` offers: those of `defs` whose `when` holds for it (`isActionEligible`). */
@@ -56,7 +113,8 @@ export function isRowMenuKey(e: RowMenuKeyEvent): boolean {
 /**
  * What `RendererProps.rowActions` hands a renderer: set when the view
  * declares row actions, absent otherwise. Draw `eligible(row)` (inline as
- * `display` says, or in a menu), label each with `label`, run one with `run`.
+ * `display` says, or in a menu; for `hover`, `split(row)`), label each with
+ * `label`, run one with `run`.
  */
 export interface RowActions {
   display: RowActionsDisplay;
@@ -64,6 +122,11 @@ export interface RowActions {
   defs: readonly ActionDef[];
   /** The actions `row` offers now: `defs` whose `when` holds for it. */
   eligible: (row: Row) => ActionDef[];
+  /**
+   * `eligible(row)` split for the `hover` bar (`splitRowActions` with the
+   * view's `row_actions_max`): the bar's icon buttons and the ⋮ dropdown's rest.
+   */
+  split: (row: Row) => RowActionSplit;
   /** The words for an action in the UI language: the collection's term, then the def's `label`. */
   label: (def: ActionDef) => string;
   /**
