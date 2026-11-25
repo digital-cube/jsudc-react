@@ -7,6 +7,8 @@
 export * from "./actions/bulk.js";
 // The actions one row offers (`row_action_defs` / `row_actions`, filtered by `when`) (0.5.0).
 export * from "./actions/row.js";
+// Can the device hover: what turns the `hover` row actions display into `menu` on touch (0.8.1).
+export * from "./actions/useCanHover.js";
 // Each renderer's model and state hook.
 export * from "./calendar/model.js";
 export * from "./calendar/useCalendarUrl.js";

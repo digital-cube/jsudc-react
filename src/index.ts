@@ -30,14 +30,21 @@ export {
 // Row actions (0.5.0): what a row offers and how it runs (also in `@jsudc/react/headless`),
 // and the buttons and menu the table and the cards draw them with.
 export {
+  DEFAULT_ROW_ACTIONS_MAX,
   eligibleRowActions,
   isRowMenuKey,
+  type RowActionSplit,
   type RowActions,
   type RowActionsDisplay,
   type RowMenuKeyEvent,
   rowActionDefs,
+  rowActionPlacement,
   rowActionsDisplay,
+  rowActionsMax,
+  splitRowActions,
 } from "./actions/row.js";
+// Can the device hover: `hover` draws as `menu` on touch (0.8.1; also in headless).
+export { effectiveRowActionsDisplay, useCanHover } from "./actions/useCanHover.js";
 // Custom cells: components a column's `render` names, registered like the renderers.
 export {
   type CellComponent,

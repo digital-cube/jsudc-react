@@ -8,7 +8,7 @@ import {
 import { BookOpen, FileCode2, InfinityIcon, Rows3 } from "lucide-react";
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import type { BulkActionHandlers } from "../actions/bulk.js";
-import { rowActionDefs, rowActionsDisplay } from "../actions/row.js";
+import { rowActionDefs, rowActionsDisplay, rowActionsMax } from "../actions/row.js";
 import { useRowActionRunner } from "../actions/useRowActionRunner.js";
 import { type CellRegistry, UdcCellsProvider } from "../cells/registry.js";
 import { ChartWindowControl } from "../chart/ChartWindowControl.js";
@@ -463,6 +463,7 @@ function DataViewBody({
     section,
     defs: rowDefs,
     display: view ? rowActionsDisplay(view) : "inline",
+    max: view ? rowActionsMax(view) : undefined,
     capabilities: live?.capabilities,
     handlers: actions,
     selection: selecting ? selection : undefined,
